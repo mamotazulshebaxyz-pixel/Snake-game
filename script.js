@@ -239,6 +239,54 @@ function gameOver(){
 }
 
 
+// ===== Swipe Control =====
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener("touchstart", function(e){
+
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+
+}, { passive: true });
+
+canvas.addEventListener("touchend", function(e){
+
+    let touchEndX = e.changedTouches[0].clientX;
+    let touchEndY = e.changedTouches[0].clientY;
+
+    let dx = touchEndX - touchStartX;
+    let dy = touchEndY - touchStartY;
+
+    // খুব ছোট swipe হলে কিছু করবে না
+    if(Math.abs(dx) < 30 && Math.abs(dy) < 30){
+        return;
+    }
+
+    if(Math.abs(dx) > Math.abs(dy)){
+
+        if(dx > 0 && direction != "LEFT"){
+            direction = "RIGHT";
+        }
+
+        if(dx < 0 && direction != "RIGHT"){
+            direction = "LEFT";
+        }
+
+    }else{
+
+        if(dy > 0 && direction != "UP"){
+            direction = "DOWN";
+        }
+
+        if(dy < 0 && direction != "DOWN"){
+            direction = "UP";
+        }
+
+    }
+
+}, { passive: true });
 
 document.addEventListener(
 "keydown",
