@@ -116,3 +116,9 @@ font-size:18px;
 .controls button{
     width:180px;
 }
+
+canvas{
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+}
