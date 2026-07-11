@@ -101,11 +101,32 @@ function draw(){
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
-    // food
-    ctx.fillStyle = "#ff3b30";
+    // ======= সাধারণ খাবারের জায়গায় ছোট ব্যাঙ (Frog) আঁকা =======
+    // ব্যাঙের মূল শরীর (Body)
+    ctx.fillStyle = "#4ade80"; // উজ্জ্বল সবুজ রঙ (Frog Green)
     ctx.beginPath();
-    ctx.arc(food.x + 10, food.y + 10, 8, 0, Math.PI * 2);
+    ctx.ellipse(food.x + 10, food.y + 12, 8, 6, 0, 0, Math.PI * 2);
     ctx.fill();
+
+    // ব্যাঙের মাথা (Head)
+    ctx.beginPath();
+    ctx.arc(food.x + 10, food.y + 8, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ব্যাঙের চোখ (বড় দুটি চোখ মাথার ওপরে থাকবে)
+    ctx.fillStyle = "#fff"; // চোখের সাদা অংশ
+    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); // বাম চোখ
+    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); // ডান চোখ
+
+    ctx.fillStyle = "#000"; // চোখের মণি
+    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 1.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 1.2, 0, Math.PI * 2); ctx.fill();
+
+    // ব্যাঙের ছোট দুটি পা (Legs)
+    ctx.fillStyle = "#22c55e"; // একটু গাঢ় সবুজ পা
+    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); // বাম পা
+    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); // ডান পা
+
 
     // special food (যদি স্ক্রিনে থাকে)
     if (specialFood) {
@@ -126,26 +147,17 @@ function draw(){
         ctx.arc(specialFood.x + 7, specialFood.y + 7, 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // ======= লাইভ টাইমার ডিসপ্লে (নতুন অংশ) =======
-        // কত সময় পার হয়েছে এবং কত সেকেন্ড বাকি আছে তা হিসাব করা
+        // ======= লাইভ টাইমার ডিসপ্লে =======
         let elapsedTime = Date.now() - specialFoodStartTime;
         let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); // সেকেন্ডে রূপান্তর
 
         if (timeLeft > 0) {
-            ctx.fillStyle = "#ffd700"; // সোনালী রঙের লেখা
+            ctx.fillStyle = "#ffd700"; 
             ctx.font = "bold 14px sans-serif";
             ctx.textAlign = "center";
-            // ক্যানভাসের নিচের দিকে মাঝ বরাবর (X: 200, Y: 385) টাইমারটি দেখাবে
             ctx.fillText(`⏱ Bonus: ${timeLeft.toFixed(1)}s`, 200, 385); 
         }
     }
-
-    ctx.strokeStyle = "#0f0";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(food.x + 10, food.y + 2);
-    ctx.lineTo(food.x + 13, food.y - 3);
-    ctx.stroke();
 
     // snake
     ctx.textAlign = "left"; // সাপের চোখের জন্য টেক্সট অ্যালাইনমেন্ট রিসেট
