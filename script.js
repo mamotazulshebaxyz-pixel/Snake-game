@@ -4,6 +4,7 @@ const ctx = canvas.getContext("2d");
 
 const scoreText = document.getElementById("score");
 const highScoreText = document.getElementById("highScore");
+const levelText = document.getElementById("level");
 
 const playBtn = document.getElementById("playBtn");
 const pauseBtn = document.getElementById("pauseBtn");
