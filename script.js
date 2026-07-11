@@ -101,31 +101,39 @@ function draw(){
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
-    // ======= সাধারণ খাবারের জায়গায় ছোট ব্যাঙ (Frog) আঁকা =======
-    // ব্যাঙের মূল শরীর (Body)
-    ctx.fillStyle = "#4ade80"; // উজ্জ্বল সবুজ রঙ
+    // ======= সাধারণ খাবারের জায়গায় নতুন কিউট ব্যাঙ (Frog) আঁকা =======
+    // ১. ব্যাঙের গোলগাল বডি (Chibi Body)
+    ctx.fillStyle = "#2ecc71"; // চমৎকার নিয়ন-সবুজ শেড (Emerald Green)
     ctx.beginPath();
-    ctx.ellipse(food.x + 10, food.y + 12, 8, 6, 0, 0, Math.PI * 2);
+    ctx.arc(food.x + 10, food.y + 11, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // ব্যাঙের মাথা (Head)
-    ctx.beginPath();
-    ctx.arc(food.x + 10, food.y + 8, 6, 0, Math.PI * 2);
-    ctx.fill();
+    // ২. বড় ও কিউট চোখ (মাথার একটু ওপরে পপ-আপ করা)
+    // বাম চোখের বেস
+    ctx.fillStyle = "#2ecc71";
+    ctx.beginPath(); ctx.arc(food.x + 5, food.y + 5, 3.5, 0, Math.PI * 2); ctx.fill();
+    // ডান চোখের বেস
+    ctx.beginPath(); ctx.arc(food.x + 15, food.y + 5, 3.5, 0, Math.PI * 2); ctx.fill();
 
-    // ব্যাঙের চোখ
-    ctx.fillStyle = "#fff"; // চোখের সাদা অংশ
-    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); 
-    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); 
+    // চোখের সাদা অংশ (Eyeballs)
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(food.x + 5, food.y + 5, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(food.x + 15, food.y + 5, 2.5, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = "#000"; // চোখের মণি
-    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 1.2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 1.2, 0, Math.PI * 2); ctx.fill();
+    // চোখের কালো মণি (Pupils - একটু ভেতরের দিকে তাকানো, যাতে কিউট লাগে)
+    ctx.fillStyle = "#111111";
+    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 5, 1.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 5, 1.2, 0, Math.PI * 2); ctx.fill();
 
-    // ব্যাঙের ছোট দুটি পা (Legs)
-    ctx.fillStyle = "#22c55e"; 
-    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); 
-    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); 
+    // ৩. গালের মিষ্টি ব্লাশ (Cute Rosy Cheeks)
+    ctx.fillStyle = "#ff7675"; // হালকা গোলাپی রঙ
+    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); // বাম গাল
+    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); // ডান গাল
+
+    // ৪. পুচকে দুটি পা (Tiny Front Feet)
+    ctx.fillStyle = "#27ae60"; // একটু গাঢ় সবুজ
+    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
 
 
     // special food (যদি স্ক্রিনে থাকে)
@@ -186,7 +194,7 @@ function draw(){
             ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
 
-            // চোখের ছোট লাইটিং ডট
+            // চোখের ছোট লাইٹنگ ডট
             ctx.fillStyle = "#ffffff";
             ctx.beginPath(); ctx.arc(part.x + 5.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 13.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
