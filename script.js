@@ -93,7 +93,7 @@ function draw(){
 
             // 2. Snake Tongue (জিহ্বা - সাপের মুখ যেদিকে, জিহ্বাও সেদিকে বের হবে)
             ctx.strokeStyle = "#ff3b30"; // লাল জিহ্বা
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             
             if(direction === "RIGHT") {
