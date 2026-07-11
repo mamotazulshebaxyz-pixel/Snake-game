@@ -77,17 +77,84 @@ function draw(){
     // snake
     snake.forEach((part, index) => {
         if(index === 0){
-            // Head
-            ctx.fillStyle = "#00ff66";
+            if(index === 0){
+            // 1. Head (Gradient Effect for 3D look)
+            let headGradient = ctx.createRadialGradient(
+                part.x + 10, part.y + 10, 2, 
+                part.x + 10, part.y + 10, 10
+            );
+            headGradient.addColorStop(0, "#80ffaa"); // ভেতরের হালকা উজ্জ্বল অংশ
+            headGradient.addColorStop(1, "#00ff66"); // বাইরের মূল সবুজ অংশ
+            
+            ctx.fillStyle = headGradient;
             ctx.beginPath();
             ctx.arc(part.x + 10, part.y + 10, 10, 0, Math.PI * 2);
             ctx.fill();
 
-            // Eyes
-            ctx.fillStyle = "#000";
+            // 2. Snake Tongue (জিহ্বা - সাপের মুখ যেদিকে, জিহ্বাও সেদিকে বের হবে)
+            ctx.strokeStyle = "#ff3b30"; // লাল জিহ্বা
+            ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.arc(part.x + 6, part.y + 7, 2, 0, Math.PI * 2);
+            
+            if(direction === "RIGHT") {
+                ctx.moveTo(part.x + 20, part.y + 10);
+                ctx.lineTo(part.x + 26, part.y + 10);
+                ctx.moveTo(part.x + 26, part.y + 10);
+                ctx.lineTo(part.x + 29, part.y + 7);
+                ctx.moveTo(part.x + 26, part.y + 10);
+                ctx.lineTo(part.x + 29, part.y + 13);
+            } else if(direction === "LEFT") {
+                ctx.moveTo(part.x, part.y + 10);
+                ctx.lineTo(part.x - 6, part.y + 10);
+                ctx.moveTo(part.x - 6, part.y + 10);
+                ctx.lineTo(part.x - 9, part.y + 7);
+                ctx.moveTo(part.x - 6, part.y + 10);
+                ctx.lineTo(part.x - 9, part.y + 13);
+            } else if(direction === "UP") {
+                ctx.moveTo(part.x + 10, part.y);
+                ctx.lineTo(part.x + 10, part.y - 6);
+                ctx.moveTo(part.x + 10, part.y - 6);
+                ctx.lineTo(part.x + 7, part.y - 9);
+                ctx.moveTo(part.x + 10, part.y - 6);
+                ctx.lineTo(part.x + 13, part.y - 9);
+            } else if(direction === "DOWN") {
+                ctx.moveTo(part.x + 10, part.y + 20);
+                ctx.lineTo(part.x + 10, part.y + 26);
+                ctx.moveTo(part.x + 10, part.y + 26);
+                ctx.lineTo(part.x + 7, part.y + 29);
+                ctx.moveTo(part.x + 10, part.y + 26);
+                ctx.lineTo(part.x + 13, part.y + 29);
+            }
+            ctx.stroke();
+
+            // 3. Cute Cartoon Eyes (চোখের সাদা অংশ)
+            ctx.fillStyle = "#ffffff";
+            // বাম চোখ
+            ctx.beginPath();
+            ctx.arc(part.x + 6, part.y + 8, 3.5, 0, Math.PI * 2);
             ctx.fill();
+            // ডান চোখ
+            ctx.beginPath();
+            ctx.arc(part.x + 14, part.y + 8, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. Pupils (চোখের কালো মণি - যা সাপকে দেখতে আরও কিউট করবে)
+            ctx.fillStyle = "#000000";
+            // বাম মণি
+            ctx.beginPath();
+            ctx.arc(part.x + 6, part.y + 8, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+            // ডান মণি
+            ctx.beginPath();
+            ctx.arc(part.x + 14, part.y + 8, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // চোখের ছোট গ্লো বা লাইটিং ডট
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath(); ctx.arc(part.x + 5.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(part.x + 13.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
+
+        }
 
             ctx.beginPath();
             ctx.arc(part.x + 14, part.y + 7, 2, 0, Math.PI * 2);
