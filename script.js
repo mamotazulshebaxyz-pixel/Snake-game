@@ -27,6 +27,7 @@ let highScore = localStorage.getItem("snakeHighScore") || 0;
 let gameLoop;
 let specialFood = null;
 let specialFoodTimer = null;
+let specialFoodStartTime = 0; // স্পেশাল ফুড কখন আসলো তা ট্র্যাক করতে
 let normalFoodEatenCount = 0; // সাধারণ খাবার কয়টা খেলো তা গুনতে
 let running = false;
 
@@ -59,20 +60,20 @@ function createSpecialFood() {
         };
         valid = true;
         
-        // চেক করা যেন সাপের শরীরের ওপর স্পেশাল ফুড না পড়ে
         for(let part of snake){
             if(part.x === specialFood.x && part.y === specialFood.y){
                 valid = false;
                 break;
             }
         }
-        // সাধারণ খাবারের ওপরেও যেন না পড়ে
         if(food && specialFood.x === food.x && specialFood.y === food.y) {
             valid = false;
         }
     }
 
-    // ৫ সেকেন্ড (৫০০০ মিলিসেকেন্ড) পর স্পেশাল ফুড মুছে ফেলার টাইমার
+    // স্পেশাল ফুড তৈরির সময়টি মিলিসেকেন্ডে সেভ করছি
+    specialFoodStartTime = Date.now(); 
+
     clearTimeout(specialFoodTimer);
     specialFoodTimer = setTimeout(() => {
         specialFood = null;
@@ -114,17 +115,29 @@ function draw(){
         
         ctx.fillStyle = "#ffd700"; // গোল্ডেন কালার
         ctx.beginPath();
-        ctx.arc(specialFood.x + 10, specialFood.y + 10, 10, 0, Math.PI * 2); // আকারে একটু বড় (১০ ব্যাসার্ধ)
+        ctx.arc(specialFood.x + 10, specialFood.y + 10, 10, 0, Math.PI * 2);
         ctx.fill();
         
-        // শ্যাডো ইফেক্ট বন্ধ করা (নাহলে সাপও গ্লো করবে)
+        // শ্যাডো ইফেক্ট বন্ধ করা
         ctx.shadowBlur = 0;
 
-        // সোনালী খাবারের ভেতরের একটা ছোট চকচকে ডট
         ctx.fillStyle = "#fff";
         ctx.beginPath();
         ctx.arc(specialFood.x + 7, specialFood.y + 7, 2, 0, Math.PI * 2);
         ctx.fill();
+
+        // ======= লাইভ টাইমার ডিসপ্লে (নতুন অংশ) =======
+        // কত সময় পার হয়েছে এবং কত সেকেন্ড বাকি আছে তা হিসাব করা
+        let elapsedTime = Date.now() - specialFoodStartTime;
+        let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); // সেকেন্ডে রূপান্তর
+
+        if (timeLeft > 0) {
+            ctx.fillStyle = "#ffd700"; // সোনালী রঙের লেখা
+            ctx.font = "bold 14px sans-serif";
+            ctx.textAlign = "center";
+            // ক্যানভাসের নিচের দিকে মাঝ বরাবর (X: 200, Y: 385) টাইমারটি দেখাবে
+            ctx.fillText(`⏱ Bonus: ${timeLeft.toFixed(1)}s`, 200, 385); 
+        }
     }
 
     ctx.strokeStyle = "#0f0";
@@ -135,50 +148,33 @@ function draw(){
     ctx.stroke();
 
     // snake
+    ctx.textAlign = "left"; // সাপের চোখের জন্য টেক্সট অ্যালাইনমেন্ট রিসেট
     snake.forEach((part, index) => {
         if(index === 0){
-            // 1. Head (Gradient Effect for 3D look)
             let headGradient = ctx.createRadialGradient(
                 part.x + 10, part.y + 10, 2, 
                 part.x + 10, part.y + 10, 10
             );
-            headGradient.addColorStop(0, "#80ffaa"); // ভেতরের হালকা উজ্জ্বল অংশ
-            headGradient.addColorStop(1, "#00ff66"); // বাইরের মূল সবুজ অংশ
+            headGradient.addColorStop(0, "#80ffaa");
+            headGradient.addColorStop(1, "#00ff66");
             
             ctx.fillStyle = headGradient;
             ctx.beginPath();
             ctx.arc(part.x + 10, part.y + 10, 10, 0, Math.PI * 2);
             ctx.fill();
 
-            // 2. Cute Cartoon Eyes (চোখের সাদা অংশ)
             ctx.fillStyle = "#ffffff";
-            // বাম চোখ
-            ctx.beginPath();
-            ctx.arc(part.x + 6, part.y + 8, 3.5, 0, Math.PI * 2);
-            ctx.fill();
-            // ডান চোখ
-            ctx.beginPath();
-            ctx.arc(part.x + 14, part.y + 8, 3.5, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 3.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 3.5, 0, Math.PI * 2); ctx.fill();
 
-            // 3. Pupils (চোখের কালো মণি)
             ctx.fillStyle = "#000000";
-            // বাম মণি
-            ctx.beginPath();
-            ctx.arc(part.x + 6, part.y + 8, 1.8, 0, Math.PI * 2);
-            ctx.fill();
-            // ডান মণি
-            ctx.beginPath();
-            ctx.arc(part.x + 14, part.y + 8, 1.8, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
 
-            // চোখের ছোট গ্লো বা লাইٹنگ ডট
             ctx.fillStyle = "#ffffff";
             ctx.beginPath(); ctx.arc(part.x + 5.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 13.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
-
         } else {
-            // Body
             ctx.fillStyle = "#22c55e";
             ctx.beginPath();
             ctx.roundRect(part.x + 1, part.y + 1, 18, 18, 6);
