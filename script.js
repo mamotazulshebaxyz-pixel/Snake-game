@@ -14,6 +14,7 @@ let snake;
 let food;
 let direction;
 let score;
+let level = 1;
 let highScore = localStorage.getItem("snakeHighScore") || 0;
 
 let gameLoop;
