@@ -21,6 +21,32 @@ let running = false;
 
 highScoreText.innerHTML = highScore;
 
+function createFood(){
+
+    let valid = false;
+
+    while(!valid){
+
+        food = {
+            x: Math.floor(Math.random()*20)*20,
+            y: Math.floor(Math.random()*20)*20
+        };
+
+        valid = true;
+
+        for(let part of snake){
+
+            if(part.x === food.x && part.y === food.y){
+                valid = false;
+                break;
+            }
+
+        }
+
+    }
+
+}
+
 
 function resetGame(){
 
@@ -28,10 +54,7 @@ function resetGame(){
         {x:200,y:200}
     ];
 
-    food = {
-        x: Math.floor(Math.random()*20)*20,
-        y: Math.floor(Math.random()*20)*20
-    };
+   createFood();
 
     direction = "RIGHT";
     score = 0;
@@ -123,6 +146,18 @@ function move(){
 
     snake.unshift(head);
 
+// Body collision
+for(let i = 1; i < snake.length; i++){
+
+    if(
+        head.x === snake[i].x &&
+        head.y === snake[i].y
+    ){
+        gameOver();
+        return;
+    }
+
+}
 
     // eat food
 
@@ -144,10 +179,7 @@ function move(){
         }
 
 
-        food={
-            x:Math.floor(Math.random()*20)*20,
-            y:Math.floor(Math.random()*20)*20
-        };
+        createFood();
 
     }
     else{
