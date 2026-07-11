@@ -7,6 +7,7 @@ const highScoreText = document.getElementById("highScore");
 const levelText = document.getElementById("level");
 
 const playBtn = document.getElementById("playBtn");
+const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const menuRestartBtn = document.getElementById("restart"); // নাম একটু পরিবর্তন করা হলো সংঘাত এড়াতে
 
@@ -181,19 +182,54 @@ function restartGame(){
     clearInterval(gameLoop);
     resetGame();
     draw();
+    
+    // টাইটেল এবং বাটন আগের মতো (হোম মেনু) করা
+    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 SKY SNAKE`;
+    }
+    if(playBtn) {
+        playBtn.innerHTML = "▶ Play";
+    }
+    if(menuRestartBtn) {
+        menuRestartBtn.style.display = "block";
+    }
+
+    // Cancel বাটনটি আবার লুকিয়ে ফেলা
+    if(cancelBtn) {
+        cancelBtn.style.display = "none";
+    }
+
     menu.classList.remove("hidden");
-    if(gameOverModal) gameOverModal.style.display = "none"; // মোডাল বন্ধ করবে
     running = false;
 }
 
-// কাস্টম গেম ওভার ফাংশন আপডেট করা হলো
+// গেম ওভার ফাংশন আপডেট
 function gameOver(){
     clearInterval(gameLoop);
     running = false;
 
-    // ক্যানভাসের ভেতরের টেক্সট ড্র করা বন্ধ করে সরাসরি কাস্টম মোডাল উইন্ডোটি শো করবে
-    if(finalScoreText) finalScoreText.innerText = score;
-    if(gameOverModal) gameOverModal.style.display = "flex";
+    // মেনু বক্সটি স্ক্রিনে দেখাবে
+    menu.classList.remove("hidden");
+
+    // গেম ওভার টেক্সট ও স্কোর আপডেট
+    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 20px; color: #fff;">Your Score: ${score}</span>`;
+    }
+
+    if(playBtn) {
+        playBtn.innerHTML = "▶ Play Again";
+    }
+
+    if(menuRestartBtn) {
+        menuRestartBtn.style.display = "none";
+    }
+
+    // গেম ওভার হলে Cancel বাটনটি দৃশ্যমান হবে
+    if(cancelBtn) {
+        cancelBtn.style.display = "block";
+    }
 }
 
 // ===== Swipe Control =====
