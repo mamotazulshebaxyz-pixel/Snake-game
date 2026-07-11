@@ -50,7 +50,7 @@ function createFood(){
     }
 }
 
-// স্পেশাল ফুড তৈরির গ্লোবাল ফাংশন (আলাদা ও স্বাধীন রাখা হলো)
+// স্পেশাল ফুড তৈরির গ্লোবাল ফাংশন
 function createSpecialFood() {
     let valid = false;
     while(!valid){
@@ -71,7 +71,7 @@ function createSpecialFood() {
         }
     }
 
-    // স্পেশাল ফুড তৈরির সময়টি মিলিসেকেন্ডে সেভ করছি
+    // স্পেশাল ফুড তৈরির সময়টি মিলিসেকেন্ডে সেভ করছি
     specialFoodStartTime = Date.now(); 
 
     clearTimeout(specialFoodTimer);
@@ -101,9 +101,9 @@ function draw(){
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
-    // ======= সাধারণ খাবারের জায়গায় ছোট ব্যাঙ (Frog) আঁকা =======
+    // ======= সাধারণ খাবারের জায়গায় ছোট ব্যাঙ (Frog) আঁকা =======
     // ব্যাঙের মূল শরীর (Body)
-    ctx.fillStyle = "#4ade80"; // উজ্জ্বল সবুজ রঙ (Frog Green)
+    ctx.fillStyle = "#4ade80"; // উজ্জ্বল সবুজ রঙ
     ctx.beginPath();
     ctx.ellipse(food.x + 10, food.y + 12, 8, 6, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -113,19 +113,19 @@ function draw(){
     ctx.arc(food.x + 10, food.y + 8, 6, 0, Math.PI * 2);
     ctx.fill();
 
-    // ব্যাঙের চোখ (বড় দুটি চোখ মাথার ওপরে থাকবে)
+    // ব্যাঙের চোখ
     ctx.fillStyle = "#fff"; // চোখের সাদা অংশ
-    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); // বাম চোখ
-    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); // ডান চোখ
+    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); 
+    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 2.5, 0, Math.PI * 2); ctx.fill(); 
 
     ctx.fillStyle = "#000"; // চোখের মণি
     ctx.beginPath(); ctx.arc(food.x + 6, food.y + 4, 1.2, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(food.x + 14, food.y + 4, 1.2, 0, Math.PI * 2); ctx.fill();
 
     // ব্যাঙের ছোট দুটি পা (Legs)
-    ctx.fillStyle = "#22c55e"; // একটু গাঢ় সবুজ পা
-    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); // বাম পা
-    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); // ডান পা
+    ctx.fillStyle = "#22c55e"; 
+    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); 
+    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 15, 2, 0, Math.PI * 2); ctx.fill(); 
 
 
     // special food (যদি স্ক্রিনে থাকে)
@@ -149,7 +149,7 @@ function draw(){
 
         // ======= লাইভ টাইমার ডিসপ্লে =======
         let elapsedTime = Date.now() - specialFoodStartTime;
-        let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); // সেকেন্ডে রূপান্তর
+        let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); 
 
         if (timeLeft > 0) {
             ctx.fillStyle = "#ffd700"; 
@@ -163,6 +163,7 @@ function draw(){
     ctx.textAlign = "left"; // সাপের চোখের জন্য টেক্সট অ্যালাইনমেন্ট রিসেট
     snake.forEach((part, index) => {
         if(index === 0){
+            // সাপের মাথা (Gradient Effect)
             let headGradient = ctx.createRadialGradient(
                 part.x + 10, part.y + 10, 2, 
                 part.x + 10, part.y + 10, 10
@@ -175,19 +176,29 @@ function draw(){
             ctx.arc(part.x + 10, part.y + 10, 10, 0, Math.PI * 2);
             ctx.fill();
 
+            // চোখের সাদা অংশ
             ctx.fillStyle = "#ffffff";
             ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 3.5, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 3.5, 0, Math.PI * 2); ctx.fill();
 
+            // চোখের কালো মণি
             ctx.fillStyle = "#000000";
             ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
 
+            // চোখের ছোট লাইটিং ডট
             ctx.fillStyle = "#ffffff";
             ctx.beginPath(); ctx.arc(part.x + 5.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 13.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
         } else {
-            ctx.fillStyle = "#22c55e";
+            // ======= বডির নির্দিষ্ট দুটি রঙ: আকাশী নীল এবং সাদা =======
+            // ইনডেক্স জোড় (Even) হলে Sky Blue, বিজোড় (Odd) হলে White
+            if (index % 2 === 0) {
+                ctx.fillStyle = "#00bfff"; // উজ্জ্বল আকাশী নীল (Deep Sky Blue)
+            } else {
+                ctx.fillStyle = "#ffffff"; // ধবধবে সাদা (White)
+            }
+            
             ctx.beginPath();
             ctx.roundRect(part.x + 1, part.y + 1, 18, 18, 6);
             ctx.fill();
@@ -222,10 +233,9 @@ function move(){
     // ১. সাধারণ খাবার খাওয়া চেক করা
     if(head.x == food.x && head.y == food.y){
         score++;
-        normalFoodEatenCount++; // সাধারণ খাবার গুনছি
+        normalFoodEatenCount++; 
         scoreText.innerHTML = score;
 
-        // প্রতি ৫টি সাধারণ খাবার পর স্পেশাল ফুড আসবে
         if(normalFoodEatenCount % 5 === 0){
             createSpecialFood();
         }
@@ -248,11 +258,11 @@ function move(){
     } 
     // ২. স্পেশাল গোল্ডেন ফুড খাওয়া চেক করা
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
-        score += 3; // ৩ পয়েন্ট বোনাস!
+        score += 3; 
         scoreText.innerHTML = score;
         
-        clearTimeout(specialFoodTimer); // টাইমার বন্ধ করা
-        specialFood = null; // স্ক্রিন থেকে মুছে ফেলা
+        clearTimeout(specialFoodTimer); 
+        specialFood = null; 
 
         if(score > highScore){
             highScore = score;
@@ -274,9 +284,8 @@ function startGame(){
     clearInterval(gameLoop);
     resetGame();
     menu.classList.add("hidden");
-    if(gameOverModal) gameOverModal.style.display = "none"; // মোডাল খোলা থাকলে বন্ধ করবে
+    if(gameOverModal) gameOverModal.style.display = "none"; 
     
-    // গেম শুরু হলে নিচের Pause বাটনটি দৃশ্যমান ও স্বাভাবিক থাকবে
     if(pauseBtn) {
         pauseBtn.style.display = "block";
         pauseBtn.innerHTML = "⏸ Pause";
@@ -304,7 +313,6 @@ function restartGame(){
     resetGame();
     draw();
     
-    // টাইটেল এবং বাটন আগের মতো (হোম মেনু) করা
     const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
     if(menuTitle) {
         menuTitle.innerHTML = `🐍 SKY SNAKE`;
@@ -316,12 +324,10 @@ function restartGame(){
         menuRestartBtn.style.display = "block";
     }
 
-    // Cancel বাটনটি আবার লুকিয়ে ফেলা
     if(cancelBtn) {
         cancelBtn.style.display = "none";
     }
 
-    // হোম মেনুতে আসলে নিচের Pause বাটনটি হাইড থাকবে
     if(pauseBtn) {
         pauseBtn.style.display = "none";
     }
@@ -330,16 +336,13 @@ function restartGame(){
     running = false;
 }
 
-// গেম ওভার ফাংশন আপডেট
 function gameOver(){
     clearInterval(gameLoop);
     running = false;
-    clearTimeout(specialFoodTimer); // গেম ওভারে স্পেশাল ফুডের টাইমার বন্ধ করা হলো
+    clearTimeout(specialFoodTimer); 
 
-    // মেনু বক্সটি স্ক্রিনে দেখাবে
     menu.classList.remove("hidden");
 
-    // গেম ওভার টেক্সট ও স্কোর আপডেট
     const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
     if(menuTitle) {
         menuTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 20px; color: #fff;">Your Score: ${score}</span>`;
@@ -353,12 +356,10 @@ function gameOver(){
         menuRestartBtn.style.display = "none";
     }
 
-    // গেম ওভার হলে Cancel বাটনটি দৃশ্যমান হবে
     if(cancelBtn) {
         cancelBtn.style.display = "block";
     }
 
-    // গেম ওভার অবস্থায় নিচের Pause বাটনটি লুকিয়ে ফেলা হলো
     if(pauseBtn) {
         pauseBtn.style.display = "none";
     }
@@ -396,8 +397,7 @@ canvas.addEventListener("touchend", function(e){
 document.addEventListener("keydown", function(e){
     // Spacebar চাপলে গেম পজ বা রিজুম হবে
     if(e.key === " " || e.key === "Spacebar"){
-        e.preventDefault(); // পেজ যেন নিচে স্ক্রোল না করে
-        // গেমটি যদি অলরেডি হোম মেনুতে বা গেম ওভার অবস্থায় না থাকে, তবেই পজ কাজ করবে
+        e.preventDefault(); 
         if(!menu.classList.contains("hidden") === false){ 
             pauseGame();
         }
@@ -414,22 +414,19 @@ playBtn.onclick = startGame;
 pauseBtn.onclick = pauseGame;
 menuRestartBtn.onclick = restartGame;
 
-// কাস্টম Cancel বাটনের ক্লিক অ্যাকশন যোগ করা হলো
 if(cancelBtn) {
     cancelBtn.onclick = function() {
-        restartGame(); // এটি গেম রিসেট করে আবার মূল হোম মেনু ফিরিয়ে আনবে
+        restartGame(); 
     };
 }
 
-// কাস্টম পপ-আপের 'Play Again' বাটনে ক্লিক করলে গেম নতুন করে শুরু হবে
 if(modalRestartBtn) {
     modalRestartBtn.onclick = function() {
         if(gameOverModal) gameOverModal.style.display = "none";
-        startGame(); // সরাসরি গেম রিস্টার্ট করে দেবে
+        startGame(); 
     };
 }
 
-// শুরুতে নিচের Pause বাটনটি লুকিয়ে রাখার জন্য (কারণ গেম তখন শুরু হয়নি)
 if(pauseBtn) {
     pauseBtn.style.display = "none";
 }
