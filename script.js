@@ -1,24 +1,3 @@
-const soundBtn = document.getElementById("soundBtn");
-
-let soundEnabled =
-localStorage.getItem("snakeSound");
-
-if(soundEnabled === null){
-    soundEnabled = true;
-}else{
-    soundEnabled = soundEnabled === "true";
-}
-
-updateSoundButton();
-
-function playSound(sound){
-
-    if(!soundEnabled) return;
-
-    sound.currentTime = 0;
-    sound.play();
-
-}
 const menu = document.getElementById("menu");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -41,15 +20,6 @@ let gameLoop;
 let running = false;
 
 highScoreText.innerHTML = highScore;
-
-function updateSoundButton(){
-
-    soundBtn.innerHTML =
-        soundEnabled
-        ? "🔊 Sound On"
-        : "🔇 Sound Off";
-
-}
 
 function createFood(){
 
