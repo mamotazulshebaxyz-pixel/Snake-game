@@ -61,6 +61,10 @@ function resetGame(){
     direction = "RIGHT";
     score = 0;
     scoreText.innerHTML = score;
+    
+    level = 1;
+gameSpeed = 350;
+levelText.innerHTML = level;
 
 }
 
@@ -167,6 +171,22 @@ for(let i = 1; i < snake.length; i++){
 
         score++;
         scoreText.innerHTML=score;
+
+        let newLevel = Math.floor(score / 5) + 1;
+
+if(newLevel > level){
+
+    level = newLevel;
+
+    levelText.innerHTML = level;
+
+    gameSpeed = Math.max(80, 350 - (level - 1) * 30);
+
+    clearInterval(gameLoop);
+
+    gameLoop = setInterval(game, gameSpeed);
+
+}
 
         if(score>highScore){
 
