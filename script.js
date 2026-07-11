@@ -378,3 +378,15 @@ restartBtn.onclick=restartGame;
 
 resetGame();
 draw();
+
+soundBtn.onclick = function(){
+
+    alert("Button Clicked");
+
+    soundEnabled = !soundEnabled;
+
+    localStorage.setItem("snakeSound", soundEnabled);
+
+    updateSoundButton();
+
+}
