@@ -25,6 +25,9 @@ let level = 1;
 let highScore = localStorage.getItem("snakeHighScore") || 0;
 
 let gameLoop;
+let specialFood = null;
+let specialFoodTimer = null;
+let normalFoodEatenCount = 0; // সাধারণ খাবার কয়টা খেলো তা গুনতে
 let running = false;
 
 highScoreText.innerHTML = highScore;
@@ -46,9 +49,45 @@ function createFood(){
     }
 }
 
+// স্পেশাল ফুড তৈরির গ্লোবাল ফাংশন (আলাদা ও স্বাধীন রাখা হলো)
+function createSpecialFood() {
+    let valid = false;
+    while(!valid){
+        specialFood = {
+            x: Math.floor(Math.random()*20)*20,
+            y: Math.floor(Math.random()*20)*20
+        };
+        valid = true;
+        
+        // চেক করা যেন সাপের শরীরের ওপর স্পেশাল ফুড না পড়ে
+        for(let part of snake){
+            if(part.x === specialFood.x && part.y === specialFood.y){
+                valid = false;
+                break;
+            }
+        }
+        // সাধারণ খাবারের ওপরেও যেন না পড়ে
+        if(food && specialFood.x === food.x && specialFood.y === food.y) {
+            valid = false;
+        }
+    }
+
+    // ৫ সেকেন্ড (৫০০০ মিলিসেকেন্ড) পর স্পেশাল ফুড মুছে ফেলার টাইমার
+    clearTimeout(specialFoodTimer);
+    specialFoodTimer = setTimeout(() => {
+        specialFood = null;
+    }, 5000);
+}
+
 function resetGame(){
     snake = [{x:200,y:200}];
     createFood();
+    
+    // স্পেশাল ফুড ও কাউন্টার রিসেট
+    specialFood = null;
+    normalFoodEatenCount = 0;
+    clearTimeout(specialFoodTimer);
+
     direction = "RIGHT";
     score = 0;
     scoreText.innerHTML = score;
@@ -66,6 +105,27 @@ function draw(){
     ctx.beginPath();
     ctx.arc(food.x + 10, food.y + 10, 8, 0, Math.PI * 2);
     ctx.fill();
+
+    // special food (যদি স্ক্রিনে থাকে)
+    if (specialFood) {
+        // সোনালী গ্লো ইফেক্ট
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#ffd700";
+        
+        ctx.fillStyle = "#ffd700"; // গোল্ডেন কালার
+        ctx.beginPath();
+        ctx.arc(specialFood.x + 10, specialFood.y + 10, 10, 0, Math.PI * 2); // আকারে একটু বড় (১০ ব্যাসার্ধ)
+        ctx.fill();
+        
+        // শ্যাডো ইফেক্ট বন্ধ করা (নাহলে সাপও গ্লো করবে)
+        ctx.shadowBlur = 0;
+
+        // সোনালী খাবারের ভেতরের একটা ছোট চকচকে ডট
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(specialFood.x + 7, specialFood.y + 7, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     ctx.strokeStyle = "#0f0";
     ctx.lineWidth = 2;
@@ -151,10 +211,16 @@ function move(){
         }
     }
 
-    // eat food
-    if(head.x==food.x && head.y==food.y){
+    // ১. সাধারণ খাবার খাওয়া চেক করা
+    if(head.x == food.x && head.y == food.y){
         score++;
-        scoreText.innerHTML=score;
+        normalFoodEatenCount++; // সাধারণ খাবার গুনছি
+        scoreText.innerHTML = score;
+
+        // প্রতি ৫টি সাধারণ খাবার পর স্পেশাল ফুড আসবে
+        if(normalFoodEatenCount % 5 === 0){
+            createSpecialFood();
+        }
 
         let newLevel = Math.floor(score / 5) + 1;
         if(newLevel > level){
@@ -165,13 +231,28 @@ function move(){
             gameLoop = setInterval(game, gameSpeed);
         }
 
-        if(score>highScore){
-            highScore=score;
+        if(score > highScore){
+            highScore = score;
             localStorage.setItem("snakeHighScore", highScore);
-            highScoreText.innerHTML=highScore;
+            highScoreText.innerHTML = highScore;
         }
         createFood();
-    } else {
+    } 
+    // ২. স্পেশাল গোল্ডেন ফুড খাওয়া চেক করা
+    else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
+        score += 3; // ৩ পয়েন্ট বোনাস!
+        scoreText.innerHTML = score;
+        
+        clearTimeout(specialFoodTimer); // টাইমার বন্ধ করা
+        specialFood = null; // স্ক্রিন থেকে মুছে ফেলা
+
+        if(score > highScore){
+            highScore = score;
+            localStorage.setItem("snakeHighScore", highScore);
+            highScoreText.innerHTML = highScore;
+        }
+    } 
+    else {
         snake.pop();
     }
 }
@@ -245,6 +326,7 @@ function restartGame(){
 function gameOver(){
     clearInterval(gameLoop);
     running = false;
+    clearTimeout(specialFoodTimer); // গেম ওভারে স্পেশাল ফুডের টাইমার বন্ধ করা হলো
 
     // মেনু বক্সটি স্ক্রিনে দেখাবে
     menu.classList.remove("hidden");
