@@ -286,9 +286,27 @@ function gameOver(){
 
     running = false;
 
-    menu.classList.remove("hidden");
+    // কালো হালকা Overlay
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0,0,400,400);
 
-    alert("Game Over! Your Score: " + score);
+    // GAME OVER
+    ctx.fillStyle = "#ff3b30";
+    ctx.font = "bold 42px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", 200, 180);
+
+    // Score
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "24px Arial";
+    ctx.fillText("Score : " + score, 200, 225);
+
+    // ছোট নির্দেশনা
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#00ff66";
+    ctx.fillText("Press Restart or Play", 200, 270);
+
+    menu.classList.remove("hidden");
 
 }
 
