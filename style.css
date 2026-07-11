@@ -122,3 +122,66 @@ canvas{
     user-select:none;
     -webkit-user-select:none;
 }
+
+/* ১. পুরো স্ক্রিন জুড়ে কালো আবছা ব্যাকগ্রাউন্ড */
+.modal {
+  display: none; /* শুরুতে এটি স্ক্রিনে দেখা যাবে না */
+  position: fixed;
+  z-index: 9999; /* যেন গেমের সব এলিমেন্টের উপরে এটি ভেসে থাকে */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75); /* ব্যাকগ্রাউন্ড হালকা কালো/আবছা হবে */
+  justify-content: center;
+  align-items: center;
+}
+
+/* ২. মূল পপ-আপ বক্সের চমৎকার ডিজাইন */
+.modal-content {
+  background-color: #1a1a1a; /* ডার্ক থিম */
+  color: #ffffff;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border: 2px solid #4caf50; /* আপনার গেমের বর্ডারের সাথে ম্যাচিং সবুজ */
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  min-width: 280px;
+}
+
+/* ৩. লেখার স্টাইল */
+.game-over-title {
+  color: #ff4d4d; /* লাল রঙের 'Game Over' লেখা */
+  margin-top: 0;
+  font-size: 28px;
+}
+
+.score-text {
+  font-size: 20px;
+  margin: 20px 0;
+}
+
+#finalScore {
+  font-weight: bold;
+  color: #4caf50; /* স্কোরটি সবুজ দেখাবে */
+}
+
+/* ৪. বাটনের আকর্ষণীয় ডিজাইন */
+#restartBtn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* বাটনে মাউস নিলে কালার চেঞ্জ হবে */
+#restartBtn:hover {
+  background-color: #45a049;
+  transform: scale(1.05); /* হালকা একটু বড় হবে */
+}
