@@ -386,6 +386,16 @@ canvas.addEventListener("touchend", function(e){
 }, { passive: true });
 
 document.addEventListener("keydown", function(e){
+    // Spacebar চাপলে গেম পজ বা রিজুম হবে
+    if(e.key === " " || e.key === "Spacebar"){
+        e.preventDefault(); // পেজ যেন নিচে স্ক্রোল না করে
+        // গেমটি যদি অলরেডি হোম মেনুতে বা গেম ওভার অবস্থায় না থাকে, তবেই পজ কাজ করবে
+        if(!menu.classList.contains("hidden") === false){ 
+            pauseGame();
+        }
+        return;
+    }
+
     if(e.key=="ArrowUp" && direction!="DOWN") direction="UP";
     if(e.key=="ArrowDown" && direction!="UP") direction="DOWN";
     if(e.key=="ArrowLeft" && direction!="RIGHT") direction="LEFT";
