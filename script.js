@@ -9,7 +9,7 @@ const levelText = document.getElementById("level");
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
-const menuRestartBtn = document.getElementById("restart"); // নাম একটু পরিবর্তন করা হলো সংঘাত এড়াতে
+const menuRestartBtn = document.getElementById("restart"); // নাম একটু পরিবর্তন করা হলো সংঘাত এড়াতে
 
 // নতুন কাস্টম মোডাল এলিমেন্টসমূহ
 const gameOverModal = document.getElementById("gameOverModal");
@@ -161,6 +161,13 @@ function startGame(){
     resetGame();
     menu.classList.add("hidden");
     if(gameOverModal) gameOverModal.style.display = "none"; // মোডাল খোলা থাকলে বন্ধ করবে
+    
+    // গেম শুরু হলে নিচের Pause বাটনটি দৃশ্যমান ও স্বাভাবিক থাকবে
+    if(pauseBtn) {
+        pauseBtn.style.display = "block";
+        pauseBtn.innerHTML = "⏸ Pause";
+    }
+    
     running = true;
     gameLoop = setInterval(game, gameSpeed);
 }
@@ -195,9 +202,14 @@ function restartGame(){
         menuRestartBtn.style.display = "block";
     }
 
-    // Cancel বাটনটি আবার লুকিয়ে ফেলা
+    // Cancel বাটনটি আবার লুকিয়ে ফেলা
     if(cancelBtn) {
         cancelBtn.style.display = "none";
+    }
+
+    // হোম মেনুতে আসলে নিচের Pause বাটনটি হাইড থাকবে
+    if(pauseBtn) {
+        pauseBtn.style.display = "none";
     }
 
     menu.classList.remove("hidden");
@@ -229,6 +241,11 @@ function gameOver(){
     // গেম ওভার হলে Cancel বাটনটি দৃশ্যমান হবে
     if(cancelBtn) {
         cancelBtn.style.display = "block";
+    }
+
+    // গেম ওভার অবস্থায় নিচের Pause বাটনটি লুকিয়ে ফেলা হলো
+    if(pauseBtn) {
+        pauseBtn.style.display = "none";
     }
 }
 
@@ -272,12 +289,24 @@ playBtn.onclick = startGame;
 pauseBtn.onclick = pauseGame;
 menuRestartBtn.onclick = restartGame;
 
+// কাস্টম Cancel বাটনের ক্লিক অ্যাকশন যোগ করা হলো
+if(cancelBtn) {
+    cancelBtn.onclick = function() {
+        restartGame(); // এটি গেম রিসেট করে আবার মূল হোম মেনু ফিরিয়ে আনবে
+    };
+}
+
 // কাস্টম পপ-আপের 'Play Again' বাটনে ক্লিক করলে গেম নতুন করে শুরু হবে
 if(modalRestartBtn) {
     modalRestartBtn.onclick = function() {
         if(gameOverModal) gameOverModal.style.display = "none";
         startGame(); // সরাসরি গেম রিস্টার্ট করে দেবে
     };
+}
+
+// শুরুতে নিচের Pause বাটনটি লুকিয়ে রাখার জন্য (কারণ গেম তখন শুরু হয়নি)
+if(pauseBtn) {
+    pauseBtn.style.display = "none";
 }
 
 resetGame();
