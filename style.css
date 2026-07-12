@@ -14,7 +14,6 @@ body {
 }
 
 .game {
-    position: relative; /* [IMPORTANT] মাঝখানে বাটন প্লেসমেন্টের জন্য এটি জরুরি */
     background: #1e293b;
     padding: 25px;
     border-radius: 15px;
@@ -97,7 +96,7 @@ button:hover {
     display: none !important;
 }
 
-/* ক্যানভাসের নিচের কন্ট্রোল এরিয়া */
+/* [FIXED] পজ বাটন এখন ক্যানভাসের বাইরে নিচে এবং খেলা ডিস্টার্ব করবে না */
 .controls {
     margin-top: 20px;
     display: flex;
@@ -106,11 +105,10 @@ button:hover {
     width: 100%;
 }
 
-/* নিচে মাঝামাঝি থাকা বাটনটির চমৎকার ডিজাইন */
 .controls button {
     width: 180px;
     height: 45px;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: bold;
     background: #22c55e;
     color: white;
@@ -127,10 +125,7 @@ button:hover {
     transform: translateY(-2px);
 }
 
-/* =======================================
-   গেম ওভার মোডাল (Pop-up Window) ডিজাইন 
-======================================= */
-
+/* গেম ওভার মোডাল */
 #gameOverModal {
     display: none; 
     position: fixed;
