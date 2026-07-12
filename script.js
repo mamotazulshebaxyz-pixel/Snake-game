@@ -15,7 +15,7 @@ const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreText = document.getElementById("finalScore");
 const modalRestartBtn = document.getElementById("restartBtn");
 
-// বেস স্পিড ভ্যারিয়েবল (লেভেলের শুরুতে এই স্পিডে রিসেট হবে)
+// বেস স্পিড ভ্যারিয়েবল
 const BASE_SPEED = 300; 
 let gameSpeed = BASE_SPEED;
 
@@ -34,6 +34,10 @@ let normalFoodEatenCount = 0;
 let running = false;
 let obstacles = []; // বাধা রাখার জন্য
 
+// লেভেল ট্রানজিশন (ইন্টারমিশন স্ক্রিন) এর জন্য ভ্যারিয়েবল
+let isLevelTransition = false;
+let nextLevelToStart = 2;
+
 highScoreText.innerHTML = highScore;
 
 function createFood(){
@@ -50,7 +54,6 @@ function createFood(){
                 break;
             }
         }
-        // খাবার যেন বাধার ওপর না পড়ে
         for(let obs of obstacles){
             if(food.x === obs.x && food.y === obs.y){
                 valid = false;
@@ -95,16 +98,15 @@ function createSpecialFood() {
 }
 
 // লেভেল অনুযায়ী বাধা (Obstacles) তৈরি করার ফাংশন
-function generateObstacles() {
+function generateObstacles(targetLevel) {
     obstacles = [];
-    if (level === 3) {
-        // লেভেল ৩-এর বাধা (মাঝখানের দুটি ছোট দেয়াল)
+    let lvl = targetLevel || level;
+    if (lvl === 2) {
         obstacles = [
             {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
             {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
         ];
-    } else if (level >= 4) {
-        // লেভেল ৪ বা তার ওপরে আরও কঠিন বাধা
+    } else if (lvl >= 3) {
         obstacles = [
             {x: 100, y: 100}, {x: 120, y: 100}, {x: 100, y: 120},
             {x: 280, y: 100}, {x: 260, y: 100}, {x: 280, y: 120},
@@ -128,6 +130,7 @@ function resetGame(){
     level = 1;
     gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
+    isLevelTransition = false;
     createFood();
 }
 
@@ -135,8 +138,8 @@ function draw(){
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
-    // ======= লেভেলের বাধা (Obstacles) আঁকা =======
-    ctx.fillStyle = "#e74c3c"; // লালচে ইটের মতো রঙ
+    // ======= লেভেলের বাধা (Obstacles) =======
+    ctx.fillStyle = "#e74c3c"; 
     ctx.shadowBlur = 8;
     ctx.shadowColor = "#e74c3c";
     obstacles.forEach(obs => {
@@ -144,9 +147,9 @@ function draw(){
         ctx.roundRect(obs.x + 1, obs.y + 1, 18, 18, 4);
         ctx.fill();
     });
-    ctx.shadowBlur = 0; // শ্যাডো রিসেট
+    ctx.shadowBlur = 0; 
 
-    // ======= সাধারণ খাবারের জায়গায় নতুন কিউট ব্যাঙ (Frog) আঁকা =======
+    // ======= চিবি ব্যাঙ (Frog) =======
     ctx.fillStyle = "#2ecc71"; 
     ctx.beginPath();
     ctx.arc(food.x + 10, food.y + 11, 8, 0, Math.PI * 2);
@@ -172,7 +175,7 @@ function draw(){
     ctx.beginPath(); ctx.arc(food.x + 6, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(food.x + 14, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
 
-    // special food (যদি স্ক্রিনে থাকে)
+    // special food
     if (specialFood) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = "#ffd700";
@@ -236,9 +239,76 @@ function draw(){
             ctx.fill();
         }
     });
+
+    // ======= লেভেল আপ ট্রানজিশন স্ক্রিন ওভারলে =======
+    if (isLevelTransition) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; // হালকা কালো আবছা ব্যাকগ্রাউন্ড
+        ctx.fillRect(0, 0, 400, 400);
+
+        ctx.fillStyle = "#00bfff";
+        ctx.font = "bold 32px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`LEVEL ${nextLevelToStart}`, 200, 160);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "16px sans-serif";
+        ctx.fillText("Get ready for new challenges!", 200, 200);
+
+        // একটি সুন্দর বোতাম আঁকা
+        ctx.fillStyle = "#2ecc71";
+        ctx.beginPath();
+        ctx.roundRect(120, 240, 160, 45, 10);
+        ctx.fill();
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText("Click to Start", 200, 268);
+    }
+}
+
+// ট্রানজিশন বোতামে ক্লিক হ্যান্ডেল করার জন্য ক্যানভাসে ইভেন্ট লিসেনার
+canvas.addEventListener("click", function(e) {
+    if (isLevelTransition) {
+        // ক্লিকটি বোতামের এরিয়ার (120, 240 থেকে 280, 285) ভেতরে পড়েছে কি না চেক
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (x >= 120 && x <= 280 && y >= 240 && y <= 285) {
+            startNextLevel();
+        }
+    }
+});
+
+// নতুন লেভেল বাস্তবে শুরু করার ফাংশন
+function startNextLevel() {
+    level = nextLevelToStart;
+    levelText.innerHTML = level;
+    
+    // সাপ ছোট হয়ে যাবে যেখানে মাথা ছিল সেখানেই
+    let head = {...snake[0]};
+    snake = [{x: head.x, y: head.y}]; 
+    gameSpeed = BASE_SPEED;
+    
+    generateObstacles(); 
+    createFood(); 
+    isLevelTransition = false;
+    
+    // গেম লুপ আবার চালু করা
+    clearInterval(gameLoop);
+    gameLoop = setInterval(game, gameSpeed);
+}
+
+function triggerLevelTransition(targetLevel) {
+    isLevelTransition = true;
+    nextLevelToStart = targetLevel;
+    clearInterval(gameLoop); // সাময়িকভাবে গেমের মুভমেন্ট বন্ধ
+    draw(); // স্ক্রিন রিফ্রেশ করে ট্রানজিশন উইন্ডো দেখানো
 }
 
 function move(){
+    if (isLevelTransition) return; // ট্রানজিশন চলাকালীন সাপ নড়বে না
+
     let head = {...snake[0]};
 
     if(direction=="RIGHT") head.x+=20;
@@ -246,22 +316,13 @@ function move(){
     if(direction=="UP") head.y-=20;
     if(direction=="DOWN") head.y+=20;
 
-    // ======= লেভেল ১-এর জন্য Wall Wrapping (দেয়াল ভেদ করে ওপাশে যাওয়া) =======
-    if (level === 1) {
-        if(head.x < 0) head.x = 380;
-        if(head.x >= 400) head.x = 0;
-        if(head.y < 0) head.y = 380;
-        if(head.y >= 400) head.y = 0;
-    } 
-    // ======= লেভেল ২ বা তার ওপরে দেয়ালে লাগলে মৃত্যু =======
-    else {
-        if(head.x<0 || head.x>=400 || head.y<0 || head.y>=400){
-            gameOver();
-            return;
-        }
-    }
+    // সব লেভেলেই Wall Wrapping (টানেল মোড) একটিভ
+    if(head.x < 0) head.x = 380;
+    if(head.x >= 400) head.x = 0;
+    if(head.y < 0) head.y = 380;
+    if(head.y >= 400) head.y = 0;
 
-    // Obstacle collision (বাধার সাথে ধাক্কা লাগলে মৃত্যু - লেভেল ৩+)
+    // Obstacle collision
     for(let obs of obstacles){
         if(head.x === obs.x && head.y === obs.y){
             gameOver();
@@ -289,26 +350,15 @@ function move(){
             createSpecialFood();
         }
 
-        // লেভেল চেঞ্জ লজিক (প্রতি ২০ স্কোরে লেভেল পরিবর্তন)
-        let newLevel = Math.floor((score - 1) / 20) + 1;
-        if(score === 0) newLevel = 1; // সেফটি চেক
+        // প্রতি ২০ স্কোরে লেভেল পরিবর্তন চেক
+        let targetLevel = Math.floor((score - 1) / 20) + 1;
+        if(score === 0) targetLevel = 1; 
 
-        if(newLevel > level){
-            level = newLevel;
-            levelText.innerHTML = level;
-            
-            // লেভেল পরিবর্তন হলে সাপ ছোট হয়ে যাবে এবং স্পিড প্রথমের মতো রিসেট হবে
-            snake = [{x: head.x, y: head.y}]; 
-            gameSpeed = BASE_SPEED;
-            
-            generateObstacles(); // নতুন লেভেলের জন্য বাধা তৈরি
-            createFood(); // বাধার বাইরে খাবার নতুন করে স্পন করা
-            
-            clearInterval(gameLoop);
-            gameLoop = setInterval(game, gameSpeed);
+        if(targetLevel > level){
+            // সরাসরি লেভেল আপ না করে ট্রানজিশন স্ক্রিন দেখানো হবে
+            triggerLevelTransition(targetLevel);
         } else {
-            // একই লেভেলের ভেতরে প্রতি স্কোরে স্পিড সমানুপাতিকভাবে বাড়বে 
-            // (প্রতি লেভেলে ২০ স্কোরের জন্য স্পিড ৩০০ থেকে কমে ১২০ এ আসবে)
+            // একই লেভেলের ভেতরে স্পিড সমানুপাতিকভাবে বাড়বে 
             let scoreInCurrentLevel = (score - 1) % 20; 
             gameSpeed = BASE_SPEED - (scoreInCurrentLevel * 9); 
             
@@ -321,7 +371,7 @@ function move(){
             localStorage.setItem("snakeHighScore", highScore);
             highScoreText.innerHTML = highScore;
         }
-        createFood();
+        if (!isLevelTransition) createFood();
     } 
     // ২. স্পেশাল গোল্ডেন ফুড খাওয়া
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
@@ -331,18 +381,9 @@ function move(){
         clearTimeout(specialFoodTimer); 
         specialFood = null; 
 
-        // গোল্ডেন ফুড খেলেও লেভেল আপ চেক
-        let newLevel = Math.floor((score - 1) / 20) + 1;
-        if(newLevel > level){
-            level = newLevel;
-            levelText.innerHTML = level;
-            snake = [{x: head.x, y: head.y}]; 
-            gameSpeed = BASE_SPEED;
-            generateObstacles();
-            createFood();
-            
-            clearInterval(gameLoop);
-            gameLoop = setInterval(game, gameSpeed);
+        let targetLevel = Math.floor((score - 1) / 20) + 1;
+        if(targetLevel > level){
+            triggerLevelTransition(targetLevel);
         } else {
             let scoreInCurrentLevel = (score - 1) % 20;
             gameSpeed = BASE_SPEED - (scoreInCurrentLevel * 9);
@@ -382,6 +423,7 @@ function startGame(){
 }
 
 function pauseGame(){
+    if (isLevelTransition) return; // ট্রানজিশন মোডে পজ কাজ করবে না
     if(running){
         clearInterval(gameLoop);
         gameLoop = null;
@@ -456,6 +498,8 @@ canvas.addEventListener("touchstart", function(e){
 }, { passive: true });
 
 canvas.addEventListener("touchend", function(e){
+    if (isLevelTransition) return; // ট্রানজিশনের সময় সোয়াইপ লক থাকবে
+    
     let touchEndX = e.changedTouches[0].clientX;
     let touchEndY = e.changedTouches[0].clientY;
 
@@ -476,6 +520,14 @@ canvas.addEventListener("touchend", function(e){
 }, { passive: true });
 
 document.addEventListener("keydown", function(e){
+    if (isLevelTransition) {
+        // ট্রানজিশন স্ক্রিনে এন্টার চাপলে পরের লেভেল শুরু হবে
+        if(e.key === "Enter") {
+            startNextLevel();
+        }
+        return;
+    }
+
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
         if(!menu.classList.contains("hidden") === false){ 
