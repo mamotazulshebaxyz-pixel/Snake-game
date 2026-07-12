@@ -97,61 +97,64 @@ function createSpecialFood() {
     }, 5000);
 }
 
-// প্রতিটি লেভেলের জন্য ইউনিক এবং আনলিমিটেড লেভেল পর্যন্ত দেয়াল তৈরি করার মেকানিজম
+// প্রতিটি লেভেলের জন্য ইউনিক দেয়াল তৈরি করার মেকানিজম
 function generateObstacles(targetLevel) {
-    obstacles = [];
+    let rawObstacles = [];
     let lvl = targetLevel || level;
     
     if (lvl === 1) {
-        return;
+        rawObstacles = [];
     } else if (lvl === 2) {
-        obstacles = [
+        rawObstacles = [
             {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
             {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
         ];
     } else if (lvl === 3) {
-        obstacles = [
+        rawObstacles = [
             {x: 60, y: 60}, {x: 80, y: 60}, {x: 60, y: 80},
             {x: 320, y: 60}, {x: 300, y: 60}, {x: 320, y: 80},
             {x: 60, y: 320}, {x: 80, y: 320}, {x: 60, y: 300},
             {x: 320, y: 320}, {x: 300, y: 320}, {x: 320, y: 300}
         ];
     } else if (lvl === 4) {
-        // লেভেল ৪-এ প্লাস চিহ্নের মাঝখানের ব্লক সরানো হয়েছে যাতে (২০০, ২০০) ফ্রী থাকে
-        obstacles = [
+        rawObstacles = [
             {x: 200, y: 100}, {x: 200, y: 120}, {x: 200, y: 140},
             {x: 200, y: 240}, {x: 200, y: 260}, {x: 200, y: 280},
             {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
             {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
         ];
     } else if (lvl === 5) {
-        obstacles = [
+        rawObstacles = [
             {x: 100, y: 100}, {x: 120, y: 100}, {x: 100, y: 120}, {x: 120, y: 120},
             {x: 260, y: 100}, {x: 280, y: 100}, {x: 260, y: 120}, {x: 280, y: 120},
             {x: 100, y: 260}, {x: 100, y: 280}, {x: 120, y: 260}, {x: 120, y: 280},
             {x: 260, y: 260}, {x: 260, y: 280}, {x: 280, y: 260}, {x: 280, y: 280}
         ];
     } else {
-        // লেভেল ৬ থেকে ডায়নামিক ব্লক জেনারেশন
+        // লেভেল ৬ বা তার উপরে র্যান্ডম জেনারেশন
         let obstacleCount = Math.min(12 + (lvl - 5) * 2, 32); 
-        
-        while (obstacles.length < obstacleCount) {
+        while (rawObstacles.length < obstacleCount) {
             let obsX = Math.floor(Math.random() * 20) * 20;
             let obsY = Math.floor(Math.random() * 20) * 20;
-            
-            // সাপের শুরুর স্থান (২০০, ২০০) এবং তার চারপাশের ৬০ পিক্সেলের ভেতর কোনো দেয়াল তৈরি হবে না
-            if (Math.abs(obsX - 200) <= 60 && Math.abs(obsY - 200) <= 60) continue;
-            
-            let exists = obstacles.some(obs => obs.x === obsX && obs.y === obsY);
+            let exists = rawObstacles.some(obs => obs.x === obsX && obs.y === obsY);
             if (!exists) {
-                obstacles.push({x: obsX, y: obsY});
+                rawObstacles.push({x: obsX, y: obsY});
             }
         }
     }
+
+    // [CRITICAL FIX]: সাপের স্টার্ট পজিশন (200, 200) এবং সে যেদিকে যাবে (ডানে)
+    // সেই চলার পথের আশেপাশে ৬০ পিক্সেলের ভেতর কোনো অবস্ট্যাকল ফিল্টার করে বাদ দেওয়া হবে।
+    obstacles = rawObstacles.filter(obs => {
+        // সাপের মাথা (200, 200) এর একদম উপরে বা সামনে যেন কোনো ব্লক না থাকে
+        let distanceX = Math.abs(obs.x - 200);
+        let distanceY = Math.abs(obs.y - 200);
+        return !(distanceX <= 60 && distanceY <= 40);
+    });
 }
 
 function resetGame(){
-    snake = [{x:200,y:200}]; // সেন্টার পজিশন
+    snake = [{x:200,y:200}]; 
     obstacles = [];
     
     specialFood = null;
@@ -316,14 +319,14 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
-    // [FIX] সাপ সবসময় স্ক্রিনের মাঝখানে (২০০, ২০০) রিসেট হয়ে যাবে এবং ডানে চলতে শুরু করবে
+    // সাপ সবসময় স্ক্রিনের মাঝখানে (২০০, ২০০) রিসেট হবে এবং ডান দিকে মুখ করে থাকবে
     snake = [{x: 200, y: 200}]; 
     direction = "RIGHT"; 
     
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
     
-    generateObstacles(); 
+    generateObstacles(level); // সঠিক লেভেল পাস করে অবস্ট্যাকল জেনারেট করা হলো
     createFood(); 
     isLevelTransition = false;
     
