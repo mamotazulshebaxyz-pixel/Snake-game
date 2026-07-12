@@ -1,187 +1,187 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-    background:#0f172a;
-    font-family:Arial, Helvetica, sans-serif;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+body {
+    background: #0f172a;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
-.game{
-    background:#1e293b;
-    padding:25px;
-    border-radius:15px;
-    text-align:center;
-    box-shadow:0 0 25px rgba(0,0,0,.4);
+.game {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,.4);
 }
 
-h1{
-    color:#22c55e;
-    margin-bottom:15px;
+h1 {
+    color: #22c55e;
+    margin-bottom: 15px;
 }
 
-.score-board{
-    display:flex;
-    justify-content:space-between;
-    color:#fff;
-    margin-bottom:15px;
-    font-size:18px;
+.score-board {
+    display: flex;
+    justify-content: space-between;
+    color: #fff;
+    margin-bottom: 15px;
+    font-size: 18px;
+    gap: 15px; /* লেভেল যুক্ত হওয়ায় একটু ফাঁকা রাখার জন্য */
 }
 
-canvas{
-    background:#111827;
-    border:4px solid #22c55e;
-    border-radius:10px;
+canvas {
+    background: #111827;
+    border: 4px solid #22c55e;
+    border-radius: 10px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
-button{
-    margin-top:15px;
-    padding:10px 20px;
-    border:none;
-    border-radius:8px;
-    background:#22c55e;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
-    transition:.3s;
+button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #22c55e;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: .3s;
 }
 
-button:hover{
-    background:#16a34a;
+button:hover {
+    background: #16a34a;
 }
 
-.info{
-    color:#cbd5e1;
-    margin-top:12px;
-    font-size:14px;
+.info {
+    color: #cbd5e1;
+    margin-top: 12px;
+    font-size: 14px;
 }
 
-#menu{
-
-position:fixed;
-
-top:50%;
-
-left:50%;
-
-transform:translate(-50%,-50%);
-
-background:#111827;
-
-padding:30px;
-
-border-radius:15px;
-
-box-shadow:0 0 30px #22c55e;
-
-text-align:center;
-
+/* মেইন স্টার্ট মেনু ডিজাইন */
+#menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: #111827;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 30px #22c55e;
+    text-align: center;
+    z-index: 100;
 }
 
-#menu h2{
-
-color:#22c55e;
-
-margin-bottom:20px;
-
+#menu h2 {
+    color: #22c55e;
+    margin-bottom: 20px;
 }
 
-#menu button{
-
-display:block;
-
-width:220px;
-
-margin:10px auto;
-
-font-size:18px;
-
+#menu button {
+    display: block;
+    width: 220px;
+    margin: 10px auto;
+    font-size: 18px;
 }
 
-.hidden{
-    display:none;
+.hidden {
+    display: none !important;
 }
 
-.controls{
-    margin-top:15px;
-    text-align:center;
+.controls {
+    margin-top: 15px;
+    text-align: center;
 }
 
-.controls button{
-    width:180px;
+.controls button {
+    width: 180px;
 }
 
-canvas{
-    touch-action:none;
-    user-select:none;
-    -webkit-user-select:none;
+/* =======================================
+   গেম ওভার মোডাল (Pop-up Window) ডিজাইন 
+======================================= */
+
+/* ১. পুরো স্ক্রিন জুড়ে কালো আবছা ব্যাকগ্রাউন্ড */
+#gameOverModal {
+    display: none; /* শুরুতে জাভাস্ক্রিপ্ট দিয়ে কন্ট্রোল হবে */
+    position: fixed;
+    z-index: 9999; /* যেন গেমের সব এলিমেন্টের উপরে ভেসে থাকে */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75); 
+    justify-content: center;
+    align-items: center;
 }
 
-/* ১. পুরো স্ক্রিন জুড়ে কালো আবছা ব্যাকগ্রাউন্ড */
-.modal {
-  display: none; /* শুরুতে এটি স্ক্রিনে দেখা যাবে না */
-  position: fixed;
-  z-index: 9999; /* যেন গেমের সব এলিমেন্টের উপরে এটি ভেসে থাকে */
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.75); /* ব্যাকগ্রাউন্ড হালকা কালো/আবছা হবে */
-  justify-content: center;
-  align-items: center;
-}
-
-/* ২. মূল পপ-আপ বক্সের চমৎকার ডিজাইন */
-.modal-content {
-  background-color: #1a1a1a; /* ডার্ক থিম */
-  color: #ffffff;
-  padding: 40px;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  border: 2px solid #4caf50; /* আপনার গেমের বর্ডারের সাথে ম্যাচিং সবুজ */
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  min-width: 280px;
+/* ২. মূল পপ-আপ বক্সের চমৎকার ডিজাইন (HTML-এ আমরা সরাসরি বক্সে ডিজাইন দিতে পারি) */
+#gameOverModal > div {
+    background-color: #1a1a1a; 
+    color: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border: 2px solid #22c55e; /* বর্ডারের সাথে ম্যাচিং সবুজ */
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    min-width: 300px;
 }
 
 /* ৩. লেখার স্টাইল */
-.game-over-title {
-  color: #ff4d4d; /* লাল রঙের 'Game Over' লেখা */
-  margin-top: 0;
-  font-size: 28px;
+#gameOverModal h2 {
+    color: #ff4d4d; /* লাল রঙের 'Game Over' লেখা */
+    margin-top: 0;
+    font-size: 28px;
+    margin-bottom: 15px;
 }
 
-.score-text {
-  font-size: 20px;
-  margin: 20px 0;
+#gameOverModal p {
+    font-size: 20px;
+    margin: 20px 0;
 }
 
 #finalScore {
-  font-weight: bold;
-  color: #4caf50; /* স্কোরটি সবুজ দেখাবে */
+    font-weight: bold;
+    color: #22c55e; /* স্কোরটি সবুজ দেখাবে */
 }
 
-/* ৪. বাটনের আকর্ষণীয় ডিজাইন */
+/* ৪. মোডাল বাটনের ডিজাইন */
+#restartBtn, #cancelBtn {
+    margin: 10px 8px 0 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block; /* বাটন দুটি পাশাপাশি বসার জন্য */
+}
+
 #restartBtn {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 12px 28px;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+    background-color: #22c55e;
+    color: white;
 }
 
-/* বাটনে মাউস নিলে কালার চেঞ্জ হবে */
 #restartBtn:hover {
-  background-color: #45a049;
-  transform: scale(1.05); /* হালকা একটু বড় হবে */
+    background-color: #16a34a;
+    transform: scale(1.05); 
+}
+
+#cancelBtn {
+    background-color: #ef4444; /* ক্যানসেল বাটনটি লাল দেখাবে */
+    color: white;
+}
+
+#cancelBtn:hover {
+    background-color: #dc2626;
+    transform: scale(1.05);
 }
