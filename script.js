@@ -34,7 +34,7 @@ let normalFoodEatenCount = 0;
 let running = false;
 let obstacles = []; 
 
-// [NEW STATE] সাপ বর্তমানে মুভ করছে কিনা তা ট্র্যাক করার জন্য
+// সাপ বর্তমানে মুভ করছে কিনা তা ট্র্যাক করার জন্য
 let isSnakeMoving = false; 
 
 // লেভেল ট্রানজিশন (ইন্টারমিশন স্ক্রিন) এর জন্য ভ্যারিয়েবল
@@ -145,7 +145,7 @@ function generateObstacles(targetLevel) {
         }
     }
 
-    // যেহেতু সাপ যেকোনো দিকে যেতে পারে, তাই (২০০, ২০০)-এর চারপাশের ৬০ পিক্সেলের ভেতর সব অবস্ট্যাকল পুরো পরিষ্কার রাখা হবে
+    // (২০০, ২০০)-এর চারপাশের ৬০ পিক্সেলের ভেতর সব অবস্ট্যাকল পরিষ্কার রাখা হবে
     obstacles = rawObstacles.filter(obs => {
         let distanceX = Math.abs(obs.x - 200);
         let distanceY = Math.abs(obs.y - 200);
@@ -161,8 +161,8 @@ function resetGame(){
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
 
-    direction = null; // শুরুতে কোনো ডিরেকশন থাকবে না
-    isSnakeMoving = false; // সাপ স্থির থাকবে
+    direction = null; 
+    isSnakeMoving = false; 
 
     score = 0;
     scoreText.innerHTML = score;
@@ -310,7 +310,7 @@ function draw(){
         }
     }
 
-    // [NEW GUIDE TEXT] সাপ স্থির থাকলে স্ক্রিনে ডিরেকশন দেওয়ার মেসেজ দেখাবে
+    // সাপ স্থির থাকলে স্ক্রিনে মেসেজ দেখাবে
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
@@ -362,10 +362,9 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
-    // রিসেট পজিশন ও মুভমেন্ট স্টেট স্থগিতকরণ
     snake = [{x: 200, y: 200}]; 
     direction = null; 
-    isSnakeMoving = false; // কিউ না চাপা পর্যন্ত সাপ চলবে না
+    isSnakeMoving = false; 
     
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
@@ -389,7 +388,7 @@ function triggerLevelTransition(targetLevel) {
 
 function move(){
     if (isLevelTransition) return; 
-    if (!isSnakeMoving) return; // [CRITICAL] সাপ স্থির থাকলে মুভমেন্ট প্রসেস হবে না
+    if (!isSnakeMoving) return; 
 
     let head = {...snake[0]};
 
@@ -504,7 +503,7 @@ function startGame(){
 
 function pauseGame(){
     if (isLevelTransition) return; 
-    if (!isSnakeMoving) return; // সাপ মুভ না করা পর্যন্ত পজ কাজ করবে না
+    if (!isSnakeMoving) return; 
     
     if(running){
         clearInterval(gameLoop);
@@ -593,7 +592,6 @@ canvas.addEventListener("touchend", function(e){
         return;
     }
 
-    // প্রথম মুভমেন্ট এক্টিভেট করার হ্যান্ডলার
     if (!isSnakeMoving) {
         isSnakeMoving = true;
     }
@@ -607,6 +605,7 @@ canvas.addEventListener("touchend", function(e){
     }
 }, { passive: true });
 
+// [UPDATED KEYDOWN LISTENER]
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
         if(e.key === "Enter") {
@@ -615,19 +614,19 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
+    // Spacebar লজিক: গেম চলাকালীন বা পজ থাকা অবস্থায় কাজ করবে
     if(e.key === " " || e.key === "Spacebar"){
-        e.preventDefault(); 
-        if(!menu.classList.contains("hidden") && isSnakeMoving){ 
+        e.preventDefault(); // ব্রাউজার স্ক্রোলিং বন্ধ করার জন্য
+        if(menu.classList.contains("hidden") && isSnakeMoving){ 
             pauseGame();
         }
         return;
     }
 
-    // [ARROW KEY CHECK]: যেকোনো Arrow Key চাপলে সাপ প্রথম মুভ করা শুরু করবে
+    // যেকোনো Arrow Key চাপলে সাপ চলা শুরু করবে
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
         if (!isSnakeMoving) {
             isSnakeMoving = true;
-            // প্রথম মুভমেন্টে স্পেশাল টাইমারের স্টার্ট টাইম সেট করা হলো
             if(specialFood) specialFoodStartTime = Date.now();
         }
     }
