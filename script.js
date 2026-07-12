@@ -103,16 +103,13 @@ function generateObstacles(targetLevel) {
     let lvl = targetLevel || level;
     
     if (lvl === 1) {
-        // লেভেল ১: সম্পূর্ণ খালি
         return;
     } else if (lvl === 2) {
-        // লেভেল ২: মাঝখানের দুটি ছোট আনুভূমিক দেয়াল
         obstacles = [
             {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
             {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
         ];
     } else if (lvl === 3) {
-        // লেভেল ৩: ৪টি কোণায় কোণাকুণি বাধা (L-Shapes)
         obstacles = [
             {x: 60, y: 60}, {x: 80, y: 60}, {x: 60, y: 80},
             {x: 320, y: 60}, {x: 300, y: 60}, {x: 320, y: 80},
@@ -120,35 +117,31 @@ function generateObstacles(targetLevel) {
             {x: 320, y: 320}, {x: 300, y: 320}, {x: 320, y: 300}
         ];
     } else if (lvl === 4) {
-        // লেভেল ৪: মাঝখানে একটি বড় প্লাস (+) চিহ্নের মতো বাধা
+        // লেভেল ৪-এ প্লাস চিহ্নের মাঝখানের ব্লক সরানো হয়েছে যাতে (২০০, ২০০) ফ্রী থাকে
         obstacles = [
-            {x: 200, y: 120}, {x: 200, y: 140}, {x: 200, y: 160},
-            {x: 200, y: 220}, {x: 200, y: 240}, {x: 200, y: 260},
-            {x: 120, y: 200}, {x: 140, y: 200}, {x: 160, y: 200},
-            {x: 220, y: 200}, {x: 240, y: 200}, {x: 260, y: 200}
+            {x: 200, y: 100}, {x: 200, y: 120}, {x: 200, y: 140},
+            {x: 200, y: 240}, {x: 200, y: 260}, {x: 200, y: 280},
+            {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
+            {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
         ];
     } else if (lvl === 5) {
-        // লেভেল ৫: ৪টি চারকোণা ব্লক এবং সেন্টার পয়েন্ট
         obstacles = [
             {x: 100, y: 100}, {x: 120, y: 100}, {x: 100, y: 120}, {x: 120, y: 120},
             {x: 260, y: 100}, {x: 280, y: 100}, {x: 260, y: 120}, {x: 280, y: 120},
             {x: 100, y: 260}, {x: 100, y: 280}, {x: 120, y: 260}, {x: 120, y: 280},
-            {x: 260, y: 260}, {x: 260, y: 280}, {x: 280, y: 260}, {x: 280, y: 280},
-            {x: 200, y: 200}
+            {x: 260, y: 260}, {x: 260, y: 280}, {x: 280, y: 260}, {x: 280, y: 280}
         ];
     } else {
-        // লেভেল ৬ থেকে ১০০+ (অনন্তকাল পর্যন্ত ডায়নামিক দেয়াল জেনারেশন)
-        // লেভেল যত বাড়বে, দেয়ালে ইটের সংখ্যাও আনুপাতিকভাবে বাড়বে (সর্বোচ্চ ৩০টি ব্লক যেন গেম খেলা যায়)
+        // লেভেল ৬ থেকে ডায়নামিক ব্লক জেনারেশন
         let obstacleCount = Math.min(12 + (lvl - 5) * 2, 32); 
         
         while (obstacles.length < obstacleCount) {
             let obsX = Math.floor(Math.random() * 20) * 20;
             let obsY = Math.floor(Math.random() * 20) * 20;
             
-            // নিশ্চিত করা যেন দেয়াল সাপের শুরুর পজিশনে (২০০, ২০০) না পড়ে
-            if (obsX === 200 && obsY === 200) continue;
+            // সাপের শুরুর স্থান (২০০, ২০০) এবং তার চারপাশের ৬০ পিক্সেলের ভেতর কোনো দেয়াল তৈরি হবে না
+            if (Math.abs(obsX - 200) <= 60 && Math.abs(obsY - 200) <= 60) continue;
             
-            // ডুপ্লিকেট চেক
             let exists = obstacles.some(obs => obs.x === obsX && obs.y === obsY);
             if (!exists) {
                 obstacles.push({x: obsX, y: obsY});
@@ -158,14 +151,14 @@ function generateObstacles(targetLevel) {
 }
 
 function resetGame(){
-    snake = [{x:200,y:200}];
+    snake = [{x:200,y:200}]; // সেন্টার পজিশন
     obstacles = [];
     
     specialFood = null;
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
 
-    direction = "RIGHT";
+    direction = "RIGHT"; // সবসময় ডানে চলা শুরু করবে
     score = 0;
     scoreText.innerHTML = score;
     level = 1;
@@ -323,10 +316,10 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
-    let head = {...snake[0]};
-    snake = [{x: head.x, y: head.y}]; 
+    // [FIX] সাপ সবসময় স্ক্রিনের মাঝখানে (২০০, ২০০) রিসেট হয়ে যাবে এবং ডানে চলতে শুরু করবে
+    snake = [{x: 200, y: 200}]; 
+    direction = "RIGHT"; 
     
-    // প্রতি লেভেল বাড়ার সাথে সাথে বেস স্পিডও একটু করে ফাস্ট হবে (সর্বোচ্চ স্পিড লিমিট ৮০ms)
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
     
@@ -343,9 +336,7 @@ function triggerLevelTransition(targetLevel) {
     nextLevelToStart = targetLevel;
     clearInterval(gameLoop); 
     
-    // ট্রানজিশন স্ক্রিন দেখানোর সময় অগ্রিম নতুন ডায়নামিক দেয়াল জেনারেট করে রাখা
     generateObstacles(targetLevel); 
-    
     draw(); 
 }
 
@@ -359,7 +350,6 @@ function move(){
     if(direction=="UP") head.y-=20;
     if(direction=="DOWN") head.y+=20;
 
-    // সব লেভেলেই Wall Wrapping (টানেল মোড) একটিভ
     if(head.x < 0) head.x = 380;
     if(head.x >= 400) head.x = 0;
     if(head.y < 0) head.y = 380;
@@ -393,14 +383,12 @@ function move(){
             createSpecialFood();
         }
 
-        // প্রতি ২০ স্কোরে লেভেল পরিবর্তন চেক
         let targetLevel = Math.floor((score - 1) / 20) + 1;
         if(score === 0) targetLevel = 1; 
 
         if(targetLevel > level){
             triggerLevelTransition(targetLevel);
         } else {
-            // একই লেভেলের ভেতরে স্পিড সমানুপাতিকভাবে বাড়বে 
             let scoreInCurrentLevel = (score - 1) % 20; 
             let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
             gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60); 
