@@ -171,27 +171,24 @@ function resetGame(){
     createFood();
 }
 
-// সুন্দর একটি সিঙ্গেল কি-বোর্ড বাটন ড্র করার হেল্পার ফাংশন
+// ভিজ্যুয়াল অ্যারো কি ড্র করার হেল্পার ফাংশন
 function drawKey(x, y, label) {
-    // বাটন শ্যাডো/ডেপথ এফেক্ট (3D Look)
     ctx.fillStyle = "#7f8c8d";
     ctx.beginPath();
     ctx.roundRect(x, y + 3, 32, 32, 6);
     ctx.fill();
 
-    // মেইন কি টপ ফেস
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.roundRect(x, y, 32, 32, 6);
     ctx.fill();
 
-    // কি লেবেল টেক্সট (অ্যারো চিহ্ন)
     ctx.fillStyle = "#2c3e50";
     ctx.font = "bold 16px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(label, x + 16, y + 16);
-    ctx.textBaseline = "alphabetic"; // রিসেট বেসলাইন
+    ctx.textBaseline = "alphabetic"; 
 }
 
 function draw(){
@@ -331,22 +328,19 @@ function draw(){
         }
     }
 
-    // ======= [NEW KEYBOARD GUIDE EFFECT] ভিজ্যুয়াল অ্যারো কি প্যাড ওভারলে =======
+    // ======= ভিজ্যুয়াল অ্যারো কি প্যাড এবং গাইড টেক্সট =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
         ctx.fillRect(0, 0, 400, 400);
 
-        // অ্যারো কি প্যাডের মূল পজিশন ক্যালকুলেট (স্ক্রিনের নিচে/মাঝামাঝি)
         let padX = 200; 
         let padY = 220; 
 
-        // ৪টি অ্যারো কী অঙ্কন (Up, Left, Down, Right layout)
-        drawKey(padX - 16, padY - 40, "▲");  // Up Arrow
-        drawKey(padX - 56, padY, "◀");       // Left Arrow
-        drawKey(padX - 16, padY, "▼");       // Down Arrow
-        drawKey(padX + 24, padY, "▶");       // Right Arrow
+        drawKey(padX - 16, padY - 40, "▲"); 
+        drawKey(padX - 56, padY, "◀");       
+        drawKey(padX - 16, padY, "▼");       
+        drawKey(padX + 24, padY, "▶");       
 
-        // সুন্দর গাইড মেসেজ টেক্সট
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 15px sans-serif";
         ctx.textAlign = "center";
@@ -652,7 +646,6 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
-    // যেকোনো Arrow Key চাপলে সাপ ফার্স্ট মুভ করা শুরু করবে এবং কি-বোর্ড গাইডটি চলে যাবে
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
         if (!isSnakeMoving && menu.classList.contains("hidden")) {
             isSnakeMoving = true;
