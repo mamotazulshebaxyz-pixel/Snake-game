@@ -9,14 +9,16 @@ const levelText = document.getElementById("level");
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
-const menuRestartBtn = document.getElementById("restart"); // নাম একটু পরিবর্তন করা হলো সংঘাত এড়াতে
+const menuRestartBtn = document.getElementById("restart");
 
-// নতুন কাস্টম মোডাল এলিমেন্টসমূহ
 const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreText = document.getElementById("finalScore");
 const modalRestartBtn = document.getElementById("restartBtn");
 
-let gameSpeed = 350;
+// বেস স্পিড ভ্যারিয়েবল (লেভেলের শুরুতে এই স্পিডে রিসেট হবে)
+const BASE_SPEED = 300; 
+let gameSpeed = BASE_SPEED;
+
 let snake;
 let food;
 let direction;
@@ -27,9 +29,10 @@ let highScore = localStorage.getItem("snakeHighScore") || 0;
 let gameLoop;
 let specialFood = null;
 let specialFoodTimer = null;
-let specialFoodStartTime = 0; // স্পেশাল ফুড কখন আসলো তা ট্র্যাক করতে
-let normalFoodEatenCount = 0; // সাধারণ খাবার কয়টা খেলো তা গুনতে
+let specialFoodStartTime = 0; 
+let normalFoodEatenCount = 0; 
 let running = false;
+let obstacles = []; // বাধা রাখার জন্য
 
 highScoreText.innerHTML = highScore;
 
@@ -47,10 +50,16 @@ function createFood(){
                 break;
             }
         }
+        // খাবার যেন বাধার ওপর না পড়ে
+        for(let obs of obstacles){
+            if(food.x === obs.x && food.y === obs.y){
+                valid = false;
+                break;
+            }
+        }
     }
 }
 
-// স্পেশাল ফুড তৈরির গ্লোবাল ফাংশন
 function createSpecialFood() {
     let valid = false;
     while(!valid){
@@ -69,9 +78,14 @@ function createSpecialFood() {
         if(food && specialFood.x === food.x && specialFood.y === food.y) {
             valid = false;
         }
+        for(let obs of obstacles){
+            if(specialFood.x === obs.x && specialFood.y === obs.y){
+                valid = false;
+                break;
+            }
+        }
     }
 
-    // স্পেশাল ফুড তৈরির সময়টি মিলিসেকেন্ডে সেভ করছি
     specialFoodStartTime = Date.now(); 
 
     clearTimeout(specialFoodTimer);
@@ -80,11 +94,30 @@ function createSpecialFood() {
     }, 5000);
 }
 
+// লেভেল অনুযায়ী বাধা (Obstacles) তৈরি করার ফাংশন
+function generateObstacles() {
+    obstacles = [];
+    if (level === 3) {
+        // লেভেল ৩-এর বাধা (মাঝখানের দুটি ছোট দেয়াল)
+        obstacles = [
+            {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
+            {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
+        ];
+    } else if (level >= 4) {
+        // লেভেল ৪ বা তার ওপরে আরও কঠিন বাধা
+        obstacles = [
+            {x: 100, y: 100}, {x: 120, y: 100}, {x: 100, y: 120},
+            {x: 280, y: 100}, {x: 260, y: 100}, {x: 280, y: 120},
+            {x: 100, y: 280}, {x: 120, y: 280}, {x: 100, y: 260},
+            {x: 280, y: 280}, {x: 260, y: 280}, {x: 280, y: 260}
+        ];
+    }
+}
+
 function resetGame(){
     snake = [{x:200,y:200}];
-    createFood();
+    obstacles = [];
     
-    // স্পেশাল ফুড ও কাউন্টার রিসেট
     specialFood = null;
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
@@ -93,61 +126,60 @@ function resetGame(){
     score = 0;
     scoreText.innerHTML = score;
     level = 1;
-    gameSpeed = 350;
+    gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
+    createFood();
 }
 
 function draw(){
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
+    // ======= লেভেলের বাধা (Obstacles) আঁকা =======
+    ctx.fillStyle = "#e74c3c"; // লালচে ইটের মতো রঙ
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "#e74c3c";
+    obstacles.forEach(obs => {
+        ctx.beginPath();
+        ctx.roundRect(obs.x + 1, obs.y + 1, 18, 18, 4);
+        ctx.fill();
+    });
+    ctx.shadowBlur = 0; // শ্যাডো রিসেট
+
     // ======= সাধারণ খাবারের জায়গায় নতুন কিউট ব্যাঙ (Frog) আঁকা =======
-    // ১. ব্যাঙের গোলগাল বডি (Chibi Body)
-    ctx.fillStyle = "#2ecc71"; // চমৎকার নিয়ন-সবুজ শেড (Emerald Green)
+    ctx.fillStyle = "#2ecc71"; 
     ctx.beginPath();
     ctx.arc(food.x + 10, food.y + 11, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // ২. বড় ও কিউট চোখ (মাথার একটু ওপরে পপ-আপ করা)
-    // বাম চোখের বেস
     ctx.fillStyle = "#2ecc71";
     ctx.beginPath(); ctx.arc(food.x + 5, food.y + 5, 3.5, 0, Math.PI * 2); ctx.fill();
-    // ডান চোখের বেস
     ctx.beginPath(); ctx.arc(food.x + 15, food.y + 5, 3.5, 0, Math.PI * 2); ctx.fill();
 
-    // চোখের সাদা অংশ (Eyeballs)
     ctx.fillStyle = "#ffffff";
     ctx.beginPath(); ctx.arc(food.x + 5, food.y + 5, 2.5, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(food.x + 15, food.y + 5, 2.5, 0, Math.PI * 2); ctx.fill();
 
-    // চোখের কালো মণি (Pupils - একটু ভেতরের দিকে তাকানো, যাতে কিউট লাগে)
     ctx.fillStyle = "#111111";
     ctx.beginPath(); ctx.arc(food.x + 6, food.y + 5, 1.2, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(food.x + 14, food.y + 5, 1.2, 0, Math.PI * 2); ctx.fill();
 
-    // ৩. গালের মিষ্টি ব্লাশ (Cute Rosy Cheeks)
-    ctx.fillStyle = "#ff7675"; // হালকা গোলাپی রঙ
-    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); // বাম গাল
-    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); // ডান গাল
+    ctx.fillStyle = "#ff7675"; 
+    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); 
+    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); 
 
-    // ৪. পুচকে দুটি পা (Tiny Front Feet)
-    ctx.fillStyle = "#27ae60"; // একটু গাঢ় সবুজ
+    ctx.fillStyle = "#27ae60"; 
     ctx.beginPath(); ctx.arc(food.x + 6, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(food.x + 14, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
 
-
     // special food (যদি স্ক্রিনে থাকে)
     if (specialFood) {
-        // সোনালী গ্লো ইফেক্ট
         ctx.shadowBlur = 15;
         ctx.shadowColor = "#ffd700";
-        
-        ctx.fillStyle = "#ffd700"; // গোল্ডেন কালার
+        ctx.fillStyle = "#ffd700"; 
         ctx.beginPath();
         ctx.arc(specialFood.x + 10, specialFood.y + 10, 10, 0, Math.PI * 2);
         ctx.fill();
-        
-        // শ্যাডো ইফেক্ট বন্ধ করা
         ctx.shadowBlur = 0;
 
         ctx.fillStyle = "#fff";
@@ -155,7 +187,6 @@ function draw(){
         ctx.arc(specialFood.x + 7, specialFood.y + 7, 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // ======= লাইভ টাইমার ডিসপ্লে =======
         let elapsedTime = Date.now() - specialFoodStartTime;
         let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); 
 
@@ -168,10 +199,9 @@ function draw(){
     }
 
     // snake
-    ctx.textAlign = "left"; // সাপের চোখের জন্য টেক্সট অ্যালাইনমেন্ট রিসেট
+    ctx.textAlign = "left"; 
     snake.forEach((part, index) => {
         if(index === 0){
-            // সাপের মাথা (Gradient Effect)
             let headGradient = ctx.createRadialGradient(
                 part.x + 10, part.y + 10, 2, 
                 part.x + 10, part.y + 10, 10
@@ -184,29 +214,23 @@ function draw(){
             ctx.arc(part.x + 10, part.y + 10, 10, 0, Math.PI * 2);
             ctx.fill();
 
-            // চোখের সাদা অংশ
             ctx.fillStyle = "#ffffff";
             ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 3.5, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 3.5, 0, Math.PI * 2); ctx.fill();
 
-            // চোখের কালো মণি
             ctx.fillStyle = "#000000";
             ctx.beginPath(); ctx.arc(part.x + 6, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 14, part.y + 8, 1.8, 0, Math.PI * 2); ctx.fill();
 
-            // চোখের ছোট লাইٹنگ ডট
             ctx.fillStyle = "#ffffff";
             ctx.beginPath(); ctx.arc(part.x + 5.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(part.x + 13.2, part.y + 7.2, 0.6, 0, Math.PI * 2); ctx.fill();
         } else {
-            // ======= বডির নির্দিষ্ট দুটি রঙ: আকাশী নীল এবং সাদা =======
-            // ইনডেক্স জোড় (Even) হলে Sky Blue, বিজোড় (Odd) হলে White
             if (index % 2 === 0) {
-                ctx.fillStyle = "#00bfff"; // উজ্জ্বল আকাশী নীল (Deep Sky Blue)
+                ctx.fillStyle = "#00bfff"; 
             } else {
-                ctx.fillStyle = "#ffffff"; // ধবধবে সাদা (White)
+                ctx.fillStyle = "#ffffff"; 
             }
-            
             ctx.beginPath();
             ctx.roundRect(part.x + 1, part.y + 1, 18, 18, 6);
             ctx.fill();
@@ -222,10 +246,27 @@ function move(){
     if(direction=="UP") head.y-=20;
     if(direction=="DOWN") head.y+=20;
 
-    // wall collision
-    if(head.x<0 || head.x>=400 || head.y<0 || head.y>=400){
-        gameOver();
-        return;
+    // ======= লেভেল ১-এর জন্য Wall Wrapping (দেয়াল ভেদ করে ওপাশে যাওয়া) =======
+    if (level === 1) {
+        if(head.x < 0) head.x = 380;
+        if(head.x >= 400) head.x = 0;
+        if(head.y < 0) head.y = 380;
+        if(head.y >= 400) head.y = 0;
+    } 
+    // ======= লেভেল ২ বা তার ওপরে দেয়ালে লাগলে মৃত্যু =======
+    else {
+        if(head.x<0 || head.x>=400 || head.y<0 || head.y>=400){
+            gameOver();
+            return;
+        }
+    }
+
+    // Obstacle collision (বাধার সাথে ধাক্কা লাগলে মৃত্যু - লেভেল ৩+)
+    for(let obs of obstacles){
+        if(head.x === obs.x && head.y === obs.y){
+            gameOver();
+            return;
+        }
     }
 
     snake.unshift(head);
@@ -238,7 +279,7 @@ function move(){
         }
     }
 
-    // ১. সাধারণ খাবার খাওয়া চেক করা
+    // ১. সাধারণ খাবার খাওয়া
     if(head.x == food.x && head.y == food.y){
         score++;
         normalFoodEatenCount++; 
@@ -248,11 +289,29 @@ function move(){
             createSpecialFood();
         }
 
-        let newLevel = Math.floor(score / 5) + 1;
+        // লেভেল চেঞ্জ লজিক (প্রতি ২০ স্কোরে লেভেল পরিবর্তন)
+        let newLevel = Math.floor((score - 1) / 20) + 1;
+        if(score === 0) newLevel = 1; // সেফটি চেক
+
         if(newLevel > level){
             level = newLevel;
             levelText.innerHTML = level;
-            gameSpeed = Math.max(80, 350 - (level - 1) * 30);
+            
+            // লেভেল পরিবর্তন হলে সাপ ছোট হয়ে যাবে এবং স্পিড প্রথমের মতো রিসেট হবে
+            snake = [{x: head.x, y: head.y}]; 
+            gameSpeed = BASE_SPEED;
+            
+            generateObstacles(); // নতুন লেভেলের জন্য বাধা তৈরি
+            createFood(); // বাধার বাইরে খাবার নতুন করে স্পন করা
+            
+            clearInterval(gameLoop);
+            gameLoop = setInterval(game, gameSpeed);
+        } else {
+            // একই লেভেলের ভেতরে প্রতি স্কোরে স্পিড সমানুপাতিকভাবে বাড়বে 
+            // (প্রতি লেভেলে ২০ স্কোরের জন্য স্পিড ৩০০ থেকে কমে ১২০ এ আসবে)
+            let scoreInCurrentLevel = (score - 1) % 20; 
+            gameSpeed = BASE_SPEED - (scoreInCurrentLevel * 9); 
+            
             clearInterval(gameLoop);
             gameLoop = setInterval(game, gameSpeed);
         }
@@ -264,13 +323,32 @@ function move(){
         }
         createFood();
     } 
-    // ২. স্পেশাল গোল্ডেন ফুড খাওয়া চেক করা
+    // ২. স্পেশাল গোল্ডেন ফুড খাওয়া
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
         score += 3; 
         scoreText.innerHTML = score;
         
         clearTimeout(specialFoodTimer); 
         specialFood = null; 
+
+        // গোল্ডেন ফুড খেলেও লেভেল আপ চেক
+        let newLevel = Math.floor((score - 1) / 20) + 1;
+        if(newLevel > level){
+            level = newLevel;
+            levelText.innerHTML = level;
+            snake = [{x: head.x, y: head.y}]; 
+            gameSpeed = BASE_SPEED;
+            generateObstacles();
+            createFood();
+            
+            clearInterval(gameLoop);
+            gameLoop = setInterval(game, gameSpeed);
+        } else {
+            let scoreInCurrentLevel = (score - 1) % 20;
+            gameSpeed = BASE_SPEED - (scoreInCurrentLevel * 9);
+            clearInterval(gameLoop);
+            gameLoop = setInterval(game, gameSpeed);
+        }
 
         if(score > highScore){
             highScore = score;
@@ -331,11 +409,9 @@ function restartGame(){
     if(menuRestartBtn) {
         menuRestartBtn.style.display = "block";
     }
-
     if(cancelBtn) {
         cancelBtn.style.display = "none";
     }
-
     if(pauseBtn) {
         pauseBtn.style.display = "none";
     }
@@ -359,15 +435,12 @@ function gameOver(){
     if(playBtn) {
         playBtn.innerHTML = "▶ Play Again";
     }
-
     if(menuRestartBtn) {
         menuRestartBtn.style.display = "none";
     }
-
     if(cancelBtn) {
         cancelBtn.style.display = "block";
     }
-
     if(pauseBtn) {
         pauseBtn.style.display = "none";
     }
@@ -403,7 +476,6 @@ canvas.addEventListener("touchend", function(e){
 }, { passive: true });
 
 document.addEventListener("keydown", function(e){
-    // Spacebar চাপলে গেম পজ বা রিজুম হবে
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
         if(!menu.classList.contains("hidden") === false){ 
