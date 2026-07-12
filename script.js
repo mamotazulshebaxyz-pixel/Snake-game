@@ -34,7 +34,7 @@ let normalFoodEatenCount = 0;
 let running = false;
 let obstacles = []; 
 
-// সাপ বর্তমানে মুভ করছে কিনা তা ট্র্যাক করার জন্য
+// [NEW STATE] সাপ বর্তমানে মুভ করছে কিনা তা ট্র্যাক করার জন্য
 let isSnakeMoving = false; 
 
 // লেভেল ট্রানজিশন (ইন্টারমিশন স্ক্রিন) এর জন্য ভ্যারিয়েবল
@@ -100,6 +100,7 @@ function createSpecialFood() {
     }, 5000);
 }
 
+// সাপের মাথার চারপাশে (৬০ পিক্সেল রেডিয়াসে) অবস্ট্যাকল ক্লিয়ার করার লজিক
 function generateObstacles(targetLevel) {
     let rawObstacles = [];
     let lvl = targetLevel || level;
@@ -144,6 +145,7 @@ function generateObstacles(targetLevel) {
         }
     }
 
+    // যেহেতু সাপ যেকোনো দিকে যেতে পারে, তাই (২০০, ২০০)-এর চারপাশের ৬০ পিক্সেলের ভেতর সব অবস্ট্যাকল পুরো পরিষ্কার রাখা হবে
     obstacles = rawObstacles.filter(obs => {
         let distanceX = Math.abs(obs.x - 200);
         let distanceY = Math.abs(obs.y - 200);
@@ -159,8 +161,8 @@ function resetGame(){
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
 
-    direction = null; 
-    isSnakeMoving = false; 
+    direction = null; // শুরুতে কোনো ডিরেকশন থাকবে না
+    isSnakeMoving = false; // সাপ স্থির থাকবে
 
     score = 0;
     scoreText.innerHTML = score;
@@ -169,26 +171,6 @@ function resetGame(){
     levelText.innerHTML = level;
     isLevelTransition = false;
     createFood();
-}
-
-// ভিজ্যুয়াল অ্যারো কি ড্র করার হেল্পার ফাংশন
-function drawKey(x, y, label) {
-    ctx.fillStyle = "#7f8c8d";
-    ctx.beginPath();
-    ctx.roundRect(x, y + 3, 32, 32, 6);
-    ctx.fill();
-
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.roundRect(x, y, 32, 32, 6);
-    ctx.fill();
-
-    ctx.fillStyle = "#2c3e50";
-    ctx.font = "bold 16px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(label, x + 16, y + 16);
-    ctx.textBaseline = "alphabetic"; 
 }
 
 function draw(){
@@ -250,7 +232,7 @@ function draw(){
         let elapsedTime = Date.now() - specialFoodStartTime;
         let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); 
 
-        if (timeLeft > 0 && isSnakeMoving && running) {
+        if (timeLeft > 0 && isSnakeMoving) {
             ctx.fillStyle = "#ffd700"; 
             ctx.font = "bold 14px sans-serif";
             ctx.textAlign = "center";
@@ -328,23 +310,15 @@ function draw(){
         }
     }
 
-    // ======= ভিজ্যুয়াল অ্যারো কি প্যাড এবং গাইড টেক্সট =======
+    // [NEW GUIDE TEXT] সাপ স্থির থাকলে স্ক্রিনে ডিরেকশন দেওয়ার মেসেজ দেখাবে
     if (running && !isSnakeMoving && !isLevelTransition) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
 
-        let padX = 200; 
-        let padY = 220; 
-
-        drawKey(padX - 16, padY - 40, "▲"); 
-        drawKey(padX - 56, padY, "◀");       
-        drawKey(padX - 16, padY, "▼");       
-        drawKey(padX + 24, padY, "▶");       
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 15px sans-serif";
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Press any Arrow Key to Move", 200, 150);
+        ctx.fillText("🎮 Press any Arrow Key to Start Move", 200, 190);
     }
 
     // ======= লেভেল আপ ট্রানজিশন স্ক্রিন ওভারলে =======
@@ -388,9 +362,10 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
+    // রিসেট পজিশন ও মুভমেন্ট স্টেট স্থগিতকরণ
     snake = [{x: 200, y: 200}]; 
     direction = null; 
-    isSnakeMoving = false; 
+    isSnakeMoving = false; // কিউ না চাপা পর্যন্ত সাপ চলবে না
     
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
@@ -414,7 +389,7 @@ function triggerLevelTransition(targetLevel) {
 
 function move(){
     if (isLevelTransition) return; 
-    if (!isSnakeMoving) return; 
+    if (!isSnakeMoving) return; // [CRITICAL] সাপ স্থির থাকলে মুভমেন্ট প্রসেস হবে না
 
     let head = {...snake[0]};
 
@@ -529,6 +504,7 @@ function startGame(){
 
 function pauseGame(){
     if (isLevelTransition) return; 
+    if (!isSnakeMoving) return; // সাপ মুভ না করা পর্যন্ত পজ কাজ করবে না
     
     if(running){
         clearInterval(gameLoop);
@@ -617,7 +593,8 @@ canvas.addEventListener("touchend", function(e){
         return;
     }
 
-    if (!isSnakeMoving && menu.classList.contains("hidden")) {
+    // প্রথম মুভমেন্ট এক্টিভেট করার হ্যান্ডলার
+    if (!isSnakeMoving) {
         isSnakeMoving = true;
     }
 
@@ -640,15 +617,17 @@ document.addEventListener("keydown", function(e){
 
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        if(menu.classList.contains("hidden")){ 
+        if(!menu.classList.contains("hidden") && isSnakeMoving){ 
             pauseGame();
         }
         return;
     }
 
+    // [ARROW KEY CHECK]: যেকোনো Arrow Key চাপলে সাপ প্রথম মুভ করা শুরু করবে
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
-        if (!isSnakeMoving && menu.classList.contains("hidden")) {
+        if (!isSnakeMoving) {
             isSnakeMoving = true;
+            // প্রথম মুভমেন্টে স্পেশাল টাইমারের স্টার্ট টাইম সেট করা হলো
             if(specialFood) specialFoodStartTime = Date.now();
         }
     }
