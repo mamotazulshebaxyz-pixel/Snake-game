@@ -234,7 +234,7 @@ function draw(){
         }
     }
 
-    // ======= [UPDATED LUSH 3D CARTOON SNAKE] =======
+    // ======= [LUSH 3D CARTOON SNAKE] =======
     ctx.textAlign = "left"; 
     
     for (let i = snake.length - 1; i >= 0; i--) {
@@ -243,23 +243,29 @@ function draw(){
         let centerY = part.y + 10;
 
         if (i === 0) {
-            // --- সাপের মাথা (পিক্সার কার্টুন থ্রিডি স্টাইল) ---
-            
-            // ১. ছবিটির মতো লম্বা কিউট লাল জিব (Tongue)
+            // --- সাপের মাথা ---
+
+            // চেক করা হচ্ছে সাপ খাবারের কাছাকাছি আছে কি না (২০ পিক্সেলের মধ্যে)
+            let isNearNormalFood = Math.abs(part.x - food.x) <= 20 && Math.abs(part.y - food.y) <= 20;
+            let isNearSpecialFood = specialFood && Math.abs(part.x - specialFood.x) <= 20 && Math.abs(part.y - specialFood.y) <= 20;
+            let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
+
+            // ১. লম্বা কিউট লাল জিব (মুখ হাঁ করলে জিব একটু বাইরে বের হবে)
             ctx.fillStyle = "#ff4757";
             ctx.beginPath();
+            let tongueLen = isEatingTime ? 12 : 8; 
             if (direction === "UP") {
-                ctx.rect(centerX - 3, centerY - 18, 6, 8); ctx.fill();
-                ctx.arc(centerX - 2, centerY - 18, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY - 18, 2, 0, Math.PI*2);
+                ctx.rect(centerX - 3, centerY - 10 - tongueLen, 6, tongueLen); ctx.fill();
+                ctx.arc(centerX - 2, centerY - 10 - tongueLen, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY - 10 - tongueLen, 2, 0, Math.PI*2);
             } else if (direction === "LEFT") {
-                ctx.rect(centerX - 18, centerY - 3, 8, 6); ctx.fill();
-                ctx.arc(centerX - 18, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX - 18, centerY + 2, 2, 0, Math.PI*2);
+                ctx.rect(centerX - 10 - tongueLen, centerY - 3, tongueLen, 6); ctx.fill();
+                ctx.arc(centerX - 10 - tongueLen, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX - 10 - tongueLen, centerY + 2, 2, 0, Math.PI*2);
             } else if (direction === "DOWN") {
-                ctx.rect(centerX - 3, centerY + 10, 6, 8); ctx.fill();
-                ctx.arc(centerX - 2, centerY + 18, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY + 18, 2, 0, Math.PI*2);
-            } else { // RIGHT বা ডিফল্ট
-                ctx.rect(centerX + 10, centerY - 3, 8, 6); ctx.fill();
-                ctx.arc(centerX + 18, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX + 18, centerY + 2, 2, 0, Math.PI*2);
+                ctx.rect(centerX - 3, centerY + 10, 6, tongueLen); ctx.fill();
+                ctx.arc(centerX - 2, centerY + 10 + tongueLen, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY + 10 + tongueLen, 2, 0, Math.PI*2);
+            } else { 
+                ctx.rect(centerX + 10, centerY - 3, tongueLen, 6); ctx.fill();
+                ctx.arc(centerX + 10 + tongueLen, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX + 10 + tongueLen, centerY + 2, 2, 0, Math.PI*2);
             }
             ctx.fill();
 
@@ -274,37 +280,53 @@ function draw(){
             ctx.arc(centerX, centerY, 13, 0, Math.PI * 2); 
             ctx.fill();
 
-            // ৩. ছবিটির মতো বড় বড় গোল গোল কিউট চোখ (Big Cartoon Eyes)
+            // ৩. বড় বড় গোল গোল কিউট চোখ (খাবার দেখলে চোখ এক্সাইটেড হয়ে বড় হবে!)
+            let eyeRadius = isEatingTime ? 7 : 6; 
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
-            ctx.arc(centerX - 5, centerY - 4, 6, 0, Math.PI * 2); // বাম চোখ
-            ctx.arc(centerX + 5, centerY - 4, 6, 0, Math.PI * 2); // ডান চোখ
+            ctx.arc(centerX - 5, centerY - 4, eyeRadius, 0, Math.PI * 2); 
+            ctx.arc(centerX + 5, centerY - 4, eyeRadius, 0, Math.PI * 2); 
             ctx.fill();
 
-            // চোখের মণি (Black Pupil)
+            // চোখের মণি
             ctx.fillStyle = "#000000";
             ctx.beginPath();
-            ctx.arc(centerX - 4, centerY - 4, 3.5, 0, Math.PI * 2);
-            ctx.arc(centerX + 4, centerY - 4, 3.5, 0, Math.PI * 2);
+            ctx.arc(centerX - 4, centerY - 4, isEatingTime ? 4.5 : 3.5, 0, Math.PI * 2);
+            ctx.arc(centerX + 4, centerY - 4, isEatingTime ? 4.5 : 3.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // চোখের গ্লসি রিফ্লেকশন (White Glow Spots)
+            // চোখের গ্লসি রিফ্লেকশন
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(centerX - 5.2, centerY - 5.2, 1.5, 0, Math.PI * 2);
             ctx.arc(centerX + 2.8, centerY - 5.2, 1.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // ৪. মিষ্টি হাসিমুখ (Cute Smile Line)
-            ctx.strokeStyle = "#1b5e20";
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = "round";
-            ctx.beginPath();
-            ctx.arc(centerX, centerY + 3, 5, 0.1 * Math.PI, 0.9 * Math.PI);
-            ctx.stroke();
+            // ৪. মুখ খোলা এবং বন্ধ করার অ্যানিমেশন
+            if (isEatingTime) {
+                // খাবার খাওয়ার সময় বড় হাঁ (Open Mouth)
+                ctx.fillStyle = "#9e1b1b"; 
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 4, 6, 0, Math.PI); 
+                ctx.fill();
+                
+                // কিউট ছোট্ট গোলাপী জিব মুখের ভেতরে
+                ctx.fillStyle = "#ff7675";
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 7, 3, 0, Math.PI);
+                ctx.fill();
+            } else {
+                // সাধারণ অবস্থায় মিষ্টি হাসিমুখ (Cute Smile Line)
+                ctx.strokeStyle = "#1b5e20";
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = "round";
+                ctx.beginPath();
+                ctx.arc(centerX, centerY + 3, 5, 0.1 * Math.PI, 0.9 * Math.PI);
+                ctx.stroke();
+            }
 
         } else {
-            // --- গোল গোল থ্রিডি বডি জয়েন্টস (Glossy Body Bubbles) ---
+            // --- গোল গোল থ্রিডি বডি জয়েন্টস ---
             let bodyGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 1, centerX, centerY, 11);
             bodyGrad.addColorStop(0, "#bfff00"); 
             bodyGrad.addColorStop(0.5, "#4cd137"); 
@@ -312,12 +334,10 @@ function draw(){
             
             ctx.fillStyle = bodyGrad;
             ctx.beginPath();
-            // লেজের দিকে আস্তে আস্তে একটু ছোট হবে বাবলসগুলো
             let radius = Math.max(11 - (i * 0.2), 7);
             ctx.arc(centerX, centerY, radius, 0, Math.PI * 2); 
             ctx.fill();
             
-            // ডার্ক বর্ডার ইফেক্ট
             ctx.strokeStyle = "rgba(0,0,0,0.2)";
             ctx.lineWidth = 1;
             ctx.stroke();
@@ -621,7 +641,6 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
-    // Spacebar লজিক ফিক্স
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
         if(menu.classList.contains("hidden") && isSnakeMoving){ 
