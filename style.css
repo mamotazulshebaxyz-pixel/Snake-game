@@ -97,26 +97,34 @@ button:hover {
     display: none !important;
 }
 
-/* [UPDATED] পজ বাটনটিকে ক্যানভাসের একদম সেন্টারে বা মাঝখানে ভাসিয়ে রাখার জন্য */
+/* ক্যানভাসের নিচের কন্ট্রোল এরিয়া */
 .controls {
-    position: absolute;
-    top: 55%; 
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    pointer-events: none; /* বাটনের চারপাশের খালি জায়গায় মাউস ক্লিক যাতে ক্যানভাসে পৌঁছায় */
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* নিচে মাঝামাঝি থাকা বাটনটির চমৎকার ডিজাইন */
+.controls button {
+    width: 180px;
+    height: 45px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #22c55e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: 0.2s ease;
     margin: 0;
 }
 
-.controls button {
-    width: 150px;
-    height: 50px;
-    font-size: 18px;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    border: 2px solid #fff;
-    pointer-events: auto; /* বাটনের ওপর ক্লিক সচল করার জন্য */
-    margin: 0;
+.controls button:hover {
+    background: #16a34a;
+    transform: translateY(-2px);
 }
 
 /* =======================================
