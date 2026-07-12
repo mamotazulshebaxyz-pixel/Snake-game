@@ -14,6 +14,7 @@ body {
 }
 
 .game {
+    position: relative; /* [IMPORTANT] মাঝখানে বাটন প্লেসমেন্টের জন্য এটি জরুরি */
     background: #1e293b;
     padding: 25px;
     border-radius: 15px;
@@ -32,7 +33,7 @@ h1 {
     color: #fff;
     margin-bottom: 15px;
     font-size: 18px;
-    gap: 15px; /* লেভেল যুক্ত হওয়ায় একটু ফাঁকা রাখার জন্য */
+    gap: 15px; 
 }
 
 canvas {
@@ -96,24 +97,36 @@ button:hover {
     display: none !important;
 }
 
+/* [UPDATED] পজ বাটনটিকে ক্যানভাসের একদম সেন্টারে বা মাঝখানে ভাসিয়ে রাখার জন্য */
 .controls {
-    margin-top: 15px;
-    text-align: center;
+    position: absolute;
+    top: 55%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none; /* বাটনের চারপাশের খালি জায়গায় মাউস ক্লিক যাতে ক্যানভাসে পৌঁছায় */
+    margin: 0;
 }
 
 .controls button {
-    width: 180px;
+    width: 150px;
+    height: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    border: 2px solid #fff;
+    pointer-events: auto; /* বাটনের ওপর ক্লিক সচল করার জন্য */
+    margin: 0;
 }
 
 /* =======================================
    গেম ওভার মোডাল (Pop-up Window) ডিজাইন 
 ======================================= */
 
-/* ১. পুরো স্ক্রিন জুড়ে কালো আবছা ব্যাকগ্রাউন্ড */
 #gameOverModal {
-    display: none; /* শুরুতে জাভাস্ক্রিপ্ট দিয়ে কন্ট্রোল হবে */
+    display: none; 
     position: fixed;
-    z-index: 9999; /* যেন গেমের সব এলিমেন্টের উপরে ভেসে থাকে */
+    z-index: 9999; 
     left: 0;
     top: 0;
     width: 100%;
@@ -123,7 +136,6 @@ button:hover {
     align-items: center;
 }
 
-/* ২. মূল পপ-আপ বক্সের চমৎকার ডিজাইন (HTML-এ আমরা সরাসরি বক্সে ডিজাইন দিতে পারি) */
 #gameOverModal > div {
     background-color: #1a1a1a; 
     color: #ffffff;
@@ -131,14 +143,13 @@ button:hover {
     border-radius: 16px;
     text-align: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    border: 2px solid #22c55e; /* বর্ডারের সাথে ম্যাচিং সবুজ */
+    border: 2px solid #22c55e; 
     font-family: 'Segoe UI', Roboto, sans-serif;
     min-width: 300px;
 }
 
-/* ৩. লেখার স্টাইল */
 #gameOverModal h2 {
-    color: #ff4d4d; /* লাল রঙের 'Game Over' লেখা */
+    color: #ff4d4d; 
     margin-top: 0;
     font-size: 28px;
     margin-bottom: 15px;
@@ -151,10 +162,9 @@ button:hover {
 
 #finalScore {
     font-weight: bold;
-    color: #22c55e; /* স্কোরটি সবুজ দেখাবে */
+    color: #22c55e; 
 }
 
-/* ৪. মোডাল বাটনের ডিজাইন */
 #restartBtn, #cancelBtn {
     margin: 10px 8px 0 8px;
     padding: 12px 24px;
@@ -163,7 +173,7 @@ button:hover {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: inline-block; /* বাটন দুটি পাশাপাশি বসার জন্য */
+    display: inline-block; 
 }
 
 #restartBtn {
@@ -177,7 +187,7 @@ button:hover {
 }
 
 #cancelBtn {
-    background-color: #ef4444; /* ক্যানসেল বাটনটি লাল দেখাবে */
+    background-color: #ef4444; 
     color: white;
 }
 
