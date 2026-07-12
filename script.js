@@ -15,7 +15,6 @@ const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreText = document.getElementById("finalScore");
 const modalRestartBtn = document.getElementById("restartBtn");
 
-// বেস স্পিড ভ্যারিয়েবল
 const BASE_SPEED = 300; 
 let gameSpeed = BASE_SPEED;
 
@@ -34,10 +33,7 @@ let normalFoodEatenCount = 0;
 let running = false;
 let obstacles = []; 
 
-// সাপ বর্তমানে মুভ করছে কিনা তা ট্র্যাক করার জন্য
 let isSnakeMoving = false; 
-
-// লেভেল ট্রানজিশন (ইন্টারমিশন স্ক্রিন) এর জন্য ভ্যারিয়েবল
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 
@@ -100,7 +96,6 @@ function createSpecialFood() {
     }, 5000);
 }
 
-// সাপের মাথার চারপাশে (৬০ পিক্সেল রেডিয়াসে) অবস্ট্যাকল ক্লিয়ার করার লজিক
 function generateObstacles(targetLevel) {
     let rawObstacles = [];
     let lvl = targetLevel || level;
@@ -145,7 +140,6 @@ function generateObstacles(targetLevel) {
         }
     }
 
-    // (২০০, ২০০)-এর চারপাশের ৬০ পিক্সেলের ভেতর সব অবস্ট্যাকল পরিষ্কার রাখা হবে
     obstacles = rawObstacles.filter(obs => {
         let distanceX = Math.abs(obs.x - 200);
         let distanceY = Math.abs(obs.y - 200);
@@ -177,7 +171,7 @@ function draw(){
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
-    // ======= লেভেলের বাধা (Obstacles) =======
+    // ======= Obstacles =======
     ctx.fillStyle = "#e74c3c"; 
     ctx.shadowBlur = 8;
     ctx.shadowColor = "#e74c3c";
@@ -188,7 +182,7 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= চিবি ব্যাঙ (Frog) =======
+    // ======= Frog =======
     ctx.fillStyle = "#2ecc71"; 
     ctx.beginPath();
     ctx.arc(food.x + 10, food.y + 11, 8, 0, Math.PI * 2);
@@ -214,7 +208,7 @@ function draw(){
     ctx.beginPath(); ctx.arc(food.x + 6, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(food.x + 14, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
 
-    // special food
+    // Special Food
     if (specialFood) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = "#ffd700";
@@ -240,7 +234,7 @@ function draw(){
         }
     }
 
-    // ======= কিউট কার্টুন সাপ ড্রয়িং =======
+    // ======= [UPDATED LUSH 3D CARTOON SNAKE] =======
     ctx.textAlign = "left"; 
     
     for (let i = snake.length - 1; i >= 0; i--) {
@@ -249,68 +243,87 @@ function draw(){
         let centerY = part.y + 10;
 
         if (i === 0) {
-            // --- সাপের মাথা ---
-            ctx.fillStyle = "#ff3838";
+            // --- সাপের মাথা (পিক্সার কার্টুন থ্রিডি স্টাইল) ---
+            
+            // ১. ছবিটির মতো লম্বা কিউট লাল জিব (Tongue)
+            ctx.fillStyle = "#ff4757";
             ctx.beginPath();
-            ctx.arc(centerX + 2, centerY + 11, 4, 0, Math.PI * 2);
+            if (direction === "UP") {
+                ctx.rect(centerX - 3, centerY - 18, 6, 8); ctx.fill();
+                ctx.arc(centerX - 2, centerY - 18, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY - 18, 2, 0, Math.PI*2);
+            } else if (direction === "LEFT") {
+                ctx.rect(centerX - 18, centerY - 3, 8, 6); ctx.fill();
+                ctx.arc(centerX - 18, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX - 18, centerY + 2, 2, 0, Math.PI*2);
+            } else if (direction === "DOWN") {
+                ctx.rect(centerX - 3, centerY + 10, 6, 8); ctx.fill();
+                ctx.arc(centerX - 2, centerY + 18, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY + 18, 2, 0, Math.PI*2);
+            } else { // RIGHT বা ডিফল্ট
+                ctx.rect(centerX + 10, centerY - 3, 8, 6); ctx.fill();
+                ctx.arc(centerX + 18, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX + 18, centerY + 2, 2, 0, Math.PI*2);
+            }
             ctx.fill();
-            ctx.fillRect(centerX - 1, centerY + 8, 5, 6);
 
-            let headGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 2, centerX, centerY, 12);
+            // ২. গ্রাডিয়েন্ট দিয়ে উজ্জ্বল সবুজ মাথা
+            let headGrad = ctx.createRadialGradient(centerX - 3, centerY - 4, 3, centerX, centerY, 13);
             headGrad.addColorStop(0, "#a2ff00"); 
-            headGrad.addColorStop(0.5, "#4cd137"); 
-            headGrad.addColorStop(1, "#44bd32"); 
+            headGrad.addColorStop(0.6, "#4cd137"); 
+            headGrad.addColorStop(1, "#26de10"); 
             
             ctx.fillStyle = headGrad;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 12, 0, Math.PI * 2); 
+            ctx.arc(centerX, centerY, 13, 0, Math.PI * 2); 
             ctx.fill();
 
-            // কার্টুন চোখ
+            // ৩. ছবিটির মতো বড় বড় গোল গোল কিউট চোখ (Big Cartoon Eyes)
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
-            ctx.arc(centerX - 5, centerY - 2, 5, 0, Math.PI * 2);
-            ctx.arc(centerX + 3, centerY - 2, 5, 0, Math.PI * 2);
+            ctx.arc(centerX - 5, centerY - 4, 6, 0, Math.PI * 2); // বাম চোখ
+            ctx.arc(centerX + 5, centerY - 4, 6, 0, Math.PI * 2); // ডান চোখ
             ctx.fill();
 
+            // চোখের মণি (Black Pupil)
             ctx.fillStyle = "#000000";
             ctx.beginPath();
-            ctx.arc(centerX - 4, centerY - 2, 3, 0, Math.PI * 2);
-            ctx.arc(centerX + 4, centerY - 2, 3, 0, Math.PI * 2);
+            ctx.arc(centerX - 4, centerY - 4, 3.5, 0, Math.PI * 2);
+            ctx.arc(centerX + 4, centerY - 4, 3.5, 0, Math.PI * 2);
             ctx.fill();
 
+            // চোখের গ্লসি রিফ্লেকশন (White Glow Spots)
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
-            ctx.arc(centerX - 5, centerY - 3, 1.2, 0, Math.PI * 2);
-            ctx.arc(centerX + 3, centerY - 3, 1.2, 0, Math.PI * 2);
+            ctx.arc(centerX - 5.2, centerY - 5.2, 1.5, 0, Math.PI * 2);
+            ctx.arc(centerX + 2.8, centerY - 5.2, 1.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // স্মাইল
-            ctx.strokeStyle = "#2f3640";
-            ctx.lineWidth = 1.5;
+            // ৪. মিষ্টি হাসিমুখ (Cute Smile Line)
+            ctx.strokeStyle = "#1b5e20";
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = "round";
             ctx.beginPath();
-            ctx.arc(centerX, centerY + 4, 4, 0, Math.PI);
+            ctx.arc(centerX, centerY + 3, 5, 0.1 * Math.PI, 0.9 * Math.PI);
             ctx.stroke();
 
         } else {
-            // --- বডি বাবলস ---
-            let bodyGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 1, centerX, centerY, 10);
-            bodyGrad.addColorStop(0, "#adff2f"); 
-            bodyGrad.addColorStop(0.6, "#4cd137"); 
-            bodyGrad.addColorStop(1, "#3b9c24"); 
+            // --- গোল গোল থ্রিডি বডি জয়েন্টস (Glossy Body Bubbles) ---
+            let bodyGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 1, centerX, centerY, 11);
+            bodyGrad.addColorStop(0, "#bfff00"); 
+            bodyGrad.addColorStop(0.5, "#4cd137"); 
+            bodyGrad.addColorStop(1, "#1e820b"); 
             
             ctx.fillStyle = bodyGrad;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 10, 0, Math.PI * 2); 
+            // লেজের দিকে আস্তে আস্তে একটু ছোট হবে বাবলসগুলো
+            let radius = Math.max(11 - (i * 0.2), 7);
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2); 
             ctx.fill();
             
-            ctx.strokeStyle = "rgba(0,0,0,0.15)";
-            ctx.lineWidth = 0.5;
+            // ডার্ক বর্ডার ইফেক্ট
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.lineWidth = 1;
             ctx.stroke();
         }
     }
 
-    // সাপ স্থির থাকলে স্ক্রিনে মেসেজ দেখাবে
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
@@ -321,7 +334,6 @@ function draw(){
         ctx.fillText("🎮 Press any Arrow Key to Start Move", 200, 190);
     }
 
-    // ======= লেভেল আপ ট্রানজিশন স্ক্রিন ওভারলে =======
     if (isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; 
         ctx.fillRect(0, 0, 400, 400);
@@ -402,7 +414,6 @@ function move(){
     if(head.y < 0) head.y = 380;
     if(head.y >= 400) head.y = 0;
 
-    // Obstacle collision
     for(let obs of obstacles){
         if(head.x === obs.x && head.y === obs.y){
             gameOver();
@@ -412,7 +423,6 @@ function move(){
 
     snake.unshift(head);
 
-    // Body collision
     for(let i = 1; i < snake.length; i++){
         if(head.x === snake[i].x && head.y === snake[i].y){
             gameOver();
@@ -420,7 +430,6 @@ function move(){
         }
     }
 
-    // ১. খাবার খাওয়া
     if(head.x == food.x && head.y == food.y){
         score++;
         normalFoodEatenCount++; 
@@ -451,7 +460,6 @@ function move(){
         }
         if (!isLevelTransition) createFood();
     } 
-    // ২. স্পেশাল গোল্ডেন ফুড
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
         score += 3; 
         scoreText.innerHTML = score;
@@ -605,7 +613,6 @@ canvas.addEventListener("touchend", function(e){
     }
 }, { passive: true });
 
-// [UPDATED KEYDOWN LISTENER]
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
         if(e.key === "Enter") {
@@ -614,16 +621,15 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
-    // Spacebar লজিক: গেম চলাকালীন বা পজ থাকা অবস্থায় কাজ করবে
+    // Spacebar লজিক ফিক্স
     if(e.key === " " || e.key === "Spacebar"){
-        e.preventDefault(); // ব্রাউজার স্ক্রোলিং বন্ধ করার জন্য
+        e.preventDefault(); 
         if(menu.classList.contains("hidden") && isSnakeMoving){ 
             pauseGame();
         }
         return;
     }
 
-    // যেকোনো Arrow Key চাপলে সাপ চলা শুরু করবে
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
         if (!isSnakeMoving) {
             isSnakeMoving = true;
