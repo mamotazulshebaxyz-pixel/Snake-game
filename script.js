@@ -32,7 +32,10 @@ let specialFoodTimer = null;
 let specialFoodStartTime = 0; 
 let normalFoodEatenCount = 0; 
 let running = false;
-let obstacles = []; // বাধা রাখার জন্য
+let obstacles = []; 
+
+// [NEW STATE] সাপ বর্তমানে মুভ করছে কিনা তা ট্র্যাক করার জন্য
+let isSnakeMoving = false; 
 
 // লেভেল ট্রানজিশন (ইন্টারমিশন স্ক্রিন) এর জন্য ভ্যারিয়েবল
 let isLevelTransition = false;
@@ -97,7 +100,7 @@ function createSpecialFood() {
     }, 5000);
 }
 
-// প্রতিটি লেভেলের জন্য ইউনিক দেয়াল তৈরি করার মেকানিজম
+// সাপের মাথার চারপাশে (৬০ পিক্সেল রেডিয়াসে) অবস্ট্যাকল ক্লিয়ার করার লজিক
 function generateObstacles(targetLevel) {
     let rawObstacles = [];
     let lvl = targetLevel || level;
@@ -142,10 +145,11 @@ function generateObstacles(targetLevel) {
         }
     }
 
+    // যেহেতু সাপ যেকোনো দিকে যেতে পারে, তাই (২০০, ২০০)-এর চারপাশের ৬০ পিক্সেলের ভেতর সব অবস্ট্যাকল পুরো পরিষ্কার রাখা হবে
     obstacles = rawObstacles.filter(obs => {
         let distanceX = Math.abs(obs.x - 200);
         let distanceY = Math.abs(obs.y - 200);
-        return !(distanceX <= 60 && distanceY <= 40);
+        return !(distanceX <= 60 && distanceY <= 60);
     });
 }
 
@@ -157,7 +161,9 @@ function resetGame(){
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
 
-    direction = "RIGHT"; 
+    direction = null; // শুরুতে কোনো ডিরেকশন থাকবে না
+    isSnakeMoving = false; // সাপ স্থির থাকবে
+
     score = 0;
     scoreText.innerHTML = score;
     level = 1;
@@ -226,7 +232,7 @@ function draw(){
         let elapsedTime = Date.now() - specialFoodStartTime;
         let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); 
 
-        if (timeLeft > 0) {
+        if (timeLeft > 0 && isSnakeMoving) {
             ctx.fillStyle = "#ffd700"; 
             ctx.font = "bold 14px sans-serif";
             ctx.textAlign = "center";
@@ -234,64 +240,52 @@ function draw(){
         }
     }
 
-    // ======= [NEW DESIGN] ইমেজ অনুকরণে থ্রিডি কার্টুন সাপ =======
+    // ======= কিউট কার্টুন সাপ ড্রয়িং =======
     ctx.textAlign = "left"; 
     
-    // প্রথমে বডি আঁকা হচ্ছে (যাতে মাথা সবার উপরে সুন্দরভাবে ওভারল্যাপ করে থাকে)
     for (let i = snake.length - 1; i >= 0; i--) {
         let part = snake[i];
         let centerX = part.x + 10;
         let centerY = part.y + 10;
 
         if (i === 0) {
-            // --- সাপের মাথা (Head) ---
-            
-            // ১. বের হয়ে থাকা কিউট লাল জিব (Tongue)
+            // --- সাপের মাথা ---
             ctx.fillStyle = "#ff3838";
             ctx.beginPath();
-            // সাপের মুখের নিচ থেকে জিব বের হবে
             ctx.arc(centerX + 2, centerY + 11, 4, 0, Math.PI * 2);
             ctx.fill();
-            // জিবের একটু কার্ভ শেপ
             ctx.fillRect(centerX - 1, centerY + 8, 5, 6);
 
-            // ২. মাথার থ্রিডি গ্লসি গ্রাডিয়েন্ট বডি
             let headGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 2, centerX, centerY, 12);
-            headGrad.addColorStop(0, "#a2ff00"); // ইমেজের মতো হালকা নিয়ন গ্রিন টপলাইট
-            headGrad.addColorStop(0.5, "#4cd137"); // মূল বডি গ্রিন
-            headGrad.addColorStop(1, "#44bd32"); // ডার্ক শেড বর্ডার
+            headGrad.addColorStop(0, "#a2ff00"); 
+            headGrad.addColorStop(0.5, "#4cd137"); 
+            headGrad.addColorStop(1, "#44bd32"); 
             
             ctx.fillStyle = headGrad;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 12, 0, Math.PI * 2); // মাথা সামান্য বড় (১২px)
+            ctx.arc(centerX, centerY, 12, 0, Math.PI * 2); 
             ctx.fill();
 
-            // ৩. ইমেজের মতো বিশাল আকর্ষক কার্টুন চোখ (Big Eyes)
-            // বাম চোখ
+            // কার্টুন চোখ
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(centerX - 5, centerY - 2, 5, 0, Math.PI * 2);
-            ctx.fill();
-            // ডান চোখ (সামান্য ওভারল্যাপড)
-            ctx.beginPath();
             ctx.arc(centerX + 3, centerY - 2, 5, 0, Math.PI * 2);
             ctx.fill();
 
-            // চোখের মণি (Black Pupils)
             ctx.fillStyle = "#000000";
             ctx.beginPath();
             ctx.arc(centerX - 4, centerY - 2, 3, 0, Math.PI * 2);
             ctx.arc(centerX + 4, centerY - 2, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            // চোখের ভেতরের সাদা রিফ্লেকশন গ্লস (White Highlights)
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(centerX - 5, centerY - 3, 1.2, 0, Math.PI * 2);
             ctx.arc(centerX + 3, centerY - 3, 1.2, 0, Math.PI * 2);
             ctx.fill();
 
-            // ৪. কিউট স্মাইল লাইন (Smile)
+            // স্মাইল
             ctx.strokeStyle = "#2f3640";
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -299,22 +293,32 @@ function draw(){
             ctx.stroke();
 
         } else {
-            // --- সাপের বডি সেগমেন্ট (Circular 3D Body) ---
+            // --- বডি বাবলস ---
             let bodyGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 1, centerX, centerY, 10);
-            bodyGrad.addColorStop(0, "#adff2f"); // টপ লাইট গ্লো
+            bodyGrad.addColorStop(0, "#adff2f"); 
             bodyGrad.addColorStop(0.6, "#4cd137"); 
-            bodyGrad.addColorStop(1, "#3b9c24"); // বর্ডার শ্যাডো
+            bodyGrad.addColorStop(1, "#3b9c24"); 
             
             ctx.fillStyle = bodyGrad;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 10, 0, Math.PI * 2); // সম্পূর্ণ বৃত্তাকার বডি সেগমেন্ট
+            ctx.arc(centerX, centerY, 10, 0, Math.PI * 2); 
             ctx.fill();
             
-            // হালকা স্ট্রোক যাতে প্রতিটি বাবল পার্ট আলাদা করে বোঝা যায়
             ctx.strokeStyle = "rgba(0,0,0,0.15)";
             ctx.lineWidth = 0.5;
             ctx.stroke();
         }
+    }
+
+    // [NEW GUIDE TEXT] সাপ স্থির থাকলে স্ক্রিনে ডিরেকশন দেওয়ার মেসেজ দেখাবে
+    if (running && !isSnakeMoving && !isLevelTransition) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(0, 0, 400, 400);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("🎮 Press any Arrow Key to Start Move", 200, 190);
     }
 
     // ======= লেভেল আপ ট্রানজিশন স্ক্রিন ওভারলে =======
@@ -342,7 +346,6 @@ function draw(){
     }
 }
 
-// ট্রানজিশন বোতামে ক্লিক হ্যান্ডেল করা
 canvas.addEventListener("click", function(e) {
     if (isLevelTransition) {
         const rect = canvas.getBoundingClientRect();
@@ -359,8 +362,10 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
+    // রিসেট পজিশন ও মুভমেন্ট স্টেট স্থগিতকরণ
     snake = [{x: 200, y: 200}]; 
-    direction = "RIGHT"; 
+    direction = null; 
+    isSnakeMoving = false; // কিউ না চাপা পর্যন্ত সাপ চলবে না
     
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
@@ -384,6 +389,7 @@ function triggerLevelTransition(targetLevel) {
 
 function move(){
     if (isLevelTransition) return; 
+    if (!isSnakeMoving) return; // [CRITICAL] সাপ স্থির থাকলে মুভমেন্ট প্রসেস হবে না
 
     let head = {...snake[0]};
 
@@ -415,7 +421,7 @@ function move(){
         }
     }
 
-    // ১. সাধারণ খাবার খাওয়া
+    // ১. খাবার খাওয়া
     if(head.x == food.x && head.y == food.y){
         score++;
         normalFoodEatenCount++; 
@@ -446,7 +452,7 @@ function move(){
         }
         if (!isLevelTransition) createFood();
     } 
-    // ২. স্পেশাল গোল্ডেন ফুড খাওয়া
+    // ২. স্পেশাল গোল্ডেন ফুড
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
         score += 3; 
         scoreText.innerHTML = score;
@@ -498,6 +504,8 @@ function startGame(){
 
 function pauseGame(){
     if (isLevelTransition) return; 
+    if (!isSnakeMoving) return; // সাপ মুভ না করা পর্যন্ত পজ কাজ করবে না
+    
     if(running){
         clearInterval(gameLoop);
         gameLoop = null;
@@ -539,6 +547,7 @@ function restartGame(){
 function gameOver(){
     clearInterval(gameLoop);
     running = false;
+    isSnakeMoving = false;
     clearTimeout(specialFoodTimer); 
 
     menu.classList.remove("hidden");
@@ -584,6 +593,11 @@ canvas.addEventListener("touchend", function(e){
         return;
     }
 
+    // প্রথম মুভমেন্ট এক্টিভেট করার হ্যান্ডলার
+    if (!isSnakeMoving) {
+        isSnakeMoving = true;
+    }
+
     if(Math.abs(dx) > Math.abs(dy)){
         if(dx > 0 && direction != "LEFT") direction = "RIGHT";
         if(dx < 0 && direction != "RIGHT") direction = "LEFT";
@@ -603,10 +617,19 @@ document.addEventListener("keydown", function(e){
 
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        if(!menu.classList.contains("hidden") === false){ 
+        if(!menu.classList.contains("hidden") && isSnakeMoving){ 
             pauseGame();
         }
         return;
+    }
+
+    // [ARROW KEY CHECK]: যেকোনো Arrow Key চাপলে সাপ প্রথম মুভ করা শুরু করবে
+    if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
+        if (!isSnakeMoving) {
+            isSnakeMoving = true;
+            // প্রথম মুভমেন্টে স্পেশাল টাইমারের স্টার্ট টাইম সেট করা হলো
+            if(specialFood) specialFoodStartTime = Date.now();
+        }
     }
 
     if(e.key=="ArrowUp" && direction!="DOWN") direction="UP";
