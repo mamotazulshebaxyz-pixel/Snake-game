@@ -88,7 +88,6 @@ function createSpecialFood() {
         }
     }
 
-    // [FIXED] তৈরি হওয়ার সাথে সাথেই রিয়েল-টাইম মিলিগ্রাম সেট হবে যেন ৫ সেকেন্ড কাউন্টডাউন শুরু হতে পারে
     specialFoodStartTime = Date.now(); 
 
     clearTimeout(specialFoodTimer);
@@ -168,8 +167,21 @@ function resetGame(){
 }
 
 function draw(){
-    ctx.fillStyle = "#111";
+    // ======= UNDERWATER BLUE GRADIENT BACKGROUND =======
+    let waterGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    waterGradient.addColorStop(0, "#0f2027");   
+    waterGradient.addColorStop(0.5, "#203a43"); 
+    waterGradient.addColorStop(1, "#2c5364");   
+    ctx.fillStyle = waterGradient;
     ctx.fillRect(0,0,400,400);
+
+    // ======= WATER LINE/GRID EFFECT =======
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+    ctx.lineWidth = 1;
+    for(let i = 0; i < 400; i += 20) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 400); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(400, i); ctx.stroke();
+    }
 
     // ======= Obstacles =======
     ctx.fillStyle = "#e74c3c"; 
@@ -264,7 +276,6 @@ function draw(){
 
         ctx.shadowBlur = 0; 
 
-        // [FIXED] টাইমার রেন্ডারিং লজিক (স্টেট চেঞ্জ মুক্ত ও ক্লিন রেন্ডারিং)
         let timeLeft = 5.0;
         if (specialFoodStartTime > 0) {
             let elapsedTime = Date.now() - specialFoodStartTime;
@@ -279,10 +290,10 @@ function draw(){
         }
     }
 
-    // ======= GOOGLE STYLE SMOOTH BLUE SNAKE =======
+    // ======= GOOGLE STYLE SMOOTH TEAL SNAKE =======
     ctx.textAlign = "left"; 
     
-    ctx.strokeStyle = "#3b82f6"; 
+    ctx.strokeStyle = "#14b8a6"; 
     ctx.lineWidth = 18;           
     ctx.lineCap = "round";        
     ctx.lineJoin = "round";       
@@ -309,7 +320,7 @@ function draw(){
     let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
     let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
 
-    ctx.fillStyle = "#3b82f6";
+    ctx.fillStyle = "#14b8a6"; 
     ctx.beginPath();
     ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
     ctx.fill();
@@ -327,14 +338,14 @@ function draw(){
     ctx.arc(0, 6, 4.5, 0, Math.PI * 2);  
     ctx.fill();
 
-    ctx.fillStyle = "#1d4ed8"; 
+    ctx.fillStyle = "#0f766e"; 
     ctx.beginPath();
     ctx.arc(1, -6, 2, 0, Math.PI * 2);
     ctx.arc(1, 6, 2, 0, Math.PI * 2);
     ctx.fill();
 
     if (isEatingTime) {
-        ctx.fillStyle = "#1e3a8a"; 
+        ctx.fillStyle = "#115e59"; 
         ctx.beginPath();
         ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
         ctx.fill();
@@ -345,7 +356,7 @@ function draw(){
         ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   
         ctx.fill();
     } else {
-        ctx.strokeStyle = "#1e3a8a";
+        ctx.strokeStyle = "#115e59";
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
         ctx.beginPath();
@@ -525,7 +536,6 @@ function move(){
 }
 
 function game(){
-    // [FIXED] গেম লুপের মূল ফ্রেমে বোনাস ফুড এক্সপায়ার হওয়ার লজিক যোগ করা হলো, যেন গেম স্থির বা পজ থাকলেও ৫ সেকেন্ড পর তা মুছে যায়
     if (specialFood && specialFoodStartTime > 0) {
         let elapsedTime = Date.now() - specialFoodStartTime;
         if (elapsedTime >= 5000) {
