@@ -167,16 +167,16 @@ function resetGame(){
 }
 
 function draw(){
-    // ======= UNDERWATER BLUE GRADIENT BACKGROUND =======
+    // ======= উজ্জ্বল ও আকর্ষণীয় পানির গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড =======
     let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    waterGradient.addColorStop(0, "#0f2027");   
-    waterGradient.addColorStop(0.5, "#203a43"); 
-    waterGradient.addColorStop(1, "#2c5364");   
+    waterGradient.addColorStop(0, "#00c6ff");   // ওপরের হালকা টলটলে নীল পানি
+    waterGradient.addColorStop(0.6, "#0072ff"); // মাঝের সমুদ্রের নীল পানি
+    waterGradient.addColorStop(1, "#0052d4");   // নিচের গভীর নীল পানি
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= WATER LINE/GRID EFFECT =======
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+    // ======= স্পষ্ট পানির নিচের গ্রিড ইফেক্ট =======
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
         ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
