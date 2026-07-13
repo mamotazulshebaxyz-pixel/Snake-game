@@ -182,47 +182,65 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= Frog =======
-    ctx.fillStyle = "#2ecc71"; 
+    // ======= [NEW] Cute Goldfish Food =======
+    let fx = food.x + 10;
+    let fy = food.y + 10;
+
+    // মাছের লেজ (Triangle)
+    ctx.fillStyle = "#ff7675"; 
     ctx.beginPath();
-    ctx.arc(food.x + 10, food.y + 11, 8, 0, Math.PI * 2);
+    ctx.moveTo(fx + 4, fy);
+    ctx.lineTo(fx + 9, fy - 5);
+    ctx.lineTo(fx + 9, fy + 5);
     ctx.fill();
 
-    ctx.fillStyle = "#2ecc71";
-    ctx.beginPath(); ctx.arc(food.x + 5, food.y + 5, 3.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(food.x + 15, food.y + 5, 3.5, 0, Math.PI * 2); ctx.fill();
+    // মাছের বডি (Oval)
+    ctx.fillStyle = "#fab1a0"; 
+    ctx.beginPath();
+    ctx.ellipse(fx - 2, fy, 6, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath(); ctx.arc(food.x + 5, food.y + 5, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(food.x + 15, food.y + 5, 2.5, 0, Math.PI * 2); ctx.fill();
+    // মাছের চোখ
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(fx - 5, fy - 1, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.beginPath(); ctx.arc(fx - 5.5, fy - 1, 0.7, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = "#111111";
-    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 5, 1.2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 5, 1.2, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = "#ff7675"; 
-    ctx.beginPath(); ctx.arc(food.x + 4, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); 
-    ctx.beginPath(); ctx.arc(food.x + 16, food.y + 12, 1.5, 0, Math.PI * 2); ctx.fill(); 
-
-    ctx.fillStyle = "#27ae60"; 
-    ctx.beginPath(); ctx.arc(food.x + 6, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(food.x + 14, food.y + 18, 1.8, 0, Math.PI * 2); ctx.fill();
-
-    // Special Food
+    // ======= [NEW] Special Pearl Shell Food =======
     if (specialFood) {
+        let sx = specialFood.x + 10;
+        let sy = specialFood.y + 10;
+
         ctx.shadowBlur = 15;
-        ctx.shadowColor = "#ffd700";
-        ctx.fillStyle = "#ffd700"; 
-        ctx.beginPath();
-        ctx.arc(specialFood.x + 10, specialFood.y + 10, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.shadowColor = "#00cec9";
 
-        ctx.fillStyle = "#fff";
+        // ঝিনুকের নিচের পার্ট (Pinkish Purple)
+        ctx.fillStyle = "#a29bfe";
         ctx.beginPath();
-        ctx.arc(specialFood.x + 7, specialFood.y + 7, 2, 0, Math.PI * 2);
+        ctx.arc(sx, sy + 2, 7, 0, Math.PI, true);
+        ctx.closePath();
         ctx.fill();
 
+        // ঝিনুকের ওপরের খোলা পার্ট
+        ctx.fillStyle = "#b2bec3";
+        ctx.beginPath();
+        ctx.arc(sx, sy - 1, 7, Math.PI * 1.2, Math.PI * 1.8, false);
+        ctx.lineTo(sx, sy + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // canvas এ মাঝখানের মুক্তা (Pearl)
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#fff";
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(sx, sy + 1, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0; // শ্যাডো রিসেট
+
+        // বোনাস টাইমার
         let elapsedTime = Date.now() - specialFoodStartTime;
         let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); 
 
@@ -237,7 +255,7 @@ function draw(){
     // ======= [GOOGLE STYLE SMOOTH BLUE SNAKE] =======
     ctx.textAlign = "left"; 
     
-    // ১. সাপের স্মুথ বডি (সেগমেন্ট পদ্ধতিতে দেয়াল ক্রসিং গ্লিচ ফিক্সড)
+    // সাপের স্মুথ বডি (সেগমেন্ট পদ্ধতিতে দেয়াল ক্রসিং গ্লিচ ফিক্সড)
     ctx.strokeStyle = "#3b82f6"; 
     ctx.lineWidth = 18;           
     ctx.lineCap = "round";        
@@ -258,7 +276,7 @@ function draw(){
         ctx.stroke();
     }
 
-    // ২. সাপের মাথার স্পেশাল অ্যানিমেশন
+    // সাপের মাথার স্পেশাল অ্যানিমেশন
     let head = snake[0];
     let centerX = head.x + 10;
     let centerY = head.y + 10;
