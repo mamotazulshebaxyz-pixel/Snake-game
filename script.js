@@ -5,6 +5,7 @@ const ctx = canvas.getContext("2d");
 const scoreText = document.getElementById("score");
 const highScoreText = document.getElementById("highScore");
 const levelText = document.getElementById("level");
+const livesContainer = document.getElementById("livesContainer"); // নতুন হার্ট কন্টেইনার
 
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
@@ -24,6 +25,7 @@ let direction;
 let score;
 let level = 1;
 let highScore = localStorage.getItem("snakeHighScore") || 0;
+let lives = 3; // লাইফ সিস্টেম ট্র্যাক করার জন্য ভেরিয়েবল
 
 let gameLoop;
 let specialFood = null;
@@ -44,7 +46,7 @@ function initBubbles() {
     for(let i = 0; i < 15; i++) {
         bubbles.push({
             x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height + canvas.height, // নিচ থেকে শুরু হবে
+            y: Math.random() * canvas.height + canvas.height,
             radius: Math.random() * 4 + 2,
             speed: Math.random() * 1.5 + 0.5,
             opacity: Math.random() * 0.4 + 0.1
@@ -53,6 +55,13 @@ function initBubbles() {
 }
 
 highScoreText.innerHTML = highScore;
+
+// হার্ট স্ক্রিনে আপডেট করার ফাংশন
+function updateLivesUI() {
+    if (livesContainer) {
+        livesContainer.innerHTML = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
+    }
+}
 
 function createFood(){
     let valid = false;
@@ -173,15 +182,25 @@ function resetGame(){
     score = 0;
     scoreText.innerHTML = score;
     level = 1;
+    lives = 3; // নতুন গেম শুরু হলে ৩ লাইফ পূর্ণ হবে
     gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
     isLevelTransition = false;
+    updateLivesUI();
     initBubbles();
     createFood();
 }
 
+// সাপ মরলে কিন্তু ৩ লাইফ শেষ না হলে পজিশন রিসেট করার ফাংশন
+function resetSnakePosition() {
+    snake = [{x:200,y:200}];
+    direction = null;
+    isSnakeMoving = false;
+    specialFood = null;
+    createFood();
+}
+
 function draw(){
-    // ======= আগের প্রিমিয়াম ডার্ক ব্যাকগ্রাউন্ড (Restored) =======
     let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     waterGradient.addColorStop(0, "#0f2027");   
     waterGradient.addColorStop(0.5, "#203a43"); 
@@ -189,7 +208,6 @@ function draw(){
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= সূক্ষ্ম ও সুন্দর ওয়াটার গ্রিড ইফেক্ট =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
@@ -199,16 +217,12 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= পানির অ্যানিমেটেড বুদবুদ (Animated Bubbles) =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fill();
-
-        // বুদবুদ ওপরের দিকে উঠবে
         b.y -= b.speed;
-        // স্ক্রিনের ওপরে চলে গেলে আবার নিচে ফিরে যাবে
         if(b.y < -10) {
             b.y = canvas.height + 10;
             b.x = Math.random() * canvas.width;
@@ -233,10 +247,8 @@ function draw(){
     // ======= Vector Big Goldfish =======
     let fx = food.x + 10;
     let fy = food.y + 10;
-
     ctx.shadowBlur = 10;
     ctx.shadowColor = "#ff7675";
-
     ctx.fillStyle = "#ff7675";
     ctx.beginPath();
     ctx.moveTo(fx + 2, fy);
@@ -245,37 +257,30 @@ function draw(){
     ctx.lineTo(fx + 13, fy + 9);
     ctx.closePath();
     ctx.fill();
-
     ctx.fillStyle = "#ff7675";
     ctx.beginPath();
     ctx.ellipse(fx - 3, fy, 11, 8, 0, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.fillStyle = "#fab1a0";
     ctx.beginPath();
     ctx.ellipse(fx - 3, fy + 2, 8, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.fillStyle = "#ffffff";
     ctx.beginPath(); ctx.arc(fx - 8, fy - 2, 3, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#000000";
     ctx.beginPath(); ctx.arc(fx - 8.5, fy - 2, 1.5, 0, Math.PI * 2); ctx.fill();
-
     ctx.fillStyle = "#e74c3c";
     ctx.beginPath();
     ctx.ellipse(fx - 1, fy + 3, 4, 2.5, Math.PI/4, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.shadowBlur = 0; 
 
     // ======= Vector Crystal Diamond =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
-
         ctx.shadowBlur = 18;
         ctx.shadowColor = "#00cec9";
-
         ctx.fillStyle = "#00aea9";
         ctx.beginPath();
         ctx.moveTo(sx, sy - 11);
@@ -284,7 +289,6 @@ function draw(){
         ctx.lineTo(sx, sy + 11);
         ctx.closePath();
         ctx.fill();
-
         ctx.fillStyle = "#00cec9";
         ctx.beginPath();
         ctx.moveTo(sx - 6, sy - 11);
@@ -293,7 +297,6 @@ function draw(){
         ctx.lineTo(sx - 12, sy - 4);
         ctx.closePath();
         ctx.fill();
-
         ctx.fillStyle = "#81ecec";
         ctx.beginPath();
         ctx.moveTo(sx - 6, sy - 11);
@@ -301,7 +304,6 @@ function draw(){
         ctx.lineTo(sx, sy - 4);
         ctx.closePath();
         ctx.fill();
-
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
         ctx.moveTo(sx, sy - 4);
@@ -309,7 +311,6 @@ function draw(){
         ctx.lineTo(sx, sy + 6);
         ctx.closePath();
         ctx.fill();
-
         ctx.shadowBlur = 0; 
 
         let timeLeft = 5.0;
@@ -317,7 +318,6 @@ function draw(){
             let elapsedTime = Date.now() - specialFoodStartTime;
             timeLeft = Math.max(0, (5000 - elapsedTime) / 1000);
         }
-
         if (specialFood && timeLeft > 0) {
             ctx.fillStyle = "#ffd700"; 
             ctx.font = "bold 14px sans-serif";
@@ -336,11 +336,9 @@ function draw(){
     for (let i = 1; i < snake.length; i++) {
         let prev = snake[i - 1];
         let curr = snake[i];
-
         if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
             continue; 
         }
-
         ctx.beginPath();
         ctx.moveTo(prev.x + 10, prev.y + 10);
         ctx.lineTo(curr.x + 10, curr.y + 10);
@@ -362,7 +360,6 @@ function draw(){
 
     ctx.save();
     ctx.translate(centerX, centerY);
-    
     if (direction === "UP") ctx.rotate(-Math.PI / 2);
     else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
     else if (direction === "LEFT") ctx.rotate(Math.PI);
@@ -384,7 +381,6 @@ function draw(){
         ctx.beginPath();
         ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
         ctx.fill();
-
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
         ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); 
@@ -398,14 +394,12 @@ function draw(){
         ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
         ctx.stroke();
     }
-
     ctx.restore(); 
 
     // ======= UI =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
@@ -415,16 +409,13 @@ function draw(){
     if (isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#00bfff";
         ctx.font = "bold 32px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(`LEVEL ${nextLevelToStart}`, canvas.width / 2, canvas.height / 2 - 40);
-
         ctx.fillStyle = "#fff";
         ctx.font = "16px sans-serif";
         ctx.fillText(nextLevelToStart > 5 ? "⚠️ Random Obstacles Active!" : "Get ready for new challenges!", canvas.width / 2, canvas.height / 2);
-
         ctx.fillStyle = "#2ecc71";
         ctx.beginPath();
         if (ctx.roundRect) {
@@ -433,7 +424,6 @@ function draw(){
             ctx.rect(canvas.width / 2 - 80, canvas.height / 2 + 40, 160, 45);
         }
         ctx.fill();
-
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.fillText("Click to Start", canvas.width / 2, canvas.height / 2 + 68);
@@ -445,7 +435,6 @@ canvas.addEventListener("click", function(e) {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         if (x >= canvas.width / 2 - 80 && x <= canvas.width / 2 + 80 && y >= canvas.height / 2 + 40 && y <= canvas.height / 2 + 85) {
             startNextLevel();
         }
@@ -455,18 +444,14 @@ canvas.addEventListener("click", function(e) {
 function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
-    
     snake = [{x: 200, y: 200}]; 
     direction = null; 
     isSnakeMoving = false; 
-    
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
-    
     generateObstacles(level); 
     createFood(); 
     isLevelTransition = false;
-    
     clearInterval(gameLoop);
     gameLoop = setInterval(game, gameSpeed);
 }
@@ -475,12 +460,24 @@ function triggerLevelTransition(targetLevel) {
     isLevelTransition = true;
     nextLevelToStart = targetLevel;
     clearInterval(gameLoop); 
-    
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null;
-    
     generateObstacles(targetLevel); 
     draw(); 
+}
+
+// সাপ দুর্ঘটনার শিকার হলে এই লজিকটি কাজ করবে
+function handleSnakeDeath() {
+    lives--; // ১টি লাইফ কমে যাবে
+    updateLivesUI(); // স্ক্রিনে হার্ট আপডেট হবে
+
+    if (lives > 0) {
+        // লাইফ বাকি থাকলে সাপ জাস্ট রিসেট হবে, গেম ওভার হবে না
+        resetSnakePosition();
+    } else {
+        // ৩টি লাইফই শেষ হলে ফাইনাল গেম ওভার
+        gameOver();
+    }
 }
 
 function move(){
@@ -499,18 +496,20 @@ function move(){
     if(head.y < 0) head.y = 380;
     if(head.y >= 400) head.y = 0;
 
+    // বাধা বা অবস্টাকলে ধাক্কা লাগলে
     for(let obs of obstacles){
         if(head.x === obs.x && head.y === obs.y){
-            gameOver();
+            handleSnakeDeath();
             return;
         }
     }
 
     snake.unshift(head);
 
+    // নিজের শরীরে ধাক্কা লাগলে
     for(let i = 1; i < snake.length; i++){
         if(head.x === snake[i].x && head.y === snake[i].y){
-            gameOver();
+            handleSnakeDeath();
             return;
         }
     }
@@ -548,7 +547,6 @@ function move(){
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
         score += 3; 
         scoreText.innerHTML = score;
-        
         clearTimeout(specialFoodTimer); 
         specialFood = null; 
 
@@ -582,7 +580,6 @@ function game(){
             specialFoodStartTime = 0;
         }
     }
-
     move();
     draw();
 }
@@ -683,10 +680,8 @@ canvas.addEventListener("touchstart", function(e){
 
 canvas.addEventListener("touchend", function(e){
     if (isLevelTransition) return; 
-    
     let touchEndX = e.changedTouches[0].clientX;
     let touchEndY = e.changedTouches[0].clientY;
-
     let dx = touchEndX - touchStartX;
     let dy = touchEndY - touchStartY;
 
