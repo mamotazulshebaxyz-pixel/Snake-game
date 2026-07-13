@@ -168,19 +168,21 @@ function resetGame(){
 
 function draw(){
     // ======= UNDERWATER BLUE GRADIENT BACKGROUND =======
-    let waterGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     waterGradient.addColorStop(0, "#0f2027");   
     waterGradient.addColorStop(0.5, "#203a43"); 
     waterGradient.addColorStop(1, "#2c5364");   
     ctx.fillStyle = waterGradient;
-    ctx.fillRect(0,0,400,400);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // ======= WATER LINE/GRID EFFECT =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
     ctx.lineWidth = 1;
-    for(let i = 0; i < 400; i += 20) {
-        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 400); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(400, i); ctx.stroke();
+    for(let i = 0; i < canvas.width; i += 20) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+    }
+    for(let i = 0; i < canvas.height; i += 20) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
     // ======= Obstacles =======
@@ -189,7 +191,11 @@ function draw(){
     ctx.shadowColor = "#e74c3c";
     obstacles.forEach(obs => {
         ctx.beginPath();
-        ctx.roundRect(obs.x + 1, obs.y + 1, 18, 18, 4);
+        if (ctx.roundRect) {
+            ctx.roundRect(obs.x + 1, obs.y + 1, 18, 18, 4);
+        } else {
+            ctx.rect(obs.x + 1, obs.y + 1, 18, 18);
+        }
         ctx.fill();
     });
     ctx.shadowBlur = 0; 
@@ -286,7 +292,7 @@ function draw(){
             ctx.fillStyle = "#ffd700"; 
             ctx.font = "bold 14px sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText(`⏱ Bonus: ${timeLeft.toFixed(1)}s`, 200, 385); 
+            ctx.fillText(`⏱ Bonus: ${timeLeft.toFixed(1)}s`, canvas.width / 2, canvas.height - 15); 
         }
     }
 
@@ -369,35 +375,39 @@ function draw(){
     // ======= UI =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-        ctx.fillRect(0, 0, 400, 400);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🎮 Press any Arrow Key to Start Move", 200, 190);
+        ctx.fillText("🎮 Press any Arrow Key to Start Move", canvas.width / 2, canvas.height / 2 - 10);
     }
 
     if (isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; 
-        ctx.fillRect(0, 0, 400, 400);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "#00bfff";
         ctx.font = "bold 32px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(`LEVEL ${nextLevelToStart}`, 200, 160);
+        ctx.fillText(`LEVEL ${nextLevelToStart}`, canvas.width / 2, canvas.height / 2 - 40);
 
         ctx.fillStyle = "#fff";
         ctx.font = "16px sans-serif";
-        ctx.fillText(nextLevelToStart > 5 ? "⚠️ Random Obstacles Active!" : "Get ready for new challenges!", 200, 200);
+        ctx.fillText(nextLevelToStart > 5 ? "⚠️ Random Obstacles Active!" : "Get ready for new challenges!", canvas.width / 2, canvas.height / 2);
 
         ctx.fillStyle = "#2ecc71";
         ctx.beginPath();
-        ctx.roundRect(120, 240, 160, 45, 10);
+        if (ctx.roundRect) {
+            ctx.roundRect(canvas.width / 2 - 80, canvas.height / 2 + 40, 160, 45, 10);
+        } else {
+            ctx.rect(canvas.width / 2 - 80, canvas.height / 2 + 40, 160, 45);
+        }
         ctx.fill();
 
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("Click to Start", 200, 268);
+        ctx.fillText("Click to Start", canvas.width / 2, canvas.height / 2 + 68);
     }
 }
 
@@ -407,7 +417,7 @@ canvas.addEventListener("click", function(e) {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        if (x >= 120 && x <= 280 && y >= 240 && y <= 285) {
+        if (x >= canvas.width / 2 - 80 && x <= canvas.width / 2 + 80 && y >= canvas.height / 2 + 40 && y <= canvas.height / 2 + 85) {
             startNextLevel();
         }
     }
