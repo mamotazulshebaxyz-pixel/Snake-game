@@ -143,13 +143,11 @@ function generateObstacles(targetLevel) {
 }
 
 function resetGame(){
-    // সাপের মাথা এবং বডি রিসেট
     snake = [{x: 200, y: 200}];
     for(let i = 1; i <= 4; i++) {
         snake.push({x: 200, y: 200});
     }
 
-    // [FIXED] প্যাথ হিস্ট্রি শুরুতেই পর্যাপ্ত ডেটা দিয়ে ফিলআপ করা হলো যেন বডি ভেঙে না যায়
     snakePath = []; 
     for(let i = 0; i < 500; i++) {
         snakePath.push({x: 200, y: 200});
@@ -163,7 +161,7 @@ function resetGame(){
 
     direction = null; 
     nextDirection = null;
-    isSnakeMoving = false; // মুভমেন্ট ফলস, তাই শুরুতে মরবে না
+    isSnakeMoving = false; 
 
     score = 0;
     scoreText.innerHTML = score;
@@ -354,7 +352,7 @@ function draw(){
     }
     ctx.restore(); 
 
-    // UI
+    // UI Overlay
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
@@ -429,7 +427,6 @@ function triggerLevelTransition(targetLevel) {
 
 // ======= MOVEMENT ENGINE =======
 function move(){
-    // [FIXED Guardrail] যদি সাপ না নড়ে বা লেভেল ট্রানজিশন চলে, তবে মুভমেন্ট ও মৃত্যুর লজিক সম্পূর্ণ বন্ধ থাকবে
     if (isLevelTransition || !isSnakeMoving) return; 
 
     if (nextDirection) {
@@ -457,9 +454,18 @@ function move(){
         }
     }
 
-    // সেলফ কলিশন চেক (সাপ যখন অলরেডি চলা শুরু করেছে)
+    // ======= [FIXED SELF-COLLISION GUARDRAIL] =======
+    // সাপ যখন একদম শুরুতে স্পন পজিশন থেকে বের হচ্ছে, তখন যেন ডামি প্যাথের সাথে কোলাইড না করে
     let stepGap = Math.round(SEGMENT_DIST / moveSpeed);
+    
+    // কেবল মাত্র তখনই চেক করবে যখন মাথাটি স্পন পয়েন্ট (200,200) থেকে কিছুটা দূরে যাবে
+    let hasMovedFromSpawn = Math.hypot(head.x - 200, head.y - 200) > 25;
+
     for(let i = 3; i < snake.length; i++){
+        // যদি এখনও স্পন এরিয়াতেই থাকে, তবে ডামি বডির প্রথম ফিউ পার্টসের সাথে কলিশন ইগনোর করবে
+        if(!hasMovedFromSpawn && Math.hypot(snake[i].x - 200, snake[i].y - 200) < 2) {
+            continue; 
+        }
         if(Math.hypot(head.x - snake[i].x, head.y - snake[i].y) < 8){
             gameOver();
             return;
@@ -668,7 +674,7 @@ if(modalRestartBtn) modalRestartBtn.onclick = () => { gameOverModal.style.displa
 if(pauseBtn) pauseBtn.style.display = "none";
 
 resetGame();
-// ইঞ্জিন অ্যাক্টিভেট
+
 if(!window.loopStarted) {
     requestAnimationFrame(gameLoopTicker);
     window.loopStarted = true;
