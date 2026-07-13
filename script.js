@@ -37,6 +37,21 @@ let isSnakeMoving = false;
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 
+// ======= পানির বুদবুদ (Bubbles Array) =======
+let bubbles = [];
+function initBubbles() {
+    bubbles = [];
+    for(let i = 0; i < 15; i++) {
+        bubbles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height + canvas.height, // নিচ থেকে শুরু হবে
+            radius: Math.random() * 4 + 2,
+            speed: Math.random() * 1.5 + 0.5,
+            opacity: Math.random() * 0.4 + 0.1
+        });
+    }
+}
+
 highScoreText.innerHTML = highScore;
 
 function createFood(){
@@ -87,9 +102,7 @@ function createSpecialFood() {
             }
         }
     }
-
     specialFoodStartTime = Date.now(); 
-
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null; 
 }
@@ -163,20 +176,21 @@ function resetGame(){
     gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
     isLevelTransition = false;
+    initBubbles();
     createFood();
 }
 
 function draw(){
-    // ======= উজ্জ্বল ও আকর্ষণীয় পানির গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড =======
+    // ======= আগের প্রিমিয়াম ডার্ক ব্যাকগ্রাউন্ড (Restored) =======
     let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    waterGradient.addColorStop(0, "#00c6ff");   // ওপরের হালকা টলটলে নীল পানি
-    waterGradient.addColorStop(0.6, "#0072ff"); // মাঝের সমুদ্রের নীল পানি
-    waterGradient.addColorStop(1, "#0052d4");   // নিচের গভীর নীল পানি
+    waterGradient.addColorStop(0, "#0f2027");   
+    waterGradient.addColorStop(0.5, "#203a43"); 
+    waterGradient.addColorStop(1, "#2c5364");   
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= স্পষ্ট পানির নিচের গ্রিড ইফেক্ট =======
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    // ======= সূক্ষ্ম ও সুন্দর ওয়াটার গ্রিড ইফেক্ট =======
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
         ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
@@ -184,6 +198,22 @@ function draw(){
     for(let i = 0; i < canvas.height; i += 20) {
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
+
+    // ======= পানির অ্যানিমেটেড বুদবুদ (Animated Bubbles) =======
+    bubbles.forEach(b => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // বুদবুদ ওপরের দিকে উঠবে
+        b.y -= b.speed;
+        // স্ক্রিনের ওপরে চলে গেলে আবার নিচে ফিরে যাবে
+        if(b.y < -10) {
+            b.y = canvas.height + 10;
+            b.x = Math.random() * canvas.width;
+        }
+    });
 
     // ======= Obstacles =======
     ctx.fillStyle = "#e74c3c"; 
@@ -296,9 +326,8 @@ function draw(){
         }
     }
 
-    // ======= GOOGLE STYLE SMOOTH TEAL SNAKE =======
+    // ======= SMOOTH TEAL SNAKE =======
     ctx.textAlign = "left"; 
-    
     ctx.strokeStyle = "#14b8a6"; 
     ctx.lineWidth = 18;           
     ctx.lineCap = "round";        
