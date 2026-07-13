@@ -15,12 +15,17 @@ const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreText = document.getElementById("finalScore");
 const modalRestartBtn = document.getElementById("restartBtn");
 
-const BASE_SPEED = 300; 
-let gameSpeed = BASE_SPEED;
+// ======= [SMOOTH MOVEMENT VARIABLES] =======
+const GRID_SIZE = 20;
+const SEGMENT_DIST = 20; // সাপের এক পার্ট থেকে আরেক পার্টের দূরত্ব
+let moveSpeed = 2.5;     // প্রতি ফ্রেমে সাপ কত পিক্সেল আগাবে (স্মুথ স্পিড)
 
-let snake;
+let snake = [];          // {x, y} কোঅর্ডিনেটসের অ্যারে
+let snakePath = [];      // সাপের মাথার পুরো রাস্তার হিস্ট্রি (বডি ফলো করার জন্য)
+
 let food;
-let direction;
+let direction = null;
+let nextDirection = null; // টার্নিং বাগ ফিক্সের জন্য বাফার
 let score;
 let level = 1;
 let highScore = localStorage.getItem("snakeHighScore") || 0;
@@ -39,22 +44,22 @@ let nextLevelToStart = 2;
 
 highScoreText.innerHTML = highScore;
 
+// খাবারের জন্য র‍্যান্ডম পজিশন (ক্যানভাসের বর্ডার থেকে কিছুটা ভেতরে রাখা হয়েছে)
 function createFood(){
     let valid = false;
     while(!valid){
         food = {
-            x: Math.floor(Math.random()*20)*20,
-            y: Math.floor(Math.random()*20)*20
+            x: Math.floor(Math.random() * 18 + 1) * 20,
+            y: Math.floor(Math.random() * 18 + 1) * 20
         };
         valid = true;
-        for(let part of snake){
-            if(part.x === food.x && part.y === food.y){
-                valid = false;
-                break;
-            }
-        }
+        
+        // সাপের মাথার কাছাকাছি যেন খাবার স্পন না হয়
+        let dist = Math.hypot(snake[0].x - food.x, snake[0].y - food.y);
+        if(dist < 40) valid = false;
+
         for(let obs of obstacles){
-            if(food.x === obs.x && food.y === obs.y){
+            if(Math.hypot(food.x - obs.x, food.y - obs.y) < 20){
                 valid = false;
                 break;
             }
@@ -66,33 +71,26 @@ function createSpecialFood() {
     let valid = false;
     while(!valid){
         specialFood = {
-            x: Math.floor(Math.random()*20)*20,
-            y: Math.floor(Math.random()*20)*20
+            x: Math.floor(Math.random() * 18 + 1) * 20,
+            y: Math.floor(Math.random() * 18 + 1) * 20
         };
         valid = true;
         
-        for(let part of snake){
-            if(part.x === specialFood.x && part.y === specialFood.y){
-                valid = false;
-                break;
-            }
-        }
-        if(food && specialFood.x === food.x && specialFood.y === food.y) {
+        let dist = Math.hypot(snake[0].x - specialFood.x, snake[0].y - specialFood.y);
+        if(dist < 40) valid = false;
+
+        if(food && Math.hypot(specialFood.x - food.x, specialFood.y - food.y) < 20) {
             valid = false;
         }
         for(let obs of obstacles){
-            if(specialFood.x === obs.x && specialFood.y === obs.y){
+            if(Math.hypot(specialFood.x - obs.x, specialFood.y - obs.y) < 20){
                 valid = false;
                 break;
             }
         }
     }
-
-    // [FIXED] এখনই ডিরেক্ট Date.now() দিবো না, সাপ মুভমেন্ট শুরু করলে তখন ভ্যালু বসবে।
     specialFoodStartTime = 0; 
-
     clearTimeout(specialFoodTimer);
-    // [FIXED] সাপ মুভ হওয়া না পর্যন্ত ৫ সেকেন্ডের ডেডলাইন কাউন্টডাউন শুরু হবে না।
     specialFoodTimer = null; 
 }
 
@@ -131,8 +129,8 @@ function generateObstacles(targetLevel) {
     } else {
         let obstacleCount = Math.min(12 + (lvl - 5) * 2, 32); 
         while (rawObstacles.length < obstacleCount) {
-            let obsX = Math.floor(Math.random() * 20) * 20;
-            let obsY = Math.floor(Math.random() * 20) * 20;
+            let obsX = Math.floor(Math.random() * 18 + 1) * 20;
+            let obsY = Math.floor(Math.random() * 18 + 1) * 20;
             let exists = rawObstacles.some(obs => obs.x === obsX && obs.y === obsY);
             if (!exists) {
                 rawObstacles.push({x: obsX, y: obsY});
@@ -148,27 +146,41 @@ function generateObstacles(targetLevel) {
 }
 
 function resetGame(){
-    snake = [{x:200,y:200}]; 
-    obstacles = [];
+    snake = [{x: 200, y: 200}];
+    snakePath = [{x: 200, y: 200}];
     
+    // প্রাথমিক বডি লেংথ ৪ পার্ট সেট করা হলো
+    for(let i = 1; i <= 4; i++) {
+        snake.push({x: 200, y: 200});
+    }
+
+    obstacles = [];
     specialFood = null;
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null;
 
     direction = null; 
+    nextDirection = null;
     isSnakeMoving = false; 
 
     score = 0;
     scoreText.innerHTML = score;
     level = 1;
-    gameSpeed = BASE_SPEED;
+    updateSpeed();
     levelText.innerHTML = level;
     isLevelTransition = false;
     createFood();
 }
 
+// লেভেল অনুযায়ী স্মুথ স্পিড কন্ট্রোল লজিক
+function updateSpeed() {
+    moveSpeed = 2.5 + (level - 1) * 0.4; 
+    if (moveSpeed > 5.5) moveSpeed = 5.5; // ম্যাক্সিমাম স্পিড ক্যাপ
+}
+
 function draw(){
+    // ১. ব্যাকগ্রাউন্ড একদম সলিড কালো (কোনো ছায়া বা ট্রেইল থাকবে না)
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
@@ -186,7 +198,6 @@ function draw(){
     // ======= Vector Big Goldfish =======
     let fx = food.x + 10;
     let fy = food.y + 10;
-
     ctx.shadowBlur = 10;
     ctx.shadowColor = "#ff7675";
 
@@ -218,14 +229,12 @@ function draw(){
     ctx.beginPath();
     ctx.ellipse(fx - 1, fy + 3, 4, 2.5, Math.PI/4, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.shadowBlur = 0; 
 
     // ======= Vector Crystal Diamond =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
-
         ctx.shadowBlur = 18;
         ctx.shadowColor = "#00cec9";
 
@@ -262,19 +271,13 @@ function draw(){
         ctx.lineTo(sx, sy + 6);
         ctx.closePath();
         ctx.fill();
-
         ctx.shadowBlur = 0; 
 
-        // [FIXED] টাইমার রেন্ডারিং লজিক
         let timeLeft = 5.0;
         if (specialFoodStartTime > 0) {
             let elapsedTime = Date.now() - specialFoodStartTime;
             timeLeft = Math.max(0, (5000 - elapsedTime) / 1000);
-            
-            // যদি মুভিং অবস্থায় ৫ সেকেন্ড শেষ হয়ে যায়, ডায়মন্ড ডিলিট করো
-            if (timeLeft <= 0) {
-                specialFood = null;
-            }
+            if (timeLeft <= 0) specialFood = null;
         }
 
         if (specialFood && timeLeft > 0) {
@@ -285,34 +288,28 @@ function draw(){
         }
     }
 
-    // ======= GOOGLE STYLE SMOOTH BLUE SNAKE =======
+    // ======= [SMOOTH RENDERING] =======
     ctx.textAlign = "left"; 
-    
     ctx.strokeStyle = "#3b82f6"; 
     ctx.lineWidth = 18;           
     ctx.lineCap = "round";        
     ctx.lineJoin = "round";       
 
+    // বডি পার্টসগুলোর জয়েন্ট লাইন ড্র
+    ctx.beginPath();
+    ctx.moveTo(snake[0].x + 10, snake[0].y + 10);
     for (let i = 1; i < snake.length; i++) {
-        let prev = snake[i - 1];
-        let curr = snake[i];
-
-        if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
-            continue; 
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(prev.x + 10, prev.y + 10);
-        ctx.lineTo(curr.x + 10, curr.y + 10);
-        ctx.stroke();
+        ctx.lineTo(snake[i].x + 10, snake[i].y + 10);
     }
+    ctx.stroke();
 
+    // সাপের মাথা রেন্ডারিং ও চোখ
     let head = snake[0];
     let centerX = head.x + 10;
     let centerY = head.y + 10;
 
-    let isNearNormalFood = Math.abs(head.x - food.x) <= 40 && Math.abs(head.y - food.y) <= 40;
-    let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
+    let isNearNormalFood = Math.abs(head.x - food.x) <= 35 && Math.abs(head.y - food.y) <= 35;
+    let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 35 && Math.abs(head.y - specialFood.y) <= 35;
     let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
 
     ctx.fillStyle = "#3b82f6";
@@ -358,14 +355,12 @@ function draw(){
         ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
         ctx.stroke();
     }
-
     ctx.restore(); 
 
-    // ======= UI =======
+    // UI
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
-
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
@@ -375,21 +370,17 @@ function draw(){
     if (isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; 
         ctx.fillRect(0, 0, 400, 400);
-
         ctx.fillStyle = "#00bfff";
         ctx.font = "bold 32px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(`LEVEL ${nextLevelToStart}`, 200, 160);
-
         ctx.fillStyle = "#fff";
         ctx.font = "16px sans-serif";
         ctx.fillText(nextLevelToStart > 5 ? "⚠️ Random Obstacles Active!" : "Get ready for new challenges!", 200, 200);
-
         ctx.fillStyle = "#2ecc71";
         ctx.beginPath();
         ctx.roundRect(120, 240, 160, 45, 10);
         ctx.fill();
-
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.fillText("Click to Start", 200, 268);
@@ -401,7 +392,6 @@ canvas.addEventListener("click", function(e) {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         if (x >= 120 && x <= 280 && y >= 240 && y <= 285) {
             startNextLevel();
         }
@@ -412,70 +402,96 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
-    snake = [{x: 200, y: 200}]; 
+    snake = [{x: 200, y: 200}];
+    for(let i = 1; i <= 4 + score; i++) { 
+        snake.push({x: 200, y: 200});
+    }
+    snakePath = [{x: 200, y: 200}];
+    
     direction = null; 
+    nextDirection = null;
     isSnakeMoving = false; 
     
-    let speedFactor = Math.min((level - 1) * 15, 180);
-    gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
-    
+    updateSpeed();
     generateObstacles(level); 
     createFood(); 
     isLevelTransition = false;
-    
-    clearInterval(gameLoop);
-    gameLoop = setInterval(game, gameSpeed);
 }
 
 function triggerLevelTransition(targetLevel) {
     isLevelTransition = true;
     nextLevelToStart = targetLevel;
-    clearInterval(gameLoop); 
-    
-    // [FIXED] লেভেল চেঞ্জের সময় যদি কোনো টাইমার থেকে থাকে, তা আগে ক্লিয়ার করে দেওয়া
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null;
-    
     generateObstacles(targetLevel); 
-    draw(); 
 }
 
+// ======= [FIXED SMOOTH MOVEMENT ENGINE] =======
 function move(){
-    if (isLevelTransition) return; 
-    if (!isSnakeMoving) return; 
+    if (isLevelTransition || !isSnakeMoving) return; 
+
+    if (nextDirection) {
+        direction = nextDirection;
+        nextDirection = null;
+    }
 
     let head = {...snake[0]};
 
-    if(direction=="RIGHT") head.x+=20;
-    if(direction=="LEFT") head.x-=20;
-    if(direction=="UP") head.y-=20;
-    if(direction=="DOWN") head.y+=20;
+    if(direction == "RIGHT") head.x += moveSpeed;
+    if(direction == "LEFT") head.x -= moveSpeed;
+    if(direction == "UP") head.y -= moveSpeed;
+    if(direction == "DOWN") head.y += moveSpeed;
 
-    if(head.x < 0) head.x = 380;
-    if(head.x >= 400) head.x = 0;
-    if(head.y < 0) head.y = 380;
-    if(head.y >= 400) head.y = 0;
+    // স্মুথ স্ক্রিন ক্রসিং লুপ
+    if(head.x < -10) head.x = 390;
+    if(head.x > 390) head.x = -10;
+    if(head.y < -10) head.y = 390;
+    if(head.y > 390) head.y = -10;
 
+    // অবস্ট্যাকল কলিশন চেক (স্মুথ বক্স বক্স বাউন্ডিং রেডিয়াস)
     for(let obs of obstacles){
-        if(head.x === obs.x && head.y === obs.y){
+        if(Math.abs(head.x - obs.x) < 16 && Math.abs(head.y - obs.y) < 16){
             gameOver();
             return;
         }
     }
 
-    snake.unshift(head);
-
-    for(let i = 1; i < snake.length; i++){
-        if(head.x === snake[i].x && head.y === snake[i].y){
+    // সেলফ কলিশন চেক (সাপ নিজের লেজে কামড় দিলে)
+    for(let i = 3; i < snake.length; i++){
+        if(Math.hypot(head.x - snake[i].x, head.y - snake[i].y) < 8){
             gameOver();
             return;
         }
     }
 
-    if(head.x == food.x && head.y == food.y){
+    snake[0] = head;
+    snakePath.unshift({...head});
+
+    // সাপের বডি পার্টসগুলো যেন একটার পর একটা স্মুথলি ফাঁকা বজায় রেখে ট্রেইল ফলো করে
+    for (let i = 1; i < snake.length; i++) {
+        let targetIndex = i * Math.round(SEGMENT_DIST / moveSpeed);
+        if (targetIndex < snakePath.length) {
+            snake[i] = snakePath[targetIndex];
+        } else {
+            snake[i] = snakePath[snakePath.length - 1];
+        }
+    }
+
+    if (snakePath.length > snake.length * Math.round(SEGMENT_DIST / moveSpeed) + 20) {
+        snakePath.pop();
+    }
+
+    // গোল্ডফিশ খাওয়ার চেক (ডিস্টেন্স চেক)
+    let distToFood = Math.hypot(head.x - food.x, head.y - food.y);
+    if(distToFood < 18){
         score++;
         normalFoodEatenCount++; 
         scoreText.innerHTML = score;
+
+        // নতুন বডি সেগমেন্ট অ্যাড
+        for(let k=0; k < Math.round(SEGMENT_DIST/moveSpeed); k++) {
+            snake.push({...snake[snake.length-1]});
+        }
 
         if(normalFoodEatenCount % 5 === 0){
             createSpecialFood();
@@ -487,12 +503,7 @@ function move(){
         if(targetLevel > level){
             triggerLevelTransition(targetLevel);
         } else {
-            let scoreInCurrentLevel = (score - 1) % 20; 
-            let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
-            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60); 
-            
-            clearInterval(gameLoop);
-            gameLoop = setInterval(game, gameSpeed);
+            updateSpeed();
         }
 
         if(score > highScore){
@@ -502,182 +513,112 @@ function move(){
         }
         if (!isLevelTransition) createFood();
     } 
-    else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
-        score += 3; 
-        scoreText.innerHTML = score;
-        
-        clearTimeout(specialFoodTimer); 
-        specialFood = null; 
+    
+    // স্পেশাল ডায়মন্ড খাওয়ার চেক
+    if(specialFood){
+        let distToSpecial = Math.hypot(head.x - specialFood.x, head.y - specialFood.y);
+        if(distToSpecial < 18){
+            score += 3; 
+            scoreText.innerHTML = score;
+            
+            for(let k=0; k < Math.round(SEGMENT_DIST/moveSpeed)*3; k++) {
+                snake.push({...snake[snake.length-1]});
+            }
+            
+            clearTimeout(specialFoodTimer); 
+            specialFood = null; 
 
-        let targetLevel = Math.floor((score - 1) / 20) + 1;
-        if(targetLevel > level){
-            triggerLevelTransition(targetLevel);
-        } else {
-            let scoreInCurrentLevel = (score - 1) % 20;
-            let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
-            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60);
-            clearInterval(gameLoop);
-            gameLoop = setInterval(game, gameSpeed);
-        }
+            let targetLevel = Math.floor((score - 1) / 20) + 1;
+            if(targetLevel > level){
+                triggerLevelTransition(targetLevel);
+            } else {
+                updateSpeed();
+            }
 
-        if(score > highScore){
-            highScore = score;
-            localStorage.setItem("snakeHighScore", highScore);
-            highScoreText.innerHTML = highScore;
+            if(score > highScore){
+                highScore = score;
+                localStorage.setItem("snakeHighScore", highScore);
+                highScoreText.innerHTML = highScore;
+            }
         }
-    } 
-    else {
-        snake.pop();
     }
 }
 
-function game(){
-    move();
-    draw();
+// requestAnimationFrame দিয়ে ৬০ এফপিএস-এ মাখনের মতো রান হবে গেম
+function gameLoopTicker(){
+    if(running) {
+        move();
+        draw();
+    }
+    requestAnimationFrame(gameLoopTicker);
 }
 
 function startGame(){
-    clearInterval(gameLoop);
     resetGame();
     menu.classList.add("hidden");
     if(gameOverModal) gameOverModal.style.display = "none"; 
-    
     if(pauseBtn) {
         pauseBtn.style.display = "block";
         pauseBtn.innerHTML = "⏸ Pause";
     }
-    
     running = true;
-    gameLoop = setInterval(game, gameSpeed);
 }
 
 function pauseGame(){
-    if (isLevelTransition) return; 
-    if (!isSnakeMoving) return; 
-    
+    if (isLevelTransition || !isSnakeMoving) return; 
     if(running){
-        clearInterval(gameLoop);
-        gameLoop = null;
         running = false;
         pauseBtn.innerHTML = "▶ Resume";
     }else{
-        gameLoop = setInterval(game, gameSpeed);
         running = true;
         pauseBtn.innerHTML = "⏸ Pause";
     }
 }
 
 function restartGame(){
-    clearInterval(gameLoop);
     resetGame();
     draw();
-    
     const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
-    if(menuTitle) {
-        menuTitle.innerHTML = `🐍 SKY SNAKE`;
-    }
-    if(playBtn) {
-        playBtn.innerHTML = "▶ Play";
-    }
-    if(menuRestartBtn) {
-        menuRestartBtn.style.display = "block";
-    }
-    if(cancelBtn) {
-        cancelBtn.style.display = "none";
-    }
-    if(pauseBtn) {
-        pauseBtn.style.display = "none";
-    }
-
+    if(menuTitle) menuTitle.innerHTML = `🐍 SKY SNAKE`;
+    if(playBtn) playBtn.innerHTML = "▶ Play";
+    if(menuRestartBtn) menuRestartBtn.style.display = "block";
+    if(cancelBtn) cancelBtn.style.display = "none";
+    if(pauseBtn) pauseBtn.style.display = "none";
     menu.classList.remove("hidden");
     running = false;
 }
 
 function gameOver(){
-    clearInterval(gameLoop);
     running = false;
     isSnakeMoving = false;
     clearTimeout(specialFoodTimer); 
     specialFoodTimer = null;
-
     menu.classList.remove("hidden");
 
     const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
     if(menuTitle) {
         menuTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 20px; color: #fff;">Your Score: ${score}</span>`;
     }
-
-    if(playBtn) {
-        playBtn.innerHTML = "▶ Play Again";
-    }
-    if(menuRestartBtn) {
-        menuRestartBtn.style.display = "none";
-    }
-    if(cancelBtn) {
-        cancelBtn.style.display = "block";
-    }
-    if(pauseBtn) {
-        pauseBtn.style.display = "none";
-    }
+    if(playBtn) playBtn.innerHTML = "▶ Play Again";
+    if(menuRestartBtn) menuRestartBtn.style.display = "none";
+    if(cancelBtn) cancelBtn.style.display = "block";
+    if(pauseBtn) pauseBtn.style.display = "none";
 }
 
-// ===== Swipe Control =====
-let touchStartX = 0;
-let touchStartY = 0;
-
-canvas.addEventListener("touchstart", function(e){
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
-canvas.addEventListener("touchend", function(e){
-    if (isLevelTransition) return; 
-    
-    let touchEndX = e.changedTouches[0].clientX;
-    let touchEndY = e.changedTouches[0].clientY;
-
-    let dx = touchEndX - touchStartX;
-    let dy = touchEndY - touchStartY;
-
-    if(Math.abs(dx) < 30 && Math.abs(dy) < 30){
-        return;
-    }
-
-    // [FIXED] প্রথমবার মুভ করা শুরু করলে যদি স্ক্রিনে ডায়মন্ড থাকে, তবে এখন থেকে টাইমার শুরু হবে
-    if (!isSnakeMoving) {
-        isSnakeMoving = true;
-        if (specialFood && specialFoodStartTime === 0) {
-            specialFoodStartTime = Date.now();
-        }
-    }
-
-    if(Math.abs(dx) > Math.abs(dy)){
-        if(dx > 0 && direction != "LEFT") direction = "RIGHT";
-        if(dx < 0 && direction != "RIGHT") direction = "LEFT";
-    }else{
-        if(dy > 0 && direction != "UP") direction = "DOWN";
-        if(dy < 0 && direction != "DOWN") direction = "UP";
-    }
-}, { passive: true });
-
+// ===== Control Handlers (টার্ন স্মুথিং সহ) =====
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
-        if(e.key === "Enter") {
-            startNextLevel();
-        }
+        if(e.key === "Enter") startNextLevel();
         return;
     }
 
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        if(menu.classList.contains("hidden") && isSnakeMoving){ 
-            pauseGame();
-        }
+        if(menu.classList.contains("hidden") && isSnakeMoving) pauseGame();
         return;
     }
 
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
-        // [FIXED] কী-বোর্ড দিয়ে প্রথমবার মুভ করা শুরু করলে তখন থেকে এক্সাক্টলি ৫ সেকেন্ড কাউন্ট হবে
         if (!isSnakeMoving) {
             isSnakeMoving = true;
             if (specialFood && specialFoodStartTime === 0) {
@@ -686,32 +627,47 @@ document.addEventListener("keydown", function(e){
         }
     }
 
-    if(e.key=="ArrowUp" && direction!="DOWN") direction="UP";
-    if(e.key=="ArrowDown" && direction!="UP") direction="DOWN";
-    if(e.key=="ArrowLeft" && direction!="RIGHT") direction="LEFT";
-    if(e.key=="ArrowRight" && direction!="LEFT") direction="RIGHT";
+    if(e.key=="ArrowUp" && direction!="DOWN") nextDirection="UP";
+    if(e.key=="ArrowDown" && direction!="UP") nextDirection="DOWN";
+    if(e.key=="ArrowLeft" && direction!="RIGHT") nextDirection="LEFT";
+    if(e.key=="ArrowRight" && direction!="LEFT") nextDirection="RIGHT";
 });
+
+// ===== Swipe Control (Mobile) =====
+let touchStartX = 0; let touchStartY = 0;
+canvas.addEventListener("touchstart", e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+canvas.addEventListener("touchend", e => {
+    if (isLevelTransition) return; 
+    let dx = e.changedTouches[0].clientX - touchStartX;
+    let dy = e.changedTouches[0].clientY - touchStartY;
+    if(Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+
+    if (!isSnakeMoving) {
+        isSnakeMoving = true;
+        if (specialFood && specialFoodStartTime === 0) specialFoodStartTime = Date.now();
+    }
+
+    if(Math.abs(dx) > Math.abs(dy)){
+        if(dx > 0 && direction != "LEFT") nextDirection = "RIGHT";
+        if(dx < 0 && direction != "RIGHT") nextDirection = "LEFT";
+    }else{
+        if(dy > 0 && direction != "UP") nextDirection = "DOWN";
+        if(dy < 0 && direction != "DOWN") nextDirection = "UP";
+    }
+}, { passive: true });
 
 playBtn.onclick = startGame;
 pauseBtn.onclick = pauseGame;
 menuRestartBtn.onclick = restartGame;
+if(cancelBtn) cancelBtn.onclick = restartGame;
+if(modalRestartBtn) modalRestartBtn.onclick = () => { gameOverModal.style.display = "none"; startGame(); };
 
-if(cancelBtn) {
-    cancelBtn.onclick = function() {
-        restartGame(); 
-    };
-}
-
-if(modalRestartBtn) {
-    modalRestartBtn.onclick = function() {
-        if(gameOverModal) gameOverModal.style.display = "none";
-        startGame(); 
-    };
-}
-
-if(pauseBtn) {
-    pauseBtn.style.display = "none";
-}
+if(pauseBtn) pauseBtn.style.display = "none";
 
 resetGame();
-draw();
+// ইঞ্জিন স্টার্ট
+requestAnimationFrame(gameLoopTicker);
