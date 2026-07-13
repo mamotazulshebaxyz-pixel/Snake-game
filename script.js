@@ -38,6 +38,7 @@ let obstacles = [];
 let isSnakeMoving = false; 
 let isLevelTransition = false;
 let nextLevelToStart = 2;
+let shouldSpawnBonusAfterTransition = false; 
 
 // ==========================================
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম (কোনো ডাউনলোড ছাড়া)
@@ -51,7 +52,7 @@ function playSound(type) {
     gainNode.connect(audioCtx.destination);
 
     if (type === 'eat') {
-        // 📱 ক্লাসিক নোকিয়া বাটন ফোনের খাবার খাওয়ার শর্ট স্কয়ার বিপ সাউন্ড
+        // 📱 ক্লাসিক নোকিয়া বাটন ফোনের খাবার খাওয়ার বিপ সাউন্ড
         oscillator.type = 'square'; 
         oscillator.frequency.setValueAtTime(950, audioCtx.currentTime); 
         gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
@@ -165,7 +166,7 @@ function createSpecialFood() {
     specialFoodStartTime = Date.now(); 
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null; 
-    playSound('bonus_appear'); // বোনাস ডায়মন্ড আসার টিং সাউন্ড
+    playSound('bonus_appear'); 
 }
 
 function generateObstacles(targetLevel) {
@@ -227,6 +228,7 @@ function resetGame(){
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null;
+    shouldSpawnBonusAfterTransition = false;
 
     direction = null; 
     isSnakeMoving = false; 
@@ -252,7 +254,7 @@ function resetSnakePosition() {
 }
 
 function handleSnakeDeath() {
-    playSound('die'); // মারা যাওয়ার সাউন্ড
+    playSound('die'); 
     lives--; 
     updateLivesUI(); 
 
@@ -296,7 +298,7 @@ function draw(){
         }
     });
 
-    // ======= Obstacles =======
+    // ======= Obstacles (বাঁধা) =======
     ctx.fillStyle = "#e74c3c"; 
     ctx.shadowBlur = 8;
     ctx.shadowColor = "#e74c3c";
@@ -311,7 +313,7 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= Vector Big Goldfish =======
+    // ======= গোল্ডফিশ ফুড =======
     let fx = food.x + 10;
     let fy = food.y + 10;
 
@@ -349,7 +351,7 @@ function draw(){
 
     ctx.shadowBlur = 0; 
 
-    // ======= Vector Crystal Diamond =======
+    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -407,7 +409,7 @@ function draw(){
         }
     }
 
-    // ======= SMOOTH TEAL SNAKE =======
+    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#14b8a6"; 
     ctx.lineWidth = 18;           
@@ -482,7 +484,6 @@ function draw(){
 
     ctx.restore(); 
 
-    // ======= UI =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -547,6 +548,12 @@ function startNextLevel() {
     generateObstacles(level); 
     createFood(); 
     isLevelTransition = false;
+
+    // লেভেল শুরুর পরই বোনাস তৈরি হবে
+    if (shouldSpawnBonusAfterTransition) {
+        createSpecialFood();
+        shouldSpawnBonusAfterTransition = false;
+    }
     
     clearInterval(gameLoop);
     gameLoop = setInterval(game, gameSpeed);
@@ -597,17 +604,21 @@ function move(){
     }
 
     if(head.x == food.x && head.y == food.y){
-        playSound('eat'); // 📱 নোকিয়া বাটন ফোন ফুড সাউন্ড
+        playSound('eat'); 
         score++;
         normalFoodEatenCount++; 
         scoreText.innerHTML = score;
 
-        if(normalFoodEatenCount % 5 === 0){
-            createSpecialFood();
-        }
-
         let targetLevel = Math.floor((score - 1) / 20) + 1;
         if(score === 0) targetLevel = 1; 
+
+        if(normalFoodEatenCount % 5 === 0){
+            if(targetLevel > level) {
+                shouldSpawnBonusAfterTransition = true; 
+            } else {
+                createSpecialFood();
+            }
+        }
 
         if(targetLevel > level){
             triggerLevelTransition(targetLevel);
@@ -628,7 +639,7 @@ function move(){
         if (!isLevelTransition) createFood();
     } 
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
-        playSound('eat_bonus'); // 💎 বোনাস ফুড খাওয়ার স্পেশাল ডাবল "টিং-টিং" সাউন্ড
+        playSound('eat_bonus'); 
         score += 3; 
         scoreText.innerHTML = score;
         
@@ -733,6 +744,7 @@ function gameOver(){
     isSnakeMoving = false;
     clearTimeout(specialFoodTimer); 
     specialFoodTimer = null;
+    shouldSpawnBonusAfterTransition = false;
 
     menu.classList.remove("hidden");
 
