@@ -37,6 +37,13 @@ let isSnakeMoving = false;
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 
+// ======= [NEW] হাই-কোয়ালিটি গেম স্প্রাইট ইমেজেস =======
+const fishImage = new Image();
+fishImage.src = "https://cdn-icons-png.flaticon.com/512/2911/2911132.png"; // কিউট বড় গোল্ডফিশ
+
+const diamondImage = new Image();
+diamondImage.src = "https://cdn-icons-png.flaticon.com/512/3067/3067439.png"; // চকচকে বড় লাক্সারি ডায়মন্ড
+
 highScoreText.innerHTML = highScore;
 
 function createFood(){
@@ -182,63 +189,18 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= [NEW] Cute Goldfish Food =======
-    let fx = food.x + 10;
-    let fy = food.y + 10;
+    // ======= [FIXED] HD Goldfish Food (সাইজ বড় এবং স্পষ্ট) =======
+    // গ্রিড থেকে ২ পিক্সেল বাড়িয়ে ২৪x২৪ সাইজে ড্র করা হয়েছে যাতে একদম ক্লিয়ার দেখা যায়
+    ctx.drawImage(fishImage, food.x - 2, food.y - 2, 24, 24);
 
-    // মাছের লেজ (Triangle)
-    ctx.fillStyle = "#ff7675"; 
-    ctx.beginPath();
-    ctx.moveTo(fx + 4, fy);
-    ctx.lineTo(fx + 9, fy - 5);
-    ctx.lineTo(fx + 9, fy + 5);
-    ctx.fill();
-
-    // মাছের বডি (Oval)
-    ctx.fillStyle = "#fab1a0"; 
-    ctx.beginPath();
-    ctx.ellipse(fx - 2, fy, 6, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // মাছের চোখ
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.arc(fx - 5, fy - 1, 1.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#111";
-    ctx.beginPath(); ctx.arc(fx - 5.5, fy - 1, 0.7, 0, Math.PI * 2); ctx.fill();
-
-
-    // ======= [NEW] Special Pearl Shell Food =======
+    // ======= [FIXED] HD Diamond Special Food =======
     if (specialFood) {
-        let sx = specialFood.x + 10;
-        let sy = specialFood.y + 10;
-
         ctx.shadowBlur = 15;
-        ctx.shadowColor = "#00cec9";
+        ctx.shadowColor = "#00cec9"; // ডায়মন্ডের চারপাশে চমৎকার গ্লো ইফেক্ট
 
-        // ঝিনুকের নিচের পার্ট (Pinkish Purple)
-        ctx.fillStyle = "#a29bfe";
-        ctx.beginPath();
-        ctx.arc(sx, sy + 2, 7, 0, Math.PI, true);
-        ctx.closePath();
-        ctx.fill();
-
-        // ঝিনুকের ওপরের খোলা পার্ট
-        ctx.fillStyle = "#b2bec3";
-        ctx.beginPath();
-        ctx.arc(sx, sy - 1, 7, Math.PI * 1.2, Math.PI * 1.8, false);
-        ctx.lineTo(sx, sy + 2);
-        ctx.closePath();
-        ctx.fill();
-
-        // canvas এ মাঝখানের মুক্তা (Pearl)
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = "#fff";
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(sx, sy + 1, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0; // শ্যাডো রিসেট
+        // একটু বড় সাইজে (২৬x২৬ পিক্সেল) ডায়মন্ড রেন্ডার
+        ctx.drawImage(diamondImage, specialFood.x - 3, specialFood.y - 3, 26, 26);
+        ctx.shadowBlur = 0; 
 
         // বোনাস টাইমার
         let elapsedTime = Date.now() - specialFoodStartTime;
@@ -255,7 +217,6 @@ function draw(){
     // ======= [GOOGLE STYLE SMOOTH BLUE SNAKE] =======
     ctx.textAlign = "left"; 
     
-    // সাপের স্মুথ বডি (সেগমেন্ট পদ্ধতিতে দেয়াল ক্রসিং গ্লিচ ফিক্সড)
     ctx.strokeStyle = "#3b82f6"; 
     ctx.lineWidth = 18;           
     ctx.lineCap = "round";        
@@ -265,7 +226,6 @@ function draw(){
         let prev = snake[i - 1];
         let curr = snake[i];
 
-        // যদি কোনো পার্ট দেয়াল পার হয়ে ওপাশে যায়, তবে মাঝখানের লম্বা গ্লিচ লাইন আঁকা স্কিপ করবে
         if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
             continue; 
         }
@@ -297,7 +257,7 @@ function draw(){
     else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
     else if (direction === "LEFT") ctx.rotate(Math.PI);
 
-    // দুই পাশে বাইরের দিকে বের হওয়া চোখ
+    // চোখ
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
@@ -310,7 +270,7 @@ function draw(){
     ctx.arc(1, 6, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // মুখ হাঁ করার লজিক ও সাদা দাঁত
+    // মুখ হাঁ করা ও দাঁত
     if (isEatingTime) {
         ctx.fillStyle = "#1e3a8a"; 
         ctx.beginPath();
