@@ -52,7 +52,6 @@ function playSound(type) {
     gainNode.connect(audioCtx.destination);
 
     if (type === 'eat') {
-        // 📱 ক্লাসিক নোকিয়া বাটন ফোনের খাবার খাওয়ার বিপ সাউন্ড
         oscillator.type = 'square'; 
         oscillator.frequency.setValueAtTime(950, audioCtx.currentTime); 
         gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
@@ -61,7 +60,6 @@ function playSound(type) {
         oscillator.stop(audioCtx.currentTime + 0.08);
     } 
     else if (type === 'bonus_appear') {
-        // ✨ বোনাস ডায়মন্ড স্ক্রিনে আসার মিষ্টি "টিং" সাউন্ড
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
         oscillator.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.15);
@@ -71,7 +69,6 @@ function playSound(type) {
         oscillator.stop(audioCtx.currentTime + 0.25);
     }
     else if (type === 'eat_bonus') {
-        // 💎 বোনাস ফুড খেলে ডাবল "টিং-টিং" সাকসেস সাউন্ড
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
         oscillator.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.08); 
@@ -81,7 +78,6 @@ function playSound(type) {
         oscillator.stop(audioCtx.currentTime + 0.2);
     }
     else if (type === 'die') {
-        // 💀 ধাক্কা লাগলে বা লাইফ হারালে রেট্রো সাউন্ড
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
         oscillator.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.35);
@@ -92,7 +88,7 @@ function playSound(type) {
     }
 }
 
-// ======= পানির বুদবুদ (Bubbles Array) =======
+// ======= পানির বুদবুদ =======
 let bubbles = [];
 function initBubbles() {
     bubbles = [];
@@ -548,12 +544,6 @@ function startNextLevel() {
     generateObstacles(level); 
     createFood(); 
     isLevelTransition = false;
-
-    // লেভেল শুরুর পরই বোনাস তৈরি হবে
-    if (shouldSpawnBonusAfterTransition) {
-        createSpecialFood();
-        shouldSpawnBonusAfterTransition = false;
-    }
     
     clearInterval(gameLoop);
     gameLoop = setInterval(game, gameSpeed);
@@ -669,11 +659,24 @@ function move(){
 }
 
 function game(){
-    if (specialFood && specialFoodStartTime > 0) {
-        let elapsedTime = Date.now() - specialFoodStartTime;
-        if (elapsedTime >= 5000) {
-            specialFood = null;
-            specialFoodStartTime = 0;
+    // 🛠 [FIXED] সাপ যতক্ষণ না নড়বে (isSnakeMoving === true), ততক্ষণ বোনাস ফুড আসবে না এবং টাইমারও কমবে না।
+    if (isSnakeMoving) {
+        if (shouldSpawnBonusAfterTransition) {
+            createSpecialFood();
+            shouldSpawnBonusAfterTransition = false;
+        }
+
+        if (specialFood && specialFoodStartTime > 0) {
+            let elapsedTime = Date.now() - specialFoodStartTime;
+            if (elapsedTime >= 5000) {
+                specialFood = null;
+                specialFoodStartTime = 0;
+            }
+        }
+    } else {
+        // সাপ স্থির থাকলে বোনাসের স্টার্টিং টাইমকে কারেন্ট টাইমে লক করে রাখা হচ্ছে যাতে টাইমার কমে না যায়
+        if (specialFood && specialFoodStartTime > 0) {
+            specialFoodStartTime = Date.now();
         }
     }
 
@@ -695,6 +698,8 @@ function startGame(){
     running = true;
     gameLoop = setInterval(game, gameSpeed);
 }
+
+// ... (বাকি বাটন এবং সোয়াইপ কন্ট্রোল কোড নিচে অপরিবর্তিত রয়েছে) ...
 
 function pauseGame(){
     if (isLevelTransition) return; 
