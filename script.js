@@ -15,10 +15,9 @@ const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreText = document.getElementById("finalScore");
 const modalRestartBtn = document.getElementById("restartBtn");
 
-// ======= [SMOOTH MOVEMENT VARIABLES] =======
-const GRID_SIZE = 20;
-const SEGMENT_DIST = 20; 
-let moveSpeed = 2.5;     
+// ======= [SMOOTH MOVEMENT TUNING] =======
+const SEGMENT_DIST = 16;  // বডি পার্টসগুলোর মধ্যকার পারফেক্ট গ্যাপ
+let moveSpeed = 1.8;      // [FIXED] স্পিড কিছুটা কমিয়ে পারফেক্ট করা হলো
 
 let snake = [];          
 let snakePath = [];      
@@ -144,12 +143,14 @@ function generateObstacles(targetLevel) {
 
 function resetGame(){
     snake = [{x: 200, y: 200}];
-    for(let i = 1; i <= 4; i++) {
+    // শুরুর ডিফল্ট সাইজ ছোট রাখা হলো
+    for(let i = 1; i <= 3; i++) {
         snake.push({x: 200, y: 200});
     }
 
+    // প্যাথ ক্লিয়ার করা হলো
     snakePath = []; 
-    for(let i = 0; i < 500; i++) {
+    for(let i = 0; i < 300; i++) {
         snakePath.push({x: 200, y: 200});
     }
 
@@ -173,8 +174,9 @@ function resetGame(){
 }
 
 function updateSpeed() {
-    moveSpeed = 2.5 + (level - 1) * 0.4; 
-    if (moveSpeed > 5.5) moveSpeed = 5.5; 
+    // লেভেল ভিত্তিক স্পিড কন্ট্রোল
+    moveSpeed = 1.8 + (level - 1) * 0.25; 
+    if (moveSpeed > 4.0) moveSpeed = 4.0; 
 }
 
 function draw(){
@@ -288,10 +290,11 @@ function draw(){
     // ======= SMOOTH RENDERING =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#3b82f6"; 
-    ctx.lineWidth = 18;           
+    ctx.lineWidth = 16;           
     ctx.lineCap = "round";        
     ctx.lineJoin = "round";       
 
+    // বডি পার্টসগুলোর জয়েন্ট লাইন ড্র
     ctx.beginPath();
     ctx.moveTo(snake[0].x + 10, snake[0].y + 10);
     for (let i = 1; i < snake.length; i++) {
@@ -309,7 +312,7 @@ function draw(){
 
     ctx.fillStyle = "#3b82f6";
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, 9.5, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.save();
@@ -321,33 +324,27 @@ function draw(){
 
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
-    ctx.arc(0, 6, 4.5, 0, Math.PI * 2);  
+    ctx.arc(0, -5, 4, 0, Math.PI * 2); 
+    ctx.arc(0, 5, 4, 0, Math.PI * 2);  
     ctx.fill();
 
     ctx.fillStyle = "#1d4ed8"; 
     ctx.beginPath();
-    ctx.arc(1, -6, 2, 0, Math.PI * 2);
-    ctx.arc(1, 6, 2, 0, Math.PI * 2);
+    ctx.arc(1, -5, 1.8, 0, Math.PI * 2);
+    ctx.arc(1, 5, 1.8, 0, Math.PI * 2);
     ctx.fill();
 
     if (isEatingTime) {
         ctx.fillStyle = "#1e3a8a"; 
         ctx.beginPath();
-        ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
-        ctx.fill();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); 
-        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   
+        ctx.arc(3, 0, 7, -Math.PI/2, Math.PI/2, false);
         ctx.fill();
     } else {
         ctx.strokeStyle = "#1e3a8a";
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
+        ctx.arc(2, 0, 3.5, -Math.PI/3, Math.PI/3, false);
         ctx.stroke();
     }
     ctx.restore(); 
@@ -398,12 +395,12 @@ function startNextLevel() {
     levelText.innerHTML = level;
     
     snake = [{x: 200, y: 200}];
-    for(let i = 1; i <= 4 + score; i++) { 
+    for(let i = 1; i <= 3; i++) { 
         snake.push({x: 200, y: 200});
     }
     
     snakePath = [];
-    for(let i = 0; i < 500; i++) {
+    for(let i = 0; i < 300; i++) {
         snakePath.push({x: 200, y: 200});
     }
     
@@ -435,44 +432,55 @@ function move(){
     }
 
     let head = {...snake[0]};
+    let oldHead = {...head}; // টেলিপোর্ট চেক করার জন্য পুরনো পজিশন সেভ
 
     if(direction == "RIGHT") head.x += moveSpeed;
     if(direction == "LEFT") head.x -= moveSpeed;
     if(direction == "UP") head.y -= moveSpeed;
     if(direction == "DOWN") head.y += moveSpeed;
 
-    if(head.x < -10) head.x = 390;
-    if(head.x > 390) head.x = -10;
-    if(head.y < -10) head.y = 390;
-    if(head.y > 390) head.y = -10;
+    // ======= [FIXED SCREEN CROSSING & PATH TELEPORT] =======
+    let teleported = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if(head.x < -10) { head.x = 390; offsetX = 400; teleported = true; }
+    if(head.x > 390) { head.x = -10; offsetX = -400; teleported = true; }
+    if(head.y < -10) { head.y = 390; offsetY = 400; teleported = true; }
+    if(head.y > 390) { head.y = -10; offsetY = -400; teleported = true; }
 
     // অবস্ট্যাকল কলিশন চেক
     for(let obs of obstacles){
-        if(Math.abs(head.x - obs.x) < 16 && Math.abs(head.y - obs.y) < 16){
+        if(Math.abs(head.x - obs.x) < 15 && Math.abs(head.y - obs.y) < 15){
             gameOver();
             return;
         }
     }
 
-    // ======= [FIXED SELF-COLLISION GUARDRAIL] =======
-    // সাপ যখন একদম শুরুতে স্পন পজিশন থেকে বের হচ্ছে, তখন যেন ডামি প্যাথের সাথে কোলাইড না করে
+    // সেলফ কলিশন চেক (স্পন সেফটি শিল্ড সহ)
     let stepGap = Math.round(SEGMENT_DIST / moveSpeed);
-    
-    // কেবল মাত্র তখনই চেক করবে যখন মাথাটি স্পন পয়েন্ট (200,200) থেকে কিছুটা দূরে যাবে
-    let hasMovedFromSpawn = Math.hypot(head.x - 200, head.y - 200) > 25;
+    let hasMovedFromSpawn = Math.hypot(head.x - 200, head.y - 200) > 30;
 
     for(let i = 3; i < snake.length; i++){
-        // যদি এখনও স্পন এরিয়াতেই থাকে, তবে ডামি বডির প্রথম ফিউ পার্টসের সাথে কলিশন ইগনোর করবে
         if(!hasMovedFromSpawn && Math.hypot(snake[i].x - 200, snake[i].y - 200) < 2) {
             continue; 
         }
-        if(Math.hypot(head.x - snake[i].x, head.y - snake[i].y) < 8){
+        if(Math.hypot(head.x - snake[i].x, head.y - snake[i].y) < 7){
             gameOver();
             return;
         }
     }
 
     snake[0] = head;
+    
+    // [FIXED] যদি সাপ দেয়াল পার হয়, তবে পেছনের প্যাথ হিস্ট্রিকেও অফসেট শিফট করে দেওয়া হবে যেন লম্বা লাইন না টানে
+    if (teleported) {
+        for (let i = 0; i < snakePath.length; i++) {
+            snakePath[i].x += offsetX;
+            snakePath[i].y += offsetY;
+        }
+    }
+    
     snakePath.unshift({...head});
 
     for (let i = 1; i < snake.length; i++) {
@@ -484,17 +492,18 @@ function move(){
         }
     }
 
-    if (snakePath.length > snake.length * stepGap + 50) {
+    if (snakePath.length > snake.length * stepGap + 30) {
         snakePath.pop();
     }
 
-    // গোল্ডফিশ খাওয়া
+    // গোল্ডফিশ খাওয়া (১টি করে বডি পার্ট বাড়বে)
     let distToFood = Math.hypot(head.x - food.x, head.y - food.y);
     if(distToFood < 18){
         score++;
         normalFoodEatenCount++; 
         scoreText.innerHTML = score;
 
+        // [FIXED] গ্রোথ রেট কমানো হলো, নিখুঁত ১ স্টেপ বাড়বে
         for(let k=0; k < stepGap; k++) {
             snake.push({...snake[snake.length-1]});
         }
@@ -527,7 +536,7 @@ function move(){
             score += 3; 
             scoreText.innerHTML = score;
             
-            for(let k=0; k < stepGap * 3; k++) {
+            for(let k=0; k < stepGap * 2; k++) {
                 snake.push({...snake[snake.length-1]});
             }
             
