@@ -15,12 +15,12 @@ const gameOverModal = document.getElementById("gameOverModal");
 const finalScoreText = document.getElementById("finalScore");
 const modalRestartBtn = document.getElementById("restartBtn");
 
-// ======= [SMOOTH MOVEMENT TUNING] =======
-const SEGMENT_DIST = 16;  // বডি পার্টসগুলোর মধ্যকার পারফেক্ট গ্যাপ
-let moveSpeed = 1.8;      // [FIXED] স্পিড কিছুটা কমিয়ে পারফেক্ট করা হলো
+// ======= [PERFECT TUNING] =======
+let moveSpeed = 2.0;       // কন্ট্রোল করার মতো পারফেক্ট স্পিড
+const SEGMENT_GAP = 8;    // সাপের বডির সেগমেন্টগুলোর মাঝের গ্যাপ (ইনডেক্স কাউন্ট)
 
-let snake = [];          
-let snakePath = [];      
+let snakePath = [];       // সাপের মাথার সব পজিশন রেকর্ড রাখার অ্যারে
+let snakeLength = 30;     // সাপের শুরুর সাইজ (পাথ ইনডেক্স অনুযায়ী)
 
 let food;
 let direction = null;
@@ -51,7 +51,8 @@ function createFood(){
         };
         valid = true;
         
-        let dist = Math.hypot(snake[0].x - food.x, snake[0].y - food.y);
+        let head = snakePath[0] || {x: 200, y: 200};
+        let dist = Math.hypot(head.x - food.x, head.y - food.y);
         if(dist < 40) valid = false;
 
         for(let obs of obstacles){
@@ -72,7 +73,8 @@ function createSpecialFood() {
         };
         valid = true;
         
-        let dist = Math.hypot(snake[0].x - specialFood.x, snake[0].y - specialFood.y);
+        let head = snakePath[0] || {x: 200, y: 200};
+        let dist = Math.hypot(head.x - specialFood.x, head.y - specialFood.y);
         if(dist < 40) valid = false;
 
         if(food && Math.hypot(specialFood.x - food.x, specialFood.y - food.y) < 20) {
@@ -142,15 +144,9 @@ function generateObstacles(targetLevel) {
 }
 
 function resetGame(){
-    snake = [{x: 200, y: 200}];
-    // শুরুর ডিফল্ট সাইজ ছোট রাখা হলো
-    for(let i = 1; i <= 3; i++) {
-        snake.push({x: 200, y: 200});
-    }
-
-    // প্যাথ ক্লিয়ার করা হলো
+    snakeLength = 35; // ডিফল্ট শুরুর সাইজ
     snakePath = []; 
-    for(let i = 0; i < 300; i++) {
+    for(let i = 0; i < 500; i++) {
         snakePath.push({x: 200, y: 200});
     }
 
@@ -174,9 +170,8 @@ function resetGame(){
 }
 
 function updateSpeed() {
-    // লেভেল ভিত্তিক স্পিড কন্ট্রোল
-    moveSpeed = 1.8 + (level - 1) * 0.25; 
-    if (moveSpeed > 4.0) moveSpeed = 4.0; 
+    moveSpeed = 2.0 + (level - 1) * 0.25; 
+    if (moveSpeed > 4.5) moveSpeed = 4.5; 
 }
 
 function draw(){
@@ -287,22 +282,41 @@ function draw(){
         }
     }
 
-    // ======= SMOOTH RENDERING =======
+    // ======= [FIXED] ADVANCED SMOOTH RENDERING WITH TELEPORT SUPPORT =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#3b82f6"; 
     ctx.lineWidth = 16;           
     ctx.lineCap = "round";        
     ctx.lineJoin = "round";       
 
-    // বডি পার্টসগুলোর জয়েন্ট লাইন ড্র
-    ctx.beginPath();
-    ctx.moveTo(snake[0].x + 10, snake[0].y + 10);
-    for (let i = 1; i < snake.length; i++) {
-        ctx.lineTo(snake[i].x + 10, snake[i].y + 10);
+    // বডি পার্টস পয়েন্টগুলো হিস্ট্রি থেকে জেনারেট করা
+    let segments = [];
+    for (let i = 0; i < snakeLength; i++) {
+        let idx = i * SEGMENT_GAP;
+        if (idx < snakePath.length) {
+            segments.push(snakePath[idx]);
+        }
     }
-    ctx.stroke();
 
-    let head = snake[0];
+    // দেয়াল পার হওয়ার সময় টুকরো হওয়া এড়াতে আলাদা আলাদা স্ট্রোক ড্র লজিক
+    if (segments.length > 0) {
+        ctx.beginPath();
+        ctx.moveTo(segments[0].x + 10, segments[0].y + 10);
+        for (let i = 1; i < segments.length; i++) {
+            // যদি দুটি পয়েন্টের দূরত্ব হুট করে অনেক বেশি হয় (টেলিপোর্টেশন), তাহলে লাইন ড্র ব্রেক করো
+            if (Math.hypot(segments[i].x - segments[i-1].x, segments[i].y - segments[i-1].y) > 40) {
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(segments[i].x + 10, segments[i].y + 10);
+            } else {
+                ctx.lineTo(segments[i].x + 10, segments[i].y + 10);
+            }
+        }
+        ctx.stroke();
+    }
+
+    // মাথা ড্র করা
+    let head = snakePath[0];
     let centerX = head.x + 10;
     let centerY = head.y + 10;
 
@@ -394,13 +408,9 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
     
-    snake = [{x: 200, y: 200}];
-    for(let i = 1; i <= 3; i++) { 
-        snake.push({x: 200, y: 200});
-    }
-    
+    snakeLength = 35;
     snakePath = [];
-    for(let i = 0; i < 300; i++) {
+    for(let i = 0; i < 500; i++) {
         snakePath.push({x: 200, y: 200});
     }
     
@@ -431,23 +441,19 @@ function move(){
         nextDirection = null;
     }
 
-    let head = {...snake[0]};
-    let oldHead = {...head}; // টেলিপোর্ট চেক করার জন্য পুরনো পজিশন সেভ
+    let head = {...snakePath[0]};
 
     if(direction == "RIGHT") head.x += moveSpeed;
     if(direction == "LEFT") head.x -= moveSpeed;
     if(direction == "UP") head.y -= moveSpeed;
     if(direction == "DOWN") head.y += moveSpeed;
 
-    // ======= [FIXED SCREEN CROSSING & PATH TELEPORT] =======
-    let teleported = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    if(head.x < -10) { head.x = 390; offsetX = 400; teleported = true; }
-    if(head.x > 390) { head.x = -10; offsetX = -400; teleported = true; }
-    if(head.y < -10) { head.y = 390; offsetY = 400; teleported = true; }
-    if(head.y > 390) { head.y = -10; offsetY = -400; teleported = true; }
+    // ======= [FIXED INSTANT VANISH BAG] =======
+    // এবার বর্ডার স্ক্রিন পার হলে প্যাথ শিফটের দরকার নেই, শুধু মাথা টেলিপোর্ট হবে
+    if(head.x < -10) head.x = 390;
+    if(head.x > 390) head.x = -10;
+    if(head.y < -10) head.y = 390;
+    if(head.y > 390) head.y = -10;
 
     // অবস্ট্যাকল কলিশন চেক
     for(let obs of obstacles){
@@ -457,56 +463,38 @@ function move(){
         }
     }
 
-    // সেলফ কলিশন চেক (স্পন সেফটি শিল্ড সহ)
-    let stepGap = Math.round(SEGMENT_DIST / moveSpeed);
+    // সেলফ কলিশন চেক (প্রথম ১০টা ফ্রেম বা নিজের ঘাড় বাদে পেছনের বডির সাথে চেক করবে)
     let hasMovedFromSpawn = Math.hypot(head.x - 200, head.y - 200) > 30;
-
-    for(let i = 3; i < snake.length; i++){
-        if(!hasMovedFromSpawn && Math.hypot(snake[i].x - 200, snake[i].y - 200) < 2) {
-            continue; 
-        }
-        if(Math.hypot(head.x - snake[i].x, head.y - snake[i].y) < 7){
-            gameOver();
-            return;
-        }
-    }
-
-    snake[0] = head;
-    
-    // [FIXED] যদি সাপ দেয়াল পার হয়, তবে পেছনের প্যাথ হিস্ট্রিকেও অফসেট শিফট করে দেওয়া হবে যেন লম্বা লাইন না টানে
-    if (teleported) {
-        for (let i = 0; i < snakePath.length; i++) {
-            snakePath[i].x += offsetX;
-            snakePath[i].y += offsetY;
-        }
-    }
-    
-    snakePath.unshift({...head});
-
-    for (let i = 1; i < snake.length; i++) {
-        let targetIndex = i * stepGap;
-        if (targetIndex < snakePath.length) {
-            snake[i] = snakePath[targetIndex];
-        } else {
-            snake[i] = snakePath[snakePath.length - 1];
+    for(let i = 25; i < snakeLength; i++){
+        let idx = i * SEGMENT_GAP;
+        if (idx < snakePath.length) {
+            let seg = snakePath[idx];
+            if(!hasMovedFromSpawn && Math.hypot(seg.x - 200, seg.y - 200) < 2) continue;
+            
+            if(Math.hypot(head.x - seg.x, head.y - seg.y) < 7){
+                gameOver();
+                return;
+            }
         }
     }
 
-    if (snakePath.length > snake.length * stepGap + 30) {
+    // নতুন মাথার পজিশন অ্যারের শুরুতে পুশ করা
+    snakePath.unshift(head);
+
+    // মেমোরি ধরে রাখতে অ্যারের সাইজ ট্রিম করা
+    if (snakePath.length > 1000) {
         snakePath.pop();
     }
 
-    // গোল্ডফিশ খাওয়া (১টি করে বডি পার্ট বাড়বে)
+    // গোল্ডফিশ খাওয়া (১টি পারফেক্ট সেগমেন্ট গ্রোথ)
     let distToFood = Math.hypot(head.x - food.x, head.y - food.y);
     if(distToFood < 18){
         score++;
         normalFoodEatenCount++; 
         scoreText.innerHTML = score;
 
-        // [FIXED] গ্রোথ রেট কমানো হলো, নিখুঁত ১ স্টেপ বাড়বে
-        for(let k=0; k < stepGap; k++) {
-            snake.push({...snake[snake.length-1]});
-        }
+        // [FIXED ONE SEGMENT GROW] এক লাফে বড় না করে নিখুঁত ১টি ব্লক সাইজ বাড়ানো হলো
+        snakeLength += SEGMENT_GAP;
 
         if(normalFoodEatenCount % 5 === 0){
             createSpecialFood();
@@ -536,9 +524,8 @@ function move(){
             score += 3; 
             scoreText.innerHTML = score;
             
-            for(let k=0; k < stepGap * 2; k++) {
-                snake.push({...snake[snake.length-1]});
-            }
+            // স্পেশাল ফুডে ৩ গুণ গ্রোথ
+            snakeLength += (SEGMENT_GAP * 3);
             
             clearTimeout(specialFoodTimer); 
             specialFood = null; 
