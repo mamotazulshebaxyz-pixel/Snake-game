@@ -37,13 +37,6 @@ let isSnakeMoving = false;
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 
-// ======= [NEW] হাই-কোয়ালিটি গেম স্প্রাইট ইমেজেস =======
-const fishImage = new Image();
-fishImage.src = "https://cdn-icons-png.flaticon.com/512/2911/2911132.png"; // কিউট বড় গোল্ডফিশ
-
-const diamondImage = new Image();
-diamondImage.src = "https://cdn-icons-png.flaticon.com/512/3067/3067439.png"; // চকচকে বড় লাক্সারি ডায়মন্ড
-
 highScoreText.innerHTML = highScore;
 
 function createFood(){
@@ -189,17 +182,95 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= [FIXED] HD Goldfish Food (সাইজ বড় এবং স্পষ্ট) =======
-    // গ্রিড থেকে ২ পিক্সেল বাড়িয়ে ২৪x২৪ সাইজে ড্র করা হয়েছে যাতে একদম ক্লিয়ার দেখা যায়
-    ctx.drawImage(fishImage, food.x - 2, food.y - 2, 24, 24);
+    // ======= [FIXED] Vector Big Goldfish (বিশদ কার্টুন মাছ) =======
+    let fx = food.x + 10;
+    let fy = food.y + 10;
 
-    // ======= [FIXED] HD Diamond Special Food =======
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#ff7675";
+
+    // ১. মাছের লেজ (বড় ডাবল ফিন)
+    ctx.fillStyle = "#ff7675";
+    ctx.beginPath();
+    ctx.moveTo(fx + 2, fy);
+    ctx.lineTo(fx + 13, fy - 9);
+    ctx.lineTo(fx + 9, fy);
+    ctx.lineTo(fx + 13, fy + 9);
+    ctx.closePath();
+    ctx.fill();
+
+    // ২. মাছের মেইন বডি (ডিম্বাকৃতি ও বড় সাইজ)
+    ctx.fillStyle = "#ff7675";
+    ctx.beginPath();
+    ctx.ellipse(fx - 3, fy, 11, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ৩. পেটের ওপর হাইলাইট কালার (Light Pink/Orange)
+    ctx.fillStyle = "#fab1a0";
+    ctx.beginPath();
+    ctx.ellipse(fx - 3, fy + 2, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ৪. কিউট বড় চোখ
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(fx - 8, fy - 2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.arc(fx - 8.5, fy - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // ৫. ছোট পাখা (Fin)
+    ctx.fillStyle = "#e74c3c";
+    ctx.beginPath();
+    ctx.ellipse(fx - 1, fy + 3, 4, 2.5, Math.PI/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0; // রিলিজ শ্যাডো
+
+    // ======= [FIXED] Vector Crystal Diamond (চকচকে ৩ডি হীরা) =======
     if (specialFood) {
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "#00cec9"; // ডায়মন্ডের চারপাশে চমৎকার গ্লো ইফেক্ট
+        let sx = specialFood.x + 10;
+        let sy = specialFood.y + 10;
 
-        // একটু বড় সাইজে (২৬x২৬ পিক্সেল) ডায়মন্ড রেন্ডার
-        ctx.drawImage(diamondImage, specialFood.x - 3, specialFood.y - 3, 26, 26);
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = "#00cec9";
+
+        // হীরার ডান পাশের শেড (Dark cyan)
+        ctx.fillStyle = "#00aea9";
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - 11);
+        ctx.lineTo(sx + 6, sy - 11);
+        ctx.lineTo(sx + 12, sy - 4);
+        ctx.lineTo(sx, sy + 11);
+        ctx.closePath();
+        ctx.fill();
+
+        // হীরার বাম পাশের শেড (Medium Cyan)
+        ctx.fillStyle = "#00cec9";
+        ctx.beginPath();
+        ctx.moveTo(sx - 6, sy - 11);
+        ctx.lineTo(sx, sy - 11);
+        ctx.lineTo(sx, sy + 11);
+        ctx.lineTo(sx - 12, sy - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // হীরার ওপরের চকচকে রিফ্লেকশন (Light Pearl Mint)
+        ctx.fillStyle = "#81ecec";
+        ctx.beginPath();
+        ctx.moveTo(sx - 6, sy - 11);
+        ctx.lineTo(sx + 6, sy - 11);
+        ctx.lineTo(sx, sy - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // হীরার একদম সামনের গ্লস
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - 4);
+        ctx.lineTo(sx + 4, sy - 4);
+        ctx.lineTo(sx, sy + 6);
+        ctx.closePath();
+        ctx.fill();
+
         ctx.shadowBlur = 0; 
 
         // বোনাস টাইমার
