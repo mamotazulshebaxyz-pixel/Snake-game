@@ -88,12 +88,12 @@ function createSpecialFood() {
         }
     }
 
-    specialFoodStartTime = Date.now(); 
+    // [FIXED] এখনই ডিরেক্ট Date.now() দিবো না, সাপ মুভমেন্ট শুরু করলে তখন ভ্যালু বসবে।
+    specialFoodStartTime = 0; 
 
     clearTimeout(specialFoodTimer);
-    specialFoodTimer = setTimeout(() => {
-        specialFood = null;
-    }, 5000);
+    // [FIXED] সাপ মুভ হওয়া না পর্যন্ত ৫ সেকেন্ডের ডেডলাইন কাউন্টডাউন শুরু হবে না।
+    specialFoodTimer = null; 
 }
 
 function generateObstacles(targetLevel) {
@@ -154,6 +154,7 @@ function resetGame(){
     specialFood = null;
     normalFoodEatenCount = 0;
     clearTimeout(specialFoodTimer);
+    specialFoodTimer = null;
 
     direction = null; 
     isSnakeMoving = false; 
@@ -182,14 +183,13 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= [FIXED] Vector Big Goldfish (বিশদ কার্টুন মাছ) =======
+    // ======= Vector Big Goldfish =======
     let fx = food.x + 10;
     let fy = food.y + 10;
 
     ctx.shadowBlur = 10;
     ctx.shadowColor = "#ff7675";
 
-    // ১. মাছের লেজ (বড় ডাবল ফিন)
     ctx.fillStyle = "#ff7675";
     ctx.beginPath();
     ctx.moveTo(fx + 2, fy);
@@ -199,33 +199,29 @@ function draw(){
     ctx.closePath();
     ctx.fill();
 
-    // ২. মাছের মেইন বডি (ডিম্বাকৃতি ও বড় সাইজ)
     ctx.fillStyle = "#ff7675";
     ctx.beginPath();
     ctx.ellipse(fx - 3, fy, 11, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // ৩. পেটের ওপর হাইলাইট কালার (Light Pink/Orange)
     ctx.fillStyle = "#fab1a0";
     ctx.beginPath();
     ctx.ellipse(fx - 3, fy + 2, 8, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // ৪. কিউট বড় চোখ
     ctx.fillStyle = "#ffffff";
     ctx.beginPath(); ctx.arc(fx - 8, fy - 2, 3, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#000000";
     ctx.beginPath(); ctx.arc(fx - 8.5, fy - 2, 1.5, 0, Math.PI * 2); ctx.fill();
 
-    // ৫. ছোট পাখা (Fin)
     ctx.fillStyle = "#e74c3c";
     ctx.beginPath();
     ctx.ellipse(fx - 1, fy + 3, 4, 2.5, Math.PI/4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.shadowBlur = 0; // রিলিজ শ্যাডো
+    ctx.shadowBlur = 0; 
 
-    // ======= [FIXED] Vector Crystal Diamond (চকচকে ৩ডি হীরা) =======
+    // ======= Vector Crystal Diamond =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -233,7 +229,6 @@ function draw(){
         ctx.shadowBlur = 18;
         ctx.shadowColor = "#00cec9";
 
-        // হীরার ডান পাশের শেড (Dark cyan)
         ctx.fillStyle = "#00aea9";
         ctx.beginPath();
         ctx.moveTo(sx, sy - 11);
@@ -243,7 +238,6 @@ function draw(){
         ctx.closePath();
         ctx.fill();
 
-        // হীরার বাম পাশের শেড (Medium Cyan)
         ctx.fillStyle = "#00cec9";
         ctx.beginPath();
         ctx.moveTo(sx - 6, sy - 11);
@@ -253,7 +247,6 @@ function draw(){
         ctx.closePath();
         ctx.fill();
 
-        // হীরার ওপরের চকচকে রিফ্লেকশন (Light Pearl Mint)
         ctx.fillStyle = "#81ecec";
         ctx.beginPath();
         ctx.moveTo(sx - 6, sy - 11);
@@ -262,7 +255,6 @@ function draw(){
         ctx.closePath();
         ctx.fill();
 
-        // হীরার একদম সামনের গ্লস
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
         ctx.moveTo(sx, sy - 4);
@@ -273,11 +265,19 @@ function draw(){
 
         ctx.shadowBlur = 0; 
 
-        // বোনাস টাইমার
-        let elapsedTime = Date.now() - specialFoodStartTime;
-        let timeLeft = Math.max(0, (5000 - elapsedTime) / 1000); 
+        // [FIXED] টাইমার রেন্ডারিং লজিক
+        let timeLeft = 5.0;
+        if (specialFoodStartTime > 0) {
+            let elapsedTime = Date.now() - specialFoodStartTime;
+            timeLeft = Math.max(0, (5000 - elapsedTime) / 1000);
+            
+            // যদি মুভিং অবস্থায় ৫ সেকেন্ড শেষ হয়ে যায়, ডায়মন্ড ডিলিট করো
+            if (timeLeft <= 0) {
+                specialFood = null;
+            }
+        }
 
-        if (timeLeft > 0 && isSnakeMoving) {
+        if (specialFood && timeLeft > 0) {
             ctx.fillStyle = "#ffd700"; 
             ctx.font = "bold 14px sans-serif";
             ctx.textAlign = "center";
@@ -285,7 +285,7 @@ function draw(){
         }
     }
 
-    // ======= [GOOGLE STYLE SMOOTH BLUE SNAKE] =======
+    // ======= GOOGLE STYLE SMOOTH BLUE SNAKE =======
     ctx.textAlign = "left"; 
     
     ctx.strokeStyle = "#3b82f6"; 
@@ -307,7 +307,6 @@ function draw(){
         ctx.stroke();
     }
 
-    // সাপের মাথার স্পেশাল অ্যানিমেশন
     let head = snake[0];
     let centerX = head.x + 10;
     let centerY = head.y + 10;
@@ -328,7 +327,6 @@ function draw(){
     else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
     else if (direction === "LEFT") ctx.rotate(Math.PI);
 
-    // চোখ
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
@@ -341,7 +339,6 @@ function draw(){
     ctx.arc(1, 6, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // মুখ হাঁ করা ও দাঁত
     if (isEatingTime) {
         ctx.fillStyle = "#1e3a8a"; 
         ctx.beginPath();
@@ -364,7 +361,7 @@ function draw(){
 
     ctx.restore(); 
 
-    // ======= UI ও মেসেজ =======
+    // ======= UI =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
@@ -434,6 +431,10 @@ function triggerLevelTransition(targetLevel) {
     isLevelTransition = true;
     nextLevelToStart = targetLevel;
     clearInterval(gameLoop); 
+    
+    // [FIXED] লেভেল চেঞ্জের সময় যদি কোনো টাইমার থেকে থাকে, তা আগে ক্লিয়ার করে দেওয়া
+    clearTimeout(specialFoodTimer);
+    specialFoodTimer = null;
     
     generateObstacles(targetLevel); 
     draw(); 
@@ -597,6 +598,7 @@ function gameOver(){
     running = false;
     isSnakeMoving = false;
     clearTimeout(specialFoodTimer); 
+    specialFoodTimer = null;
 
     menu.classList.remove("hidden");
 
@@ -641,8 +643,12 @@ canvas.addEventListener("touchend", function(e){
         return;
     }
 
+    // [FIXED] প্রথমবার মুভ করা শুরু করলে যদি স্ক্রিনে ডায়মন্ড থাকে, তবে এখন থেকে টাইমার শুরু হবে
     if (!isSnakeMoving) {
         isSnakeMoving = true;
+        if (specialFood && specialFoodStartTime === 0) {
+            specialFoodStartTime = Date.now();
+        }
     }
 
     if(Math.abs(dx) > Math.abs(dy)){
@@ -671,9 +677,12 @@ document.addEventListener("keydown", function(e){
     }
 
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
+        // [FIXED] কী-বোর্ড দিয়ে প্রথমবার মুভ করা শুরু করলে তখন থেকে এক্সাক্টলি ৫ সেকেন্ড কাউন্ট হবে
         if (!isSnakeMoving) {
             isSnakeMoving = true;
-            if(specialFood) specialFoodStartTime = Date.now();
+            if (specialFood && specialFoodStartTime === 0) {
+                specialFoodStartTime = Date.now();
+            }
         }
     }
 
