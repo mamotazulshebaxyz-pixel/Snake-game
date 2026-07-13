@@ -234,116 +234,88 @@ function draw(){
         }
     }
 
-    // ======= [LUSH 3D CARTOON SNAKE] =======
+    // ======= [GOOGLE STYLE SMOOTH BLUE SNAKE] =======
     ctx.textAlign = "left"; 
     
-    for (let i = snake.length - 1; i >= 0; i--) {
-        let part = snake[i];
-        let centerX = part.x + 10;
-        let centerY = part.y + 10;
-
-        if (i === 0) {
-            // --- সাপের মাথা ---
-
-            // চেক করা হচ্ছে সাপ খাবারের কাছাকাছি আছে কি না (২০ পিক্সেলের মধ্যে)
-            let isNearNormalFood = Math.abs(part.x - food.x) <= 20 && Math.abs(part.y - food.y) <= 20;
-            let isNearSpecialFood = specialFood && Math.abs(part.x - specialFood.x) <= 20 && Math.abs(part.y - specialFood.y) <= 20;
-            let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
-
-            // ১. লম্বা কিউট লাল জিব (মুখ হাঁ করলে জিব একটু বাইরে বের হবে)
-            ctx.fillStyle = "#ff4757";
-            ctx.beginPath();
-            let tongueLen = isEatingTime ? 12 : 8; 
-            if (direction === "UP") {
-                ctx.rect(centerX - 3, centerY - 10 - tongueLen, 6, tongueLen); ctx.fill();
-                ctx.arc(centerX - 2, centerY - 10 - tongueLen, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY - 10 - tongueLen, 2, 0, Math.PI*2);
-            } else if (direction === "LEFT") {
-                ctx.rect(centerX - 10 - tongueLen, centerY - 3, tongueLen, 6); ctx.fill();
-                ctx.arc(centerX - 10 - tongueLen, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX - 10 - tongueLen, centerY + 2, 2, 0, Math.PI*2);
-            } else if (direction === "DOWN") {
-                ctx.rect(centerX - 3, centerY + 10, 6, tongueLen); ctx.fill();
-                ctx.arc(centerX - 2, centerY + 10 + tongueLen, 2, 0, Math.PI*2); ctx.arc(centerX + 2, centerY + 10 + tongueLen, 2, 0, Math.PI*2);
-            } else { 
-                ctx.rect(centerX + 10, centerY - 3, tongueLen, 6); ctx.fill();
-                ctx.arc(centerX + 10 + tongueLen, centerY - 2, 2, 0, Math.PI*2); ctx.arc(centerX + 10 + tongueLen, centerY + 2, 2, 0, Math.PI*2);
-            }
-            ctx.fill();
-
-            // ২. গ্রাডিয়েন্ট দিয়ে উজ্জ্বল সবুজ মাথা
-            let headGrad = ctx.createRadialGradient(centerX - 3, centerY - 4, 3, centerX, centerY, 13);
-            headGrad.addColorStop(0, "#a2ff00"); 
-            headGrad.addColorStop(0.6, "#4cd137"); 
-            headGrad.addColorStop(1, "#26de10"); 
-            
-            ctx.fillStyle = headGrad;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 13, 0, Math.PI * 2); 
-            ctx.fill();
-
-            // ৩. বড় বড় গোল গোল কিউট চোখ (খাবার দেখলে চোখ এক্সাইটেড হয়ে বড় হবে!)
-            let eyeRadius = isEatingTime ? 7 : 6; 
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.arc(centerX - 5, centerY - 4, eyeRadius, 0, Math.PI * 2); 
-            ctx.arc(centerX + 5, centerY - 4, eyeRadius, 0, Math.PI * 2); 
-            ctx.fill();
-
-            // চোখের মণি
-            ctx.fillStyle = "#000000";
-            ctx.beginPath();
-            ctx.arc(centerX - 4, centerY - 4, isEatingTime ? 4.5 : 3.5, 0, Math.PI * 2);
-            ctx.arc(centerX + 4, centerY - 4, isEatingTime ? 4.5 : 3.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // চোখের গ্লসি রিফ্লেকশন
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.arc(centerX - 5.2, centerY - 5.2, 1.5, 0, Math.PI * 2);
-            ctx.arc(centerX + 2.8, centerY - 5.2, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ৪. মুখ খোলা এবং বন্ধ করার অ্যানিমেশন
-            if (isEatingTime) {
-                // খাবার খাওয়ার সময় বড় হাঁ (Open Mouth)
-                ctx.fillStyle = "#9e1b1b"; 
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 4, 6, 0, Math.PI); 
-                ctx.fill();
-                
-                // কিউট ছোট্ট গোলাপী জিব মুখের ভেতরে
-                ctx.fillStyle = "#ff7675";
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 7, 3, 0, Math.PI);
-                ctx.fill();
-            } else {
-                // সাধারণ অবস্থায় মিষ্টি হাসিমুখ (Cute Smile Line)
-                ctx.strokeStyle = "#1b5e20";
-                ctx.lineWidth = 2.5;
-                ctx.lineCap = "round";
-                ctx.beginPath();
-                ctx.arc(centerX, centerY + 3, 5, 0.1 * Math.PI, 0.9 * Math.PI);
-                ctx.stroke();
-            }
-
-        } else {
-            // --- গোল গোল থ্রিডি বডি জয়েন্টস ---
-            let bodyGrad = ctx.createRadialGradient(centerX - 3, centerY - 3, 1, centerX, centerY, 11);
-            bodyGrad.addColorStop(0, "#bfff00"); 
-            bodyGrad.addColorStop(0.5, "#4cd137"); 
-            bodyGrad.addColorStop(1, "#1e820b"); 
-            
-            ctx.fillStyle = bodyGrad;
-            ctx.beginPath();
-            let radius = Math.max(11 - (i * 0.2), 7);
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2); 
-            ctx.fill();
-            
-            ctx.strokeStyle = "rgba(0,0,0,0.2)";
-            ctx.lineWidth = 1;
-            ctx.stroke();
+    // ১. স্মুথ নীল বডি (মোড় ঘোরার সময় পাইপের মতো মসৃণ হবে)
+    if (snake.length > 1) {
+        ctx.strokeStyle = "#3b82f6"; 
+        ctx.lineWidth = 18;           
+        ctx.lineCap = "round";        
+        ctx.lineJoin = "round";       
+        
+        ctx.beginPath();
+        ctx.moveTo(snake[snake.length - 1].x + 10, snake[snake.length - 1].y + 10);
+        for (let i = snake.length - 2; i > 0; i--) {
+            ctx.lineTo(snake[i].x + 10, snake[i].y + 10);
         }
+        ctx.lineTo(snake[0].x + 10, snake[0].y + 10); 
+        ctx.stroke();
     }
 
+    // ২. সাপের মাথার স্পেশাল অ্যানিমেশন
+    let head = snake[0];
+    let centerX = head.x + 10;
+    let centerY = head.y + 10;
+
+    // খাবার সামনে আছে কি না চেক করার লজিক (৪০ পিক্সেল রেঞ্জ)
+    let isNearNormalFood = Math.abs(head.x - food.x) <= 40 && Math.abs(head.y - food.y) <= 40;
+    let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
+    let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
+
+    ctx.fillStyle = "#3b82f6";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    
+    // সাপ যেদিকে মুখ করবে সেদিকে মাথা ঘোরানো
+    if (direction === "UP") ctx.rotate(-Math.PI / 2);
+    else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
+    else if (direction === "LEFT") ctx.rotate(Math.PI);
+
+    // দুই পাশে বাইরের দিকে বের হওয়া কিউট চোখ
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
+    ctx.arc(0, 6, 4.5, 0, Math.PI * 2);  
+    ctx.fill();
+
+    ctx.fillStyle = "#1d4ed8"; 
+    ctx.beginPath();
+    ctx.arc(1, -6, 2, 0, Math.PI * 2);
+    ctx.arc(1, 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // মুখ হাঁ করার লজিক
+    if (isEatingTime) {
+        // গোল বড় হাঁ মুখ (ডার্ক ব্লু)
+        ctx.fillStyle = "#1e3a8a"; 
+        ctx.beginPath();
+        ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
+        ctx.fill();
+
+        // কিউট সাদা ছোট দাঁত
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); // উপর
+        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   // নিচ
+        ctx.fill();
+    } else {
+        // সাধারণ অবস্থায় স্মাইল ফেস
+        ctx.strokeStyle = "#1e3a8a";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
+        ctx.stroke();
+    }
+
+    ctx.restore(); 
+
+    // ======= গেমপ্লে UI ও মেসেজ =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
