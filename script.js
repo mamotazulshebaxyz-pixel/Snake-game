@@ -17,20 +17,19 @@ const modalRestartBtn = document.getElementById("restartBtn");
 
 // ======= [SMOOTH MOVEMENT VARIABLES] =======
 const GRID_SIZE = 20;
-const SEGMENT_DIST = 20; // সাপের এক পার্ট থেকে আরেক পার্টের দূরত্ব
-let moveSpeed = 2.5;     // প্রতি ফ্রেমে সাপ কত পিক্সেল আগাবে (স্মুথ স্পিড)
+const SEGMENT_DIST = 20; 
+let moveSpeed = 2.5;     
 
-let snake = [];          // {x, y} কোঅর্ডিনেটসের অ্যারে
-let snakePath = [];      // সাপের মাথার পুরো রাস্তার হিস্ট্রি (বডি ফলো করার জন্য)
+let snake = [];          
+let snakePath = [];      
 
 let food;
 let direction = null;
-let nextDirection = null; // টার্নিং বাগ ফিক্সের জন্য বাফার
+let nextDirection = null; 
 let score;
 let level = 1;
 let highScore = localStorage.getItem("snakeHighScore") || 0;
 
-let gameLoop;
 let specialFood = null;
 let specialFoodTimer = null;
 let specialFoodStartTime = 0; 
@@ -44,7 +43,6 @@ let nextLevelToStart = 2;
 
 highScoreText.innerHTML = highScore;
 
-// খাবারের জন্য র‍্যান্ডম পজিশন (ক্যানভাসের বর্ডার থেকে কিছুটা ভেতরে রাখা হয়েছে)
 function createFood(){
     let valid = false;
     while(!valid){
@@ -54,7 +52,6 @@ function createFood(){
         };
         valid = true;
         
-        // সাপের মাথার কাছাকাছি যেন খাবার স্পন না হয়
         let dist = Math.hypot(snake[0].x - food.x, snake[0].y - food.y);
         if(dist < 40) valid = false;
 
@@ -146,12 +143,16 @@ function generateObstacles(targetLevel) {
 }
 
 function resetGame(){
+    // সাপের মাথা এবং বডি রিসেট
     snake = [{x: 200, y: 200}];
-    snakePath = [{x: 200, y: 200}];
-    
-    // প্রাথমিক বডি লেংথ ৪ পার্ট সেট করা হলো
     for(let i = 1; i <= 4; i++) {
         snake.push({x: 200, y: 200});
+    }
+
+    // [FIXED] প্যাথ হিস্ট্রি শুরুতেই পর্যাপ্ত ডেটা দিয়ে ফিলআপ করা হলো যেন বডি ভেঙে না যায়
+    snakePath = []; 
+    for(let i = 0; i < 500; i++) {
+        snakePath.push({x: 200, y: 200});
     }
 
     obstacles = [];
@@ -162,7 +163,7 @@ function resetGame(){
 
     direction = null; 
     nextDirection = null;
-    isSnakeMoving = false; 
+    isSnakeMoving = false; // মুভমেন্ট ফলস, তাই শুরুতে মরবে না
 
     score = 0;
     scoreText.innerHTML = score;
@@ -173,14 +174,12 @@ function resetGame(){
     createFood();
 }
 
-// লেভেল অনুযায়ী স্মুথ স্পিড কন্ট্রোল লজিক
 function updateSpeed() {
     moveSpeed = 2.5 + (level - 1) * 0.4; 
-    if (moveSpeed > 5.5) moveSpeed = 5.5; // ম্যাক্সিমাম স্পিড ক্যাপ
+    if (moveSpeed > 5.5) moveSpeed = 5.5; 
 }
 
 function draw(){
-    // ১. ব্যাকগ্রাউন্ড একদম সলিড কালো (কোনো ছায়া বা ট্রেইল থাকবে না)
     ctx.fillStyle = "#111";
     ctx.fillRect(0,0,400,400);
 
@@ -288,14 +287,13 @@ function draw(){
         }
     }
 
-    // ======= [SMOOTH RENDERING] =======
+    // ======= SMOOTH RENDERING =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#3b82f6"; 
     ctx.lineWidth = 18;           
     ctx.lineCap = "round";        
     ctx.lineJoin = "round";       
 
-    // বডি পার্টসগুলোর জয়েন্ট লাইন ড্র
     ctx.beginPath();
     ctx.moveTo(snake[0].x + 10, snake[0].y + 10);
     for (let i = 1; i < snake.length; i++) {
@@ -303,7 +301,6 @@ function draw(){
     }
     ctx.stroke();
 
-    // সাপের মাথা রেন্ডারিং ও চোখ
     let head = snake[0];
     let centerX = head.x + 10;
     let centerY = head.y + 10;
@@ -406,7 +403,11 @@ function startNextLevel() {
     for(let i = 1; i <= 4 + score; i++) { 
         snake.push({x: 200, y: 200});
     }
-    snakePath = [{x: 200, y: 200}];
+    
+    snakePath = [];
+    for(let i = 0; i < 500; i++) {
+        snakePath.push({x: 200, y: 200});
+    }
     
     direction = null; 
     nextDirection = null;
@@ -426,8 +427,9 @@ function triggerLevelTransition(targetLevel) {
     generateObstacles(targetLevel); 
 }
 
-// ======= [FIXED SMOOTH MOVEMENT ENGINE] =======
+// ======= MOVEMENT ENGINE =======
 function move(){
+    // [FIXED Guardrail] যদি সাপ না নড়ে বা লেভেল ট্রানজিশন চলে, তবে মুভমেন্ট ও মৃত্যুর লজিক সম্পূর্ণ বন্ধ থাকবে
     if (isLevelTransition || !isSnakeMoving) return; 
 
     if (nextDirection) {
@@ -442,13 +444,12 @@ function move(){
     if(direction == "UP") head.y -= moveSpeed;
     if(direction == "DOWN") head.y += moveSpeed;
 
-    // স্মুথ স্ক্রিন ক্রসিং লুপ
     if(head.x < -10) head.x = 390;
     if(head.x > 390) head.x = -10;
     if(head.y < -10) head.y = 390;
     if(head.y > 390) head.y = -10;
 
-    // অবস্ট্যাকল কলিশন চেক (স্মুথ বক্স বক্স বাউন্ডিং রেডিয়াস)
+    // অবস্ট্যাকল কলিশন চেক
     for(let obs of obstacles){
         if(Math.abs(head.x - obs.x) < 16 && Math.abs(head.y - obs.y) < 16){
             gameOver();
@@ -456,7 +457,8 @@ function move(){
         }
     }
 
-    // সেলফ কলিশন চেক (সাপ নিজের লেজে কামড় দিলে)
+    // সেলফ কলিশন চেক (সাপ যখন অলরেডি চলা শুরু করেছে)
+    let stepGap = Math.round(SEGMENT_DIST / moveSpeed);
     for(let i = 3; i < snake.length; i++){
         if(Math.hypot(head.x - snake[i].x, head.y - snake[i].y) < 8){
             gameOver();
@@ -467,9 +469,8 @@ function move(){
     snake[0] = head;
     snakePath.unshift({...head});
 
-    // সাপের বডি পার্টসগুলো যেন একটার পর একটা স্মুথলি ফাঁকা বজায় রেখে ট্রেইল ফলো করে
     for (let i = 1; i < snake.length; i++) {
-        let targetIndex = i * Math.round(SEGMENT_DIST / moveSpeed);
+        let targetIndex = i * stepGap;
         if (targetIndex < snakePath.length) {
             snake[i] = snakePath[targetIndex];
         } else {
@@ -477,19 +478,18 @@ function move(){
         }
     }
 
-    if (snakePath.length > snake.length * Math.round(SEGMENT_DIST / moveSpeed) + 20) {
+    if (snakePath.length > snake.length * stepGap + 50) {
         snakePath.pop();
     }
 
-    // গোল্ডফিশ খাওয়ার চেক (ডিস্টেন্স চেক)
+    // গোল্ডফিশ খাওয়া
     let distToFood = Math.hypot(head.x - food.x, head.y - food.y);
     if(distToFood < 18){
         score++;
         normalFoodEatenCount++; 
         scoreText.innerHTML = score;
 
-        // নতুন বডি সেগমেন্ট অ্যাড
-        for(let k=0; k < Math.round(SEGMENT_DIST/moveSpeed); k++) {
+        for(let k=0; k < stepGap; k++) {
             snake.push({...snake[snake.length-1]});
         }
 
@@ -514,14 +514,14 @@ function move(){
         if (!isLevelTransition) createFood();
     } 
     
-    // স্পেশাল ডায়মন্ড খাওয়ার চেক
+    // স্পেশাল ডায়মন্ড খাওয়া
     if(specialFood){
         let distToSpecial = Math.hypot(head.x - specialFood.x, head.y - specialFood.y);
         if(distToSpecial < 18){
             score += 3; 
             scoreText.innerHTML = score;
             
-            for(let k=0; k < Math.round(SEGMENT_DIST/moveSpeed)*3; k++) {
+            for(let k=0; k < stepGap * 3; k++) {
                 snake.push({...snake[snake.length-1]});
             }
             
@@ -544,7 +544,6 @@ function move(){
     }
 }
 
-// requestAnimationFrame দিয়ে ৬০ এফপিএস-এ মাখনের মতো রান হবে গেম
 function gameLoopTicker(){
     if(running) {
         move();
@@ -605,7 +604,7 @@ function gameOver(){
     if(pauseBtn) pauseBtn.style.display = "none";
 }
 
-// ===== Control Handlers (টার্ন স্মুথিং সহ) =====
+// ======= Controls =======
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
         if(e.key === "Enter") startNextLevel();
@@ -633,7 +632,7 @@ document.addEventListener("keydown", function(e){
     if(e.key=="ArrowRight" && direction!="LEFT") nextDirection="RIGHT";
 });
 
-// ===== Swipe Control (Mobile) =====
+// Mobile Controls
 let touchStartX = 0; let touchStartY = 0;
 canvas.addEventListener("touchstart", e => {
     touchStartX = e.touches[0].clientX;
@@ -669,5 +668,8 @@ if(modalRestartBtn) modalRestartBtn.onclick = () => { gameOverModal.style.displa
 if(pauseBtn) pauseBtn.style.display = "none";
 
 resetGame();
-// ইঞ্জিন স্টার্ট
-requestAnimationFrame(gameLoopTicker);
+// ইঞ্জিন অ্যাক্টিভেট
+if(!window.loopStarted) {
+    requestAnimationFrame(gameLoopTicker);
+    window.loopStarted = true;
+}
