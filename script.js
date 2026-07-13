@@ -237,19 +237,24 @@ function draw(){
     // ======= [GOOGLE STYLE SMOOTH BLUE SNAKE] =======
     ctx.textAlign = "left"; 
     
-    // ১. স্মুথ নীল বডি (মোড় ঘোরার সময় পাইপের মতো মসৃণ হবে)
-    if (snake.length > 1) {
-        ctx.strokeStyle = "#3b82f6"; 
-        ctx.lineWidth = 18;           
-        ctx.lineCap = "round";        
-        ctx.lineJoin = "round";       
-        
-        ctx.beginPath();
-        ctx.moveTo(snake[snake.length - 1].x + 10, snake[snake.length - 1].y + 10);
-        for (let i = snake.length - 2; i > 0; i--) {
-            ctx.lineTo(snake[i].x + 10, snake[i].y + 10);
+    // ১. সাপের স্মুথ বডি (সেগমেন্ট পদ্ধতিতে দেয়াল ক্রসিং গ্লিচ ফিক্সড)
+    ctx.strokeStyle = "#3b82f6"; 
+    ctx.lineWidth = 18;           
+    ctx.lineCap = "round";        
+    ctx.lineJoin = "round";       
+
+    for (let i = 1; i < snake.length; i++) {
+        let prev = snake[i - 1];
+        let curr = snake[i];
+
+        // যদি কোনো পার্ট দেয়াল পার হয়ে ওপাশে যায়, তবে মাঝখানের লম্বা গ্লিচ লাইন আঁকা স্কিপ করবে
+        if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
+            continue; 
         }
-        ctx.lineTo(snake[0].x + 10, snake[0].y + 10); 
+
+        ctx.beginPath();
+        ctx.moveTo(prev.x + 10, prev.y + 10);
+        ctx.lineTo(curr.x + 10, curr.y + 10);
         ctx.stroke();
     }
 
@@ -258,7 +263,6 @@ function draw(){
     let centerX = head.x + 10;
     let centerY = head.y + 10;
 
-    // খাবার সামনে আছে কি না চেক করার লজিক (৪০ পিক্সেল রেঞ্জ)
     let isNearNormalFood = Math.abs(head.x - food.x) <= 40 && Math.abs(head.y - food.y) <= 40;
     let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
     let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
@@ -271,12 +275,11 @@ function draw(){
     ctx.save();
     ctx.translate(centerX, centerY);
     
-    // সাপ যেদিকে মুখ করবে সেদিকে মাথা ঘোরানো
     if (direction === "UP") ctx.rotate(-Math.PI / 2);
     else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
     else if (direction === "LEFT") ctx.rotate(Math.PI);
 
-    // দুই পাশে বাইরের দিকে বের হওয়া কিউট চোখ
+    // দুই পাশে বাইরের দিকে বের হওয়া চোখ
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
@@ -289,22 +292,19 @@ function draw(){
     ctx.arc(1, 6, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // মুখ হাঁ করার লজিক
+    // মুখ হাঁ করার লজিক ও সাদা দাঁত
     if (isEatingTime) {
-        // গোল বড় হাঁ মুখ (ডার্ক ব্লু)
         ctx.fillStyle = "#1e3a8a"; 
         ctx.beginPath();
         ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
         ctx.fill();
 
-        // কিউট সাদা ছোট দাঁত
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
-        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); // উপর
-        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   // নিচ
+        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); 
+        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   
         ctx.fill();
     } else {
-        // সাধারণ অবস্থায় স্মাইল ফেস
         ctx.strokeStyle = "#1e3a8a";
         ctx.lineWidth = 2;
         ctx.lineCap = "round";
@@ -315,7 +315,7 @@ function draw(){
 
     ctx.restore(); 
 
-    // ======= গেমপ্লে UI ও মেসেজ =======
+    // ======= UI ও মেসেজ =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, 400, 400);
