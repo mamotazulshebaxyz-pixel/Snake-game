@@ -88,11 +88,10 @@ function createSpecialFood() {
         }
     }
 
-    // [FIXED] এখনই ডিরেক্ট Date.now() দিবো না, সাপ মুভমেন্ট শুরু করলে তখন ভ্যালু বসবে।
-    specialFoodStartTime = 0; 
+    // [FIXED] তৈরি হওয়ার সাথে সাথেই রিয়েল-টাইম মিলিগ্রাম সেট হবে যেন ৫ সেকেন্ড কাউন্টডাউন শুরু হতে পারে
+    specialFoodStartTime = Date.now(); 
 
     clearTimeout(specialFoodTimer);
-    // [FIXED] সাপ মুভ হওয়া না পর্যন্ত ৫ সেকেন্ডের ডেডলাইন কাউন্টডাউন শুরু হবে না।
     specialFoodTimer = null; 
 }
 
@@ -265,16 +264,11 @@ function draw(){
 
         ctx.shadowBlur = 0; 
 
-        // [FIXED] টাইমার রেন্ডারিং লজিক
+        // [FIXED] টাইমার রেন্ডারিং লজিক (স্টেট চেঞ্জ মুক্ত ও ক্লিন রেন্ডারিং)
         let timeLeft = 5.0;
         if (specialFoodStartTime > 0) {
             let elapsedTime = Date.now() - specialFoodStartTime;
             timeLeft = Math.max(0, (5000 - elapsedTime) / 1000);
-            
-            // যদি মুভিং অবস্থায় ৫ সেকেন্ড শেষ হয়ে যায়, ডায়মন্ড ডিলিট করো
-            if (timeLeft <= 0) {
-                specialFood = null;
-            }
         }
 
         if (specialFood && timeLeft > 0) {
@@ -432,7 +426,6 @@ function triggerLevelTransition(targetLevel) {
     nextLevelToStart = targetLevel;
     clearInterval(gameLoop); 
     
-    // [FIXED] লেভেল চেঞ্জের সময় যদি কোনো টাইমার থেকে থাকে, তা আগে ক্লিয়ার করে দেওয়া
     clearTimeout(specialFoodTimer);
     specialFoodTimer = null;
     
@@ -532,6 +525,15 @@ function move(){
 }
 
 function game(){
+    // [FIXED] গেম লুপের মূল ফ্রেমে বোনাস ফুড এক্সপায়ার হওয়ার লজিক যোগ করা হলো, যেন গেম স্থির বা পজ থাকলেও ৫ সেকেন্ড পর তা মুছে যায়
+    if (specialFood && specialFoodStartTime > 0) {
+        let elapsedTime = Date.now() - specialFoodStartTime;
+        if (elapsedTime >= 5000) {
+            specialFood = null;
+            specialFoodStartTime = 0;
+        }
+    }
+
     move();
     draw();
 }
@@ -643,12 +645,8 @@ canvas.addEventListener("touchend", function(e){
         return;
     }
 
-    // [FIXED] প্রথমবার মুভ করা শুরু করলে যদি স্ক্রিনে ডায়মন্ড থাকে, তবে এখন থেকে টাইমার শুরু হবে
     if (!isSnakeMoving) {
         isSnakeMoving = true;
-        if (specialFood && specialFoodStartTime === 0) {
-            specialFoodStartTime = Date.now();
-        }
     }
 
     if(Math.abs(dx) > Math.abs(dy)){
@@ -677,12 +675,8 @@ document.addEventListener("keydown", function(e){
     }
 
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
-        // [FIXED] কী-বোর্ড দিয়ে প্রথমবার মুভ করা শুরু করলে তখন থেকে এক্সাক্টলি ৫ সেকেন্ড কাউন্ট হবে
         if (!isSnakeMoving) {
             isSnakeMoving = true;
-            if (specialFood && specialFoodStartTime === 0) {
-                specialFoodStartTime = Date.now();
-            }
         }
     }
 
