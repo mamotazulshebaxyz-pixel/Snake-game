@@ -32,9 +32,27 @@ body {
     align-items: center;
 }
 
+/* 💡 হেডার কন্টেইনার: টাইটেল ও লাইভ পাশাপাশি ডানে-বামে রাখবে */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 15px;
+}
+
 h1 {
     color: #22c55e;
-    margin-bottom: 15px;
+    font-size: 28px;
+}
+
+/* 💡 লাল বক্সে দেখানো হার্ট সাইজ এবং ডিজাইন */
+#lives-container {
+    font-size: 22px;
+    letter-spacing: 3px;
+    display: flex;
+    align-items: center;
 }
 
 .score-board {
@@ -153,8 +171,10 @@ button:hover {
         padding: 15px;
     }
     h1 {
-        font-size: 24px;
-        margin-bottom: 10px;
+        font-size: 20px; /* ছোট স্ক্রিনে টাইটেল সামান্য ছোট হবে */
+    }
+    #lives-container {
+        font-size: 18px; /* হার্টও সামান্য ছোট হবে */
     }
     .score-board {
         font-size: 15px;
