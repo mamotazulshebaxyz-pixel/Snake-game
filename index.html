@@ -2,51 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sky Snake</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sky Snake Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="game">
-    <h1>🐍 SKY SNAKE</h1>
-    
-    <!-- ১৩ নম্বর লাইনে এই নতুন কোডটি বসানো হয়েছে -->
-    <div id="livesContainer" style="font-size: 22px; margin-bottom: 10px; color: #ff4757; letter-spacing: 5px; text-align: center;">
-        ❤️❤️❤️
+    <!-- মূল গেম কন্টেইনার -->
+    <div class="game">
+        <h1>🐍 SKY SNAKE</h1>
+        
+        <div class="score-board">
+            <div>🍎 Score: <span id="score">0</span></div>
+            <div>🏆 High: <span id="highScore">0</span></div>
+            <div>⭐ Level: <span id="level">1</span></div>
+        </div>
+
+        <!-- গেম ক্যানভাস -->
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+        <!-- পজ বাটন -->
+        <div class="controls">
+            <button id="pauseBtn">⏸ Pause</button>
+        </div>
+
+        <div class="info">🎮 Desktop: Use Arrows | Mobile: Drag on Screen</div>
     </div>
 
-    <div class="score-board">
-        <span>Score : <b id="score">0</b></span>
-        <span>Best : <b id="highScore">0</b></span>
-        <span>Level : <b id="level">1</b></span>
+    <!-- স্টার্ট / গেম ওভার মেনু -->
+    <div id="menu">
+        <h2 class="title">🐍 SKY SNAKE</h2>
+        <button id="playBtn">▶ Play</button>
+        <button id="restart" style="display: none;">🔄 Restart</button>
+        <button id="cancelBtn" style="display: none;">❌ Quit</button>
     </div>
 
-    <!-- গেম ক্যানভাস -->
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
-
-    <div class="controls">
-        <button id="pauseBtn">⏸ Pause</button>
-    </div>
-</div>
-
-<!-- মেইন স্টার্ট মেনু -->
-<div id="menu">
-    <h2>🐍 SKY SNAKE</h2>
-    <button id="playBtn">▶ Play</button>
-    <button id="restart">🔄 Restart</button>
-</div>
-
-<!-- গেম ওভার মোডাল (পপ-আপ উইন্ডো) -->
-<div id="gameOverModal" style="display: none;">
-    <h2>Game Over!</h2>
-    <p>Your Score: <span id="finalScore">0</span></p>
-    <button id="restartBtn">🔄 Try Again</button>
-    <button id="cancelBtn">❌ Cancel</button>
-</div>
-
-<!-- জাভাস্ক্রিপ্ট ফাইল লিংক -->
-<script src="script.js"></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
