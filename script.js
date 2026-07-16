@@ -5,16 +5,11 @@ const ctx = canvas.getContext("2d");
 const scoreText = document.getElementById("score");
 const highScoreText = document.getElementById("highScore");
 const levelText = document.getElementById("level");
-const livesContainer = document.getElementById("livesContainer"); 
 
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const menuRestartBtn = document.getElementById("restart");
-
-const gameOverModal = document.getElementById("gameOverModal");
-const finalScoreText = document.getElementById("finalScore");
-const modalRestartBtn = document.getElementById("restartBtn");
 
 const BASE_SPEED = 300; 
 let gameSpeed = BASE_SPEED;
@@ -41,7 +36,7 @@ let nextLevelToStart = 2;
 let shouldSpawnBonusAfterTransition = false; 
 
 // ==========================================
-// 🎵 WEB AUDIO API সাউন্ড সিস্টেম (কোনো ডাউনলোড ছাড়া)
+// 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -88,7 +83,7 @@ function playSound(type) {
     }
 }
 
-// ======= পানির বুদবুদ =======
+// ======= পানির বুদবুদ ইফেক্ট =======
 let bubbles = [];
 function initBubbles() {
     bubbles = [];
@@ -104,12 +99,6 @@ function initBubbles() {
 }
 
 highScoreText.innerHTML = highScore;
-
-function updateLivesUI() {
-    if (livesContainer) {
-        livesContainer.innerHTML = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
-    }
-}
 
 function createFood(){
     let valid = false;
@@ -236,7 +225,6 @@ function resetGame(){
     gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
     isLevelTransition = false;
-    updateLivesUI();
     initBubbles();
     createFood();
 }
@@ -252,7 +240,6 @@ function resetSnakePosition() {
 function handleSnakeDeath() {
     playSound('die'); 
     lives--; 
-    updateLivesUI(); 
 
     if (lives > 0) {
         resetSnakePosition();
@@ -262,7 +249,7 @@ function handleSnakeDeath() {
 }
 
 function draw(){
-    // ======= ডার্ক ওয়াটার ব্যাকগ্রাউন্ড =======
+    // ======= ডার্ক ওয়াটার ব্যাকগ্রাউন্ড =======
     let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     waterGradient.addColorStop(0, "#0f2027");   
     waterGradient.addColorStop(0.5, "#203a43"); 
@@ -270,7 +257,7 @@ function draw(){
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= ওয়াটার গ্রিড ইফেক্ট =======
+    // ======= ওয়াটার গ্রিড ইফেক্ট =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
@@ -347,7 +334,7 @@ function draw(){
 
     ctx.shadowBlur = 0; 
 
-    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
+    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -405,7 +392,7 @@ function draw(){
         }
     }
 
-    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
+    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#14b8a6"; 
     ctx.lineWidth = 18;           
@@ -487,7 +474,7 @@ function draw(){
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🎮 Press any Arrow Key to Start Move", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillText("🎮 Swipe or Slide on Screen to Move", canvas.width / 2, canvas.height / 2 - 10);
     }
 
     if (isLevelTransition) {
@@ -659,7 +646,6 @@ function move(){
 }
 
 function game(){
-    // 🛠 [FIXED] সাপ যতক্ষণ না নড়বে (isSnakeMoving === true), ততক্ষণ বোনাস ফুড আসবে না এবং টাইমারও কমবে না।
     if (isSnakeMoving) {
         if (shouldSpawnBonusAfterTransition) {
             createSpecialFood();
@@ -674,7 +660,6 @@ function game(){
             }
         }
     } else {
-        // সাপ স্থির থাকলে বোনাসের স্টার্টিং টাইমকে কারেন্ট টাইমে লক করে রাখা হচ্ছে যাতে টাইমার কমে না যায়
         if (specialFood && specialFoodStartTime > 0) {
             specialFoodStartTime = Date.now();
         }
@@ -688,7 +673,6 @@ function startGame(){
     clearInterval(gameLoop);
     resetGame();
     menu.classList.add("hidden");
-    if(gameOverModal) gameOverModal.style.display = "none"; 
     
     if(pauseBtn) {
         pauseBtn.style.display = "block";
@@ -698,8 +682,6 @@ function startGame(){
     running = true;
     gameLoop = setInterval(game, gameSpeed);
 }
-
-// ... (বাকি বাটন এবং সোয়াইপ কন্ট্রোল কোড নিচে অপরিবর্তিত রয়েছে) ...
 
 function pauseGame(){
     if (isLevelTransition) return; 
@@ -772,7 +754,10 @@ function gameOver(){
     }
 }
 
-// ===== Swipe Control =====
+
+// =========================================================================
+// 🔄 কন্টিনিউয়াস ড্র্যাগ অ্যান্ড টাচ কন্ট্রোল (মোবাইলের জন্য)
+// =========================================================================
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -781,32 +766,49 @@ canvas.addEventListener("touchstart", function(e){
     touchStartY = e.touches[0].clientY;
 }, { passive: true });
 
-canvas.addEventListener("touchend", function(e){
+canvas.addEventListener("touchmove", function(e){
     if (isLevelTransition) return; 
-    
-    let touchEndX = e.changedTouches[0].clientX;
-    let touchEndY = e.changedTouches[0].clientY;
 
-    let dx = touchEndX - touchStartX;
-    let dy = touchEndY - touchStartY;
+    let currentX = e.touches[0].clientX;
+    let currentY = e.touches[0].clientY;
 
-    if(Math.abs(dx) < 30 && Math.abs(dy) < 30){
-        return;
-    }
+    let dx = currentX - touchStartX;
+    let dy = currentY - touchStartY;
 
-    if (!isSnakeMoving) {
-        isSnakeMoving = true;
-    }
+    const threshold = 15; 
 
-    if(Math.abs(dx) > Math.abs(dy)){
-        if(dx > 0 && direction != "LEFT") direction = "RIGHT";
-        if(dx < 0 && direction != "RIGHT") direction = "LEFT";
-    }else{
-        if(dy > 0 && direction != "UP") direction = "DOWN";
-        if(dy < 0 && direction != "DOWN") direction = "UP";
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > threshold) {
+            if (!isSnakeMoving) isSnakeMoving = true; 
+
+            if (dx > 0 && direction !== "LEFT") direction = "RIGHT";
+            else if (dx < 0 && direction !== "RIGHT") direction = "LEFT";
+            
+            touchStartX = currentX;
+            touchStartY = currentY;
+        }
+    } else {
+        if (Math.abs(dy) > threshold) {
+            if (!isSnakeMoving) isSnakeMoving = true;
+
+            if (dy > 0 && direction !== "UP") direction = "DOWN";
+            else if (dy < 0 && direction !== "DOWN") direction = "UP";
+            
+            touchStartX = currentX;
+            touchStartY = currentY;
+        }
     }
 }, { passive: true });
 
+canvas.addEventListener("touchend", function(){
+    touchStartX = 0;
+    touchStartY = 0;
+}, { passive: true });
+
+
+// =========================================================================
+// ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য)
+// =========================================================================
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
         if(e.key === "Enter") {
@@ -843,17 +845,6 @@ if(cancelBtn) {
     cancelBtn.onclick = function() {
         restartGame(); 
     };
-}
-
-if(modalRestartBtn) {
-    modalRestartBtn.onclick = function() {
-        if(gameOverModal) gameOverModal.style.display = "none";
-        startGame(); 
-    };
-}
-
-if(pauseBtn) {
-    pauseBtn.style.display = "none";
 }
 
 resetGame();
