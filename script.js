@@ -5,6 +5,7 @@ const ctx = canvas.getContext("2d");
 const scoreText = document.getElementById("score");
 const highScoreText = document.getElementById("highScore");
 const levelText = document.getElementById("level");
+const livesContainer = document.getElementById("lives-container"); // 💡 হার্ট দেখানোর জন্য DOM সিলেক্টর
 
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
@@ -99,6 +100,15 @@ function initBubbles() {
 }
 
 highScoreText.innerHTML = highScore;
+
+// 💡 হার্ট এর সংখ্যা UI-তে দেখানোর ফাংশন
+function updateLivesUI() {
+    let hearts = "";
+    for (let i = 0; i < lives; i++) {
+        hearts += "❤️ ";
+    }
+    livesContainer.innerHTML = hearts.trim();
+}
 
 function createFood(){
     let valid = false;
@@ -222,6 +232,7 @@ function resetGame(){
     scoreText.innerHTML = score;
     level = 1;
     lives = 3; 
+    updateLivesUI(); // 💡 লাইভ ৩টি করে দেওয়া হলো
     gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
     isLevelTransition = false;
@@ -240,6 +251,7 @@ function resetSnakePosition() {
 function handleSnakeDeath() {
     playSound('die'); 
     lives--; 
+    updateLivesUI(); // 💡 একটি হার্ট কমে যাবে
 
     if (lives > 0) {
         resetSnakePosition();
