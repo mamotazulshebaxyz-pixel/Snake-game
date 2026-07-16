@@ -10,7 +10,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh; /* 📱 মোবাইলে উচ্চতা যেন পুরো স্ক্রিন জুড়ে থাকে */
     /* 📱 মোবাইল স্ক্রোল এবং বাউন্স ইফেক্ট বন্ধ করার জন্য */
     overflow: hidden;
     touch-action: none; 
@@ -18,18 +18,20 @@ body {
     user-select: none;
 }
 
+/* 📱 গেম কন্টেইনার: মোবাইলে পুরো স্ক্রিন জুড়ে দেখানোর জন্য আপডেট করা হয়েছে */
 .game {
     background: #1e293b;
     padding: 25px;
     border-radius: 15px;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,.4);
-    /* 📱 মোবাইল স্ক্রিনে ফিট করার জন্য */
-    max-width: 95vw;
-    width: 100%;
+    /* 📱 মোবাইলে যেন দুই পাশে জায়গা নষ্ট না করে সর্বোচ্চ চওড়া থাকে */
+    width: 95vw; 
+    max-width: 450px; /* পিসিতে যেন ৪৫০ পিক্সেলের বেশি বড় না হয় */
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
 /* 💡 হেডার কন্টেইনার: টাইটেল ও লাইভ পাশাপাশি ডানে-বামে রাখবে */
@@ -66,6 +68,7 @@ h1 {
     max-width: 400px; /* ক্যানভাসের সমান চওড়া থাকবে */
 }
 
+/* 📱 ক্যানভাস: এটিকে বড় এবং স্ক্রিন-ফিট করার জন্য আপডেট করা হয়েছে */
 canvas {
     background: #111827;
     border: 4px solid #22c55e;
@@ -73,12 +76,11 @@ canvas {
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    /* 📱 ক্যানভাস যেন স্কয়ার (১:১) থাকে এবং স্ক্রিনের বাইরে না যায় */
-    max-width: 100%;
-    max-height: 55vh; 
-    width: 400px;
-    height: 400px;
-    aspect-ratio: 1 / 1;
+    /* 📱 মোবাইলের জন্য ক্যানভাসকে সর্বোচ্চ চওড়া করা হলো */
+    width: 100%; 
+    max-width: 400px;
+    height: auto; /* ক্যানভাসটি যেন উইডথ অনুযায়ী নিজে থেকেই হাইট সেট করে নেয় */
+    aspect-ratio: 1 / 1; /* নিখুঁত চারকোণা (Square) অনুপাত বজায় রাখবে */
 }
 
 button {
@@ -165,22 +167,30 @@ button:hover {
     transform: translateY(-2px);
 }
 
-/* 📱 ছোট মোবাইল স্ক্রিনের জন্য অ্যাডজাস্টমেন্ট */
+/* 📱 মোবাইল স্ক্রিনের জন্য বিশেষ অ্যাডজাস্টমেন্ট (Media Query) */
 @media (max-width: 480px) {
     .game {
         padding: 15px;
+        border-radius: 10px; /* মোবাইলের কোনার বাঁক সামঞ্জস্যপূর্ণ করা হয়েছে */
+        width: 98vw; /* মোবাইলে দুই পাশে খালি জায়গা রাখবে না */
+    }
+    .game-header {
+        margin-bottom: 8px;
     }
     h1 {
-        font-size: 20px; /* ছোট স্ক্রিনে টাইটেল সামান্য ছোট হবে */
+        font-size: 22px; /* ছোট স্ক্রিনে টাইটেল সামান্য ছোট হবে */
     }
     #lives-container {
-        font-size: 18px; /* হার্টও সামান্য ছোট হবে */
+        font-size: 18px; /* হার্টও সামান্য ছোট হবে যেন ওভারফ্লো না হয় */
     }
     .score-board {
-        font-size: 15px;
+        font-size: 14px;
         margin-bottom: 10px;
     }
     .controls {
-        margin-top: 15px;
+        margin-top: 10px;
+    }
+    .controls button {
+        width: 100%; /* মোবাইলে পজ বাটনটি পুরো চওড়া হয়ে সুন্দর দেখাবে */
     }
 }
