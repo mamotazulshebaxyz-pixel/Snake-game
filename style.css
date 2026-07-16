@@ -11,6 +11,11 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    /* 📱 মোবাইল স্ক্রোল এবং বাউন্স ইফেক্ট বন্ধ করার জন্য */
+    overflow: hidden;
+    touch-action: none; 
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .game {
@@ -19,6 +24,12 @@ body {
     border-radius: 15px;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,.4);
+    /* 📱 মোবাইল স্ক্রিনে ফিট করার জন্য */
+    max-width: 95vw;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 h1 {
@@ -33,6 +44,8 @@ h1 {
     margin-bottom: 15px;
     font-size: 18px;
     gap: 15px; 
+    width: 100%;
+    max-width: 400px; /* ক্যানভাসের সমান চওড়া থাকবে */
 }
 
 canvas {
@@ -42,6 +55,12 @@ canvas {
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    /* 📱 ক্যানভাস যেন স্কয়ার (১:১) থাকে এবং স্ক্রিনের বাইরে না যায় */
+    max-width: 100%;
+    max-height: 55vh; 
+    width: 400px;
+    height: 400px;
+    aspect-ratio: 1 / 1;
 }
 
 button {
@@ -54,6 +73,7 @@ button {
     font-size: 16px;
     cursor: pointer;
     transition: .3s;
+    touch-action: manipulation; /* ডাবল-ট্যাপে জুম বন্ধ করার জন্য */
 }
 
 button:hover {
@@ -78,6 +98,7 @@ button:hover {
     box-shadow: 0 0 30px #22c55e;
     text-align: center;
     z-index: 100;
+    max-width: 90vw; /* মোবাইলের জন্য */
 }
 
 #menu h2 {
@@ -88,6 +109,7 @@ button:hover {
 #menu button {
     display: block;
     width: 220px;
+    max-width: 80vw;
     margin: 10px auto;
     font-size: 18px;
 }
@@ -96,7 +118,7 @@ button:hover {
     display: none !important;
 }
 
-/* [FIXED] পজ বাটন এখন ক্যানভাসের বাইরে নিচে এবং খেলা ডিস্টার্ব করবে না */
+/* পজ বাটন রেসপন্সিভ ডিজাইন */
 .controls {
     margin-top: 20px;
     display: flex;
@@ -125,76 +147,20 @@ button:hover {
     transform: translateY(-2px);
 }
 
-/* গেম ওভার মোডাল */
-#gameOverModal {
-    display: none; 
-    position: fixed;
-    z-index: 9999; 
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.75); 
-    justify-content: center;
-    align-items: center;
-}
-
-#gameOverModal > div {
-    background-color: #1a1a1a; 
-    color: #ffffff;
-    padding: 40px;
-    border-radius: 16px;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    border: 2px solid #22c55e; 
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    min-width: 300px;
-}
-
-#gameOverModal h2 {
-    color: #ff4d4d; 
-    margin-top: 0;
-    font-size: 28px;
-    margin-bottom: 15px;
-}
-
-#gameOverModal p {
-    font-size: 20px;
-    margin: 20px 0;
-}
-
-#finalScore {
-    font-weight: bold;
-    color: #22c55e; 
-}
-
-#restartBtn, #cancelBtn {
-    margin: 10px 8px 0 8px;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-block; 
-}
-
-#restartBtn {
-    background-color: #22c55e;
-    color: white;
-}
-
-#restartBtn:hover {
-    background-color: #16a34a;
-    transform: scale(1.05); 
-}
-
-#cancelBtn {
-    background-color: #ef4444; 
-    color: white;
-}
-
-#cancelBtn:hover {
-    background-color: #dc2626;
-    transform: scale(1.05);
+/* 📱 ছোট মোবাইল স্ক্রিনের জন্য অ্যাডজাস্টমেন্ট */
+@media (max-width: 480px) {
+    .game {
+        padding: 15px;
+    }
+    h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    .score-board {
+        font-size: 15px;
+        margin-bottom: 10px;
+    }
+    .controls {
+        margin-top: 15px;
+    }
 }
