@@ -1,5 +1,5 @@
 // ==========================================
-// 🔥 FIREBASE কনফিগারেশন সেটআপ (আপনার আসল কোড দিয়ে আপডেট করুন)
+// 🔥 FIREBASE কনফিগারেশন সেটআপ (আপনার আসল কোড দিয়ে আপডেট করুন)
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
@@ -33,6 +33,7 @@ const livesContainer = document.getElementById("lives-container");
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
+const muteBtn = document.getElementById("muteBtn"); // 🔊 মিউট বাটন এলিমেন্ট
 const menuRestartBtn = document.getElementById("restart");
 
 const BASE_SPEED = 300; 
@@ -58,6 +59,9 @@ let isSnakeMoving = false;
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 let shouldSpawnBonusAfterTransition = false; 
+
+// 🔊 সাউন্ড অন/অফ ট্র্যাক করার গ্লোবাল ভেরিয়েবল (Default: Sound On)
+let isMuted = false;
 
 // ==========================================
 // 🔒 ফায়ারবেস অথেনটিকেশন ও ডাটাবেজ হ্যান্ডলার
@@ -92,7 +96,7 @@ auth.onAuthStateChanged(async (user) => {
 document.getElementById('google-login-btn').addEventListener('click', () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch(error => {
-        alert("লগইন ব্যর্থ হয়েছে: " + error.message);
+        alert("লগইন ব্যর্থ হয়েছে: " + error.message);
     });
 });
 
@@ -117,6 +121,9 @@ function updateAndSaveHighScore(newScore) {
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
+    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না
+    if (isMuted) return;
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -353,7 +360,7 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= অ্যানিমেটেড বুদবুদ =======
+    // ======= =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -778,6 +785,18 @@ function pauseGame(){
     }
 }
 
+// 🔊 মিউট/আনমিউট কন্ট্রোল লজিক ফাংশন
+function toggleMute() {
+    isMuted = !isMuted;
+    if (isMuted) {
+        muteBtn.innerHTML = "🔇 Sound: Off";
+        muteBtn.style.background = "#7f8c8d"; // মিউট হলে গ্রে কালার ব্যাকগ্রাউন্ড
+    } else {
+        muteBtn.innerHTML = "🔊 Sound: On";
+        muteBtn.style.background = "#3498db"; // আনমিউট হলে ব্লু কালার ব্যাকগ্রাউন্ড
+    }
+}
+
 function restartGame(){
     clearInterval(gameLoop);
     resetGame();
@@ -930,7 +949,7 @@ leaderboardBtn.onclick = async function() {
     leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
 
     try {
-        // Firestore থেকে বড় স্কোরগুলো আগে নিয়ে আসা (সর্বোচ্চ ১০টি)
+        // Firestore থেকে বড় স্কোরগুলো আগে নিয়ে আসা (সর্বোচ্চ ১০টি)
         const snapshot = await db.collection("highscores")
             .orderBy("score", "desc")
             .limit(10)
@@ -964,7 +983,7 @@ leaderboardBtn.onclick = async function() {
 
     } catch (error) {
         console.error("Error fetching leaderboard:", error);
-        leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
+        leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
     }
 };
 
@@ -973,7 +992,7 @@ closeLeaderboard.onclick = function() {
     leaderboardModal.classList.add("hidden");
 };
 
-// লিডারবোর্ডের বাইরে ফাঁকা জায়গায় ক্লিক করলেও যাতে বন্ধ হয়
+// লিডারবোর্ডের বাইরে ফাঁকা জায়গায় ক্লিক করলেও যাতে বন্ধ হয়
 window.onclick = function(event) {
     if (event.target == leaderboardModal) {
         leaderboardModal.classList.add("hidden");
@@ -983,6 +1002,11 @@ window.onclick = function(event) {
 playBtn.onclick = startGame;
 pauseBtn.onclick = pauseGame;
 menuRestartBtn.onclick = restartGame;
+
+// 🔊 মিউট বাটন ক্লিক ইভেন্ট লিসেনার সেট করা
+if(muteBtn) {
+    muteBtn.onclick = toggleMute;
+}
 
 if(cancelBtn) {
     cancelBtn.onclick = function() {
