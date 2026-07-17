@@ -73,7 +73,91 @@ body {
     transform: translateY(-2px);
 }
 
-/* গেম কন্টেইনার */
+/* ==========================================================
+   🏠 নতুন কাস্টম হোমপেজ ডিজাইন (আপনার স্ক্রিনশটের হুবহু কপি)
+   ========================================================== */
+#custom-homepage {
+    width: 95vw;
+    max-width: 410px; /* ক্যানভাস সাইজের সাথে সামঞ্জস্যপূর্ণ */
+    height: 480px; 
+    background-color: #1e293b; /* স্ক্রিনশটের ভেতরের ক্যানভাস ব্যাকগ্রাউন্ড */
+    border: 4px solid #22c55e; /* চারপাশের ব্রাইট গ্রিন বর্ডার */
+    border-radius: 15px;
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.25); /* নিয়ন গ্রিন গ্লো */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 20px;
+    margin: 20px auto;
+}
+
+/* মাঝের ডার্ক সেন্ট্রাল বক্সটি */
+.home-box {
+    background-color: #111827; /* গাঢ় ব্ল্যাকিশ-ব্লু বক্স */
+    padding: 35px 25px;
+    border-radius: 18px;
+    width: 280px;
+    max-width: 85vw;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+}
+
+/* হোমপেজের টাইটেল */
+.home-title {
+    color: #22c55e;
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* হোমপেজের বাটনসমূহ */
+.home-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.home-btn:last-child {
+    margin-bottom: 0;
+}
+
+.btn-green {
+    background-color: #22c55e;
+}
+
+.btn-green:hover {
+    background-color: #16a34a;
+    transform: translateY(-1px);
+}
+
+/* নিচের ডেসক্রিপশন টেক্সট */
+.home-footer {
+    position: absolute;
+    bottom: 20px;
+    color: #cbd5e1;
+    font-size: 14px;
+    text-align: center;
+    width: 100%;
+}
+
+/* ==========================================================
+   🎮 গেম কন্টেইনার ও অন্যান্য লেআউট
+   ========================================================== */
 .game {
     background: #1e293b;
     padding: 25px;
@@ -157,39 +241,16 @@ button:hover {
     font-size: 14px;
 }
 
-/* মেইন স্টার্ট মেনু */
-#menu {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
-    background: #111827;
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 0 30px #22c55e;
-    text-align: center;
-    z-index: 100;
-    max-width: 90vw;
-}
-
-#menu h2 {
-    color: #22c55e;
-    margin-bottom: 20px;
-}
-
-#menu button {
-    display: block;
-    width: 220px;
-    max-width: 80vw;
-    margin: 10px auto;
-    font-size: 18px;
+/* অন/অফ করার জন্য স্পেশাল হেল্পার ক্লাস */
+.hidden-layout {
+    display: none !important;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* পজ বাটন */
+/* পজ এবং সাউন্ড বাটন সেকশন */
 .controls {
     margin-top: 20px;
     display: flex;
@@ -272,7 +333,6 @@ button:hover {
     border-bottom: none;
 }
 
-/* র‍্যাংক হাইলাইট কালার */
 .rank-1 { color: #ffd700; font-weight: bold; }
 .rank-2 { color: #c0c0c0; font-weight: bold; }
 .rank-3 { color: #cd7f32; font-weight: bold; }
@@ -281,17 +341,20 @@ button:hover {
     background: #dc2626 !important;
 }
 
-/* মোবাইল অ্যাডজাস্টমেন্ট */
+/* মোবাইল রেসপন্সিভনেস */
 @media (max-width: 480px) {
-    .game {
+    .game, #custom-homepage {
         padding: 15px;
         border-radius: 10px;
         width: 98vw;
     }
+    #custom-homepage {
+        height: 440px;
+    }
     .game-header {
         margin-bottom: 8px;
     }
-    h1 {
+    h1, .home-title {
         font-size: 22px;
     }
     #lives-container {
