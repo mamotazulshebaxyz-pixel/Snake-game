@@ -19,11 +19,12 @@ let currentUser = null;
 let userHighScoreRef = null;
 
 // ==========================================
-// 🎮 গেমের গ্লোবাল ও লেআউট এলিমেন্টসমূহ
+// 🎮 গেমের গ্লোবাল ও লেআউট এলিমেন্টসমূহ (HTML এর সাথে ম্যাচিং)
 // ==========================================
 const loginScreen = document.getElementById('login-screen');
-const customHomepage = document.getElementById('custom-homepage'); // 新 🏠 কাস্টম হোমপেজ
-const gameContainer = document.querySelector('.game');            // 🎮 গেম কন্টেইনার (যদি HTML-এ ক্লাস থাকে)
+const customHomepage = document.getElementById('custom-homepage'); 
+const gameContainer = document.getElementById('main-game-layout'); // ✨ HTML ID এর সাথে ফিক্সড
+const homeTitleText = document.getElementById('home-title-text');   // ✨ সুনির্দিষ্ট আইডি সিলেক্টর
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -62,7 +63,7 @@ let isLevelTransition = false;
 let nextLevelToStart = 2;
 let shouldSpawnBonusAfterTransition = false; 
 
-// 🔊 সাউন্ড অন/অফ ট্র্যাক করার গ্লোবাল ভেরিয়েবল (Default: Sound On)
+// 🔊 সাউন্ড অন/অফ ট্র্যাক করার গ্লোবাল ভেরিয়েবল
 let isMuted = false;
 
 // ==========================================
@@ -73,7 +74,7 @@ auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         if(loginScreen) loginScreen.classList.add('hidden'); 
         
-        // লগইন সফল হলে স্ক্রিনশটের মতো হোমপেজ দেখাবে, কিন্তু গেম কন্টেইনার লুকিয়ে থাকবে
+        // লগইন সফল হলে কাস্টম হোমপেজ দেখাবে
         if(customHomepage) customHomepage.classList.remove('hidden-layout');
         if(gameContainer) gameContainer.classList.add('hidden-layout');
         
@@ -349,7 +350,6 @@ function handleSnakeDeath() {
 }
 
 function draw(){
-    // ======= ডার্ক ওয়াটার ব্যাকগ্রাউন্ড =======
     let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     waterGradient.addColorStop(0, "#0f2027");   
     waterGradient.addColorStop(0.5, "#203a43"); 
@@ -357,7 +357,6 @@ function draw(){
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= ওয়াটার গ্রিড ইফেক্ট =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
@@ -367,7 +366,6 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= বুদবুদ রেন্ডার =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -381,7 +379,6 @@ function draw(){
         }
     });
 
-    // ======= Obstacles =======
     ctx.fillStyle = "#e74c3c"; 
     ctx.shadowBlur = 8;
     ctx.shadowColor = "#e74c3c";
@@ -396,7 +393,6 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
-    // ======= গোল্ডফিশ ফুড =======
     let fx = food.x + 10;
     let fy = food.y + 10;
 
@@ -434,7 +430,6 @@ function draw(){
 
     ctx.shadowBlur = 0; 
 
-    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -492,7 +487,6 @@ function draw(){
         }
     }
 
-    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#14b8a6"; 
     ctx.lineWidth = 18;           
@@ -766,7 +760,6 @@ function startGame(){
     clearInterval(gameLoop);
     resetGame();
     
-    // 🏠 কাস্টম হোমপেজ হাইড করে মূল 🎮 গেম লেআউট সামনে আনা
     if(customHomepage) customHomepage.classList.add("hidden-layout");
     if(gameContainer) gameContainer.classList.remove("hidden-layout");
     
@@ -795,7 +788,6 @@ function pauseGame(){
     }
 }
 
-// 🔊 মিউট/আনমিউট কন্ট্রোল লজিক ফাংশন
 function toggleMute() {
     isMuted = !isMuted;
     if (isMuted) {
@@ -812,17 +804,17 @@ function restartGame(){
     resetGame();
     draw();
     
-    // গেম থেকে ব্যাক বা রিস্টার্ট করলে পুনরায় কাস্টম হোমপেজে ফিরে যাওয়া
     if(gameContainer) gameContainer.classList.add("hidden-layout");
     if(customHomepage) customHomepage.classList.remove("hidden-layout");
 
-    const homeTitle = document.querySelector(".home-title");
-    if(homeTitle) {
-        homeTitle.innerHTML = `🐍 SKY SNAKE`;
+    if(homeTitleText) {
+        homeTitleText.innerHTML = `🐍 SKY SNAKE`;
     }
     if(playBtn) {
         playBtn.innerHTML = "▶ Play";
     }
+    if(menuRestartBtn) menuRestartBtn.style.display = "none";
+    if(cancelBtn) cancelBtn.style.display = "none";
     running = false;
 }
 
@@ -834,18 +826,20 @@ function gameOver(){
     specialFoodTimer = null;
     shouldSpawnBonusAfterTransition = false;
 
-    // গেম ওভার হলে মূল লেআউট লুকিয়ে কাস্টম হোমপেজ পপআপে স্কোর প্রদর্শন
     if(gameContainer) gameContainer.classList.add("hidden-layout");
     if(customHomepage) customHomepage.classList.remove("hidden-layout");
 
-    const homeTitle = document.querySelector(".home-title");
-    if(homeTitle) {
-        homeTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 16px; color: #fff; font-weight: normal;">Score: ${score}</span>`;
+    if(homeTitleText) {
+        homeTitleText.innerHTML = `🐍 Game Over!<br><span style="font-size: 16px; color: #fff; font-weight: normal;">Score: ${score}</span>`;
     }
 
     if(playBtn) {
         playBtn.innerHTML = "▶ Play Again";
     }
+    
+    // গেম ওভারের পর হোমপেজে রিস্টার্ট ও কুইট বাটন শো করা
+    if(menuRestartBtn) menuRestartBtn.style.display = "block";
+    if(cancelBtn) cancelBtn.style.display = "block";
 }
 
 // =========================================================================
@@ -996,12 +990,7 @@ window.onclick = function(event) {
 if(playBtn) playBtn.onclick = startGame;
 if(pauseBtn) pauseBtn.onclick = pauseGame;
 if(menuRestartBtn) menuRestartBtn.onclick = restartGame;
+if(cancelBtn) cancelBtn.onclick = restartGame; 
 if(muteBtn) muteBtn.onclick = toggleMute;
-
-if(cancelBtn) {
-    cancelBtn.onclick = function() {
-        restartGame(); 
-    };
-}
 
 initBubbles();
