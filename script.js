@@ -424,7 +424,7 @@ startBtn.addEventListener("click", () => {
 });
 
 // গ্লোবাল লিডারবোর্ড বাটন (HTML-এ প্লে বাটনের নিচে এই বাটনটি থাকলে এটি কাজ করবে)
-const viewLeaderboardBtn = document.getElementById("viewLeaderboardBtn");
-if(viewLeaderboardBtn) {
-    viewLeaderboardBtn.addEventListener("click", showLeaderboard);
+// গ্লোবাল লিডারবোর্ড বাটন ক্লিকের কাজ (আপনার HTML-এর সঠিক আইডি অনুযায়ী)
+if (leaderboardBtn) {
+    leaderboardBtn.addEventListener("click", showLeaderboard);
 }
