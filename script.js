@@ -1,3 +1,6 @@
+// ==========================================
+// 🔥 FIREBASE কনফিগারেশন সেটআপ
+// ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
     authDomain: "sky-snake-game.firebaseapp.com",
