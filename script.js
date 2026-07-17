@@ -1,15 +1,17 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
-  authDomain: "sky-snake-game.firebaseapp.com",
-  projectId: "sky-snake-game",
-  storageBucket: "sky-snake-game.firebasestorage.app",
-  messagingSenderId: "673768221080",
-  appId: "1:673768221080:web:4ee4ce3ac09386bc36e3ed"
+    apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
+    authDomain: "sky-snake-game.firebaseapp.com",
+    projectId: "sky-snake-game",
+    storageBucket: "sky-snake-game.firebasestorage.app",
+    messagingSenderId: "67376821080",
+    appId: "1:67376821080:web:4ee4ce3ac09386bc36e3ed"
 };
 
 // ফায়ারবেস ইনিশিয়ালাইজ করা
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
 
 // ==========================================
 // 🎮 গেমের গ্লোবাল ভেরিয়েবলসমূহ
@@ -30,11 +32,12 @@ let gameSpeed = 100; // মিলিসেকেন্ড
 let gameInterval = null;
 
 let specialFoodTimer = null;
-let specialFoodRemainingTime = 5000; // বোনাস ফুডের সময় (৫ সেকেন্ড = ৫০০০ মিলি-সেকেন্ড)
+let specialFoodRemainingTime = 5000; // বোনাস ফুডের সময় (৫ সেকেন্ড)
 let foodEatenCount = 0;
 let obstacles = [];
 let currentStage = 1;
 let shouldSpawnBonusAfterTransition = false;
+let currentUser = null;
 
 // সাউন্ড এফেক্টস
 const sounds = {
@@ -45,7 +48,6 @@ const sounds = {
     stage_up: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav')
 };
 
-// সাউন্ড প্লেয়ার ফাংশন
 function playSound(type) {
     if (sounds[type]) {
         sounds[type].currentTime = 0;
@@ -59,12 +61,52 @@ const highScoreEl = document.getElementById("highScore");
 const stageEl = document.getElementById("stage");
 const startBtn = document.getElementById("startBtn");
 
+// লগইন UI উপাদানসমূহ
+const loginScreen = document.getElementById("loginScreen"); // আপনার HTML-এর লগইন স্ক্রিন আইডি অনুযায়ী
+const gameScreen = document.getElementById("gameScreen");   // গেম স্ক্রিন আইডি
+const googleLoginBtn = document.getElementById("googleLoginBtn"); // গুগল লগইন বাটন আইডি
+
 highScoreEl.innerText = highScore;
+
+// ==========================================
+// 🔐 গুগল অথেন্টিকেশন (Login Logic)
+// ==========================================
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        // লগইন সফল হলে লগইন স্ক্রিন লুকিয়ে গেম স্ক্রিন দেখাবে
+        if(loginScreen) loginScreen.style.display = "none";
+        if(gameScreen) gameScreen.style.display = "block";
+        
+        // ফায়ারবেস থেকে ইউজারের আগের হাই স্কোর লোড করা
+        db.collection("users").doc(user.uid).get().then((doc) => {
+            if (doc.exists && doc.data().highScore) {
+                if(doc.data().highScore > highScore) {
+                    highScore = doc.data().highScore;
+                    localStorage.setItem("highScore", highScore);
+                    highScoreEl.innerText = highScore;
+                }
+            }
+        });
+    } else {
+        currentUser = null;
+        if(loginScreen) loginScreen.style.display = "flex";
+        if(gameScreen) gameScreen.style.display = "none";
+    }
+});
+
+if(googleLoginBtn) {
+    googleLoginBtn.addEventListener("click", () => {
+        auth.signInWithPopup(provider).catch((error) => {
+            console.error("Login Failed:", error);
+            alert("লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+        });
+    });
+}
 
 // ==========================================
 // 🛠️ গেম কন্ট্রোল এবং লজিক ফাংশন
 // ==========================================
-
 function initGame() {
     snake = [{x: 200, y: 200}];
     dx = 0;
@@ -119,7 +161,7 @@ function createSpecialFood() {
             if(specialFood.x === obs.x && specialFood.y === obs.y) valid = false;
         }
     }
-    specialFoodRemainingTime = 5000; // বোনাস টাইমার ৫ সেকেন্ড রিসেট
+    specialFoodRemainingTime = 5000; 
     playSound('bonus_appear');
 }
 
@@ -135,7 +177,6 @@ function generateObstacles() {
                 y: Math.floor(Math.random() * (canvas.height / 20)) * 20
             };
             valid = true;
-            // সাপের শুরুর স্থান থেকে দূরে রাখা
             if(Math.abs(obs.x - 200) < 60 && Math.abs(obs.y - 200) < 60) valid = false;
             for(let o of obstacles){
                 if(o.x === obs.x && o.y === obs.y) valid = false;
@@ -150,15 +191,12 @@ function updateStage() {
     stageEl.innerText = currentStage;
     playSound('stage_up');
     
-    // স্পিড বাড়ানো
     gameSpeed = Math.max(40, 100 - (currentStage * 8));
     clearInterval(gameInterval);
     gameInterval = setInterval(game, gameSpeed);
     
     generateObstacles();
     createFood();
-    
-    // স্টেজ পার হওয়ার পর বোনাস ফুড দেওয়ার ফ্ল্যাগ
     shouldSpawnBonusAfterTransition = true; 
 }
 
@@ -166,7 +204,6 @@ function updateStage() {
 // 🔁 মেইন গেম লুপ (Game Loop)
 // ==========================================
 function game() {
-    // 💡 ফিক্স: গেম যখন রানিং এবং সাপ নড়াচড়া করছে তখনই শুধু টাইমার কমবে
     if (isSnakeMoving && running) {
         if (shouldSpawnBonusAfterTransition) {
             createSpecialFood();
@@ -174,7 +211,7 @@ function game() {
         }
 
         if (specialFood) {
-            specialFoodRemainingTime -= gameSpeed; // গেমের স্পিড অনুযায়ী সঠিক সময় কমবে
+            specialFoodRemainingTime -= gameSpeed; 
             if (specialFoodRemainingTime <= 0) {
                 specialFood = null;
                 specialFoodRemainingTime = 0;
@@ -191,13 +228,11 @@ function move() {
 
     const head = {x: snake[0].x + dx, y: snake[0].y + dy};
     
-    // দেয়াল পারাপার (Wall Wrap)
     if(head.x < 0) head.x = canvas.width - 20;
     if(head.x >= canvas.width) head.x = 0;
     if(head.y < 0) head.y = canvas.height - 20;
     if(head.y >= canvas.height) head.y = 0;
 
-    // নিজের শরীর বা অবস্ট্যাকলের সাথে ধাক্কা লাগলে গেম ওভার
     for(let part of snake){
         if(head.x === part.x && head.y === part.y) { gameOver(); return; }
     }
@@ -207,7 +242,6 @@ function move() {
 
     snake.unshift(head);
 
-    // সাধারণ খাবার খাওয়া
     if(head.x === food.x && head.y === food.y){
         score += 10;
         foodEatenCount++;
@@ -221,7 +255,6 @@ function move() {
             createSpecialFood();
         }
     } 
-    // বোনাস ক্রিস্টাল খাওয়া
     else if(specialFood && head.x === specialFood.x && head.y === specialFood.y){
         score += 50;
         scoreEl.innerText = score;
@@ -238,17 +271,14 @@ function move() {
 // 🎨 গ্রাফিক্স ও ক্যানভাস ড্রয়িং (Drawing)
 // ==========================================
 function draw() {
-    // ব্যাকগ্রাউন্ড গ্রিড বা স্কাই এফেক্ট
     ctx.fillStyle = "#1e272e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // অবস্ট্যাকল (বাঁধা) আঁকা
-    ctx.fillStyle = "#ea2027";
     for(let obs of obstacles){
+        ctx.fillStyle = "#ea2027";
         ctx.fillRect(obs.x + 2, obs.y + 2, 16, 16);
     }
 
-    // সাধারণ খাবার (আপেল) আঁকা
     if(food){
         ctx.fillStyle = "#ffdd59";
         ctx.beginPath();
@@ -256,7 +286,6 @@ function draw() {
         ctx.fill();
     }
 
-    // 💎 বোনাস ক্রিস্টাল এবং স্টপ-ওয়াচ টাইমার আঁকা
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -284,7 +313,6 @@ function draw() {
 
         ctx.shadowBlur = 0; 
 
-        // ⏱️ পজ-বান্ধব ভিজ্যুয়াল টাইমার
         let timeLeft = Math.max(0, specialFoodRemainingTime / 1000);
         if (timeLeft > 0) {
             ctx.fillStyle = "#ffd700"; 
@@ -294,7 +322,6 @@ function draw() {
         }
     }
 
-    // সাপ আঁকা (Neon Green Style)
     snake.forEach((part, index) => {
         ctx.fillStyle = index === 0 ? "#0be881" : "#05c46b";
         ctx.fillRect(part.x + 1, part.y + 1, 18, 18);
@@ -314,11 +341,19 @@ function gameOver() {
         highScore = score;
         localStorage.setItem("highScore", highScore);
         highScoreEl.innerText = highScore;
+
+        // ইউজারের হাই স্কোর ডাটাবেজেও সেভ করা
+        if (currentUser) {
+            db.collection("users").doc(currentUser.uid).set({
+                highScore: highScore
+            }, { merge: true });
+        }
     }
 
-    // গিটহাব পেজেস বা ফায়ারবেস প্রম্পট ঠিক রাখতে ৩ সেকেন্ড লেট করে নাম চাওয়া
     setTimeout(() => {
-        let playerName = prompt(`Game Over! আপনার স্কোর: ${score}\nগ্লোবাল লিডারবোর্ডের জন্য আপনার নাম লিখুন:`);
+        // যদি ইউজার লগইন করা থাকে তবে সরাসরি তার গুগল নাম নিয়ে নেবে
+        let playerName = currentUser ? currentUser.displayName : prompt(`Game Over! আপনার স্কোর: ${score}\nলিডারবোর্ডের জন্য নাম লিখুন:`);
+        
         if (playerName && playerName.trim() !== "") {
             db.collection("leaderboard").add({
                 name: playerName.trim(),
@@ -356,7 +391,6 @@ function showLeaderboard() {
           });
           listHtml += `</ol></div>`;
 
-          // লিডারবোর্ড দেখানোর জন্য একটি সুন্দর মডাল পপআপ তৈরি
           let modal = document.createElement("div");
           modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:9999;";
           modal.innerHTML = `
@@ -371,12 +405,10 @@ function showLeaderboard() {
 }
 
 // ==========================================
-// ⌨️ কন্ট্রোল ও ইভেন্ট লিসেনারসমূহ (Controls)
+// ⌨️ কন্ট্রোল ও ইভেন্ট লিসেনারসমূহ
 // ==========================================
 window.addEventListener("keydown", e => {
     if(!running) return;
-    
-    // গেম শুরু বা সাপ মুভ করার ফ্ল্যাগ অন করা
     if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD"].includes(e.code)){
         isSnakeMoving = true;
     }
@@ -401,7 +433,6 @@ window.addEventListener("keydown", e => {
     }
 });
 
-// স্টার্ট / পজ বাটনের কাজ
 startBtn.addEventListener("click", () => {
     if(!running) {
         running = true;
@@ -411,7 +442,6 @@ startBtn.addEventListener("click", () => {
         if(snake.length === 1 && dx === 0 && dy === 0) {
             initGame();
         } else {
-            // পজ থেকে রেজুম করা হলে ইন্টারভাল পুনরায় চালু করা
             gameInterval = setInterval(game, gameSpeed);
         }
     } else {
@@ -423,7 +453,6 @@ startBtn.addEventListener("click", () => {
     }
 });
 
-// গ্লোবাল লিডারবোর্ড বাটন (HTML-এ প্লে বাটনের নিচে এই বাটনটি থাকলে এটি কাজ করবে)
 const viewLeaderboardBtn = document.getElementById("viewLeaderboardBtn");
 if(viewLeaderboardBtn) {
     viewLeaderboardBtn.addEventListener("click", showLeaderboard);
