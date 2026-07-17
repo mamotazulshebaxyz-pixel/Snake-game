@@ -1,5 +1,5 @@
 // ==========================================
-// 🔥 FIREBASE কনফিগারেশন সেটআপ
+// 🔥 FIREBASE কনফিগারেশন সেটআপ (আপনার আসল কোড দিয়ে আপডেট করুন)
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
@@ -19,12 +19,9 @@ let currentUser = null;
 let userHighScoreRef = null;
 
 // ==========================================
-// 🎮 গেমের গ্লোবাল ও লেআউট এলিমেন্টসমূহ (HTML এর সাথে ম্যাচিং)
+// 🎮 গেমের গ্লোবাল ভেরিয়েবলসমূহ
 // ==========================================
-const loginScreen = document.getElementById('login-screen');
-const customHomepage = document.getElementById('custom-homepage'); 
-const gameContainer = document.getElementById('main-game-layout'); 
-const homeTitleText = document.getElementById('home-title-text');   
+const menu = document.getElementById("menu");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -36,7 +33,7 @@ const livesContainer = document.getElementById("lives-container");
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
-const muteBtn = document.getElementById("muteBtn"); 
+const muteBtn = document.getElementById("muteBtn"); // 🔊 মিউট বাটন এলিমেন্ট
 const menuRestartBtn = document.getElementById("restart");
 
 const BASE_SPEED = 300; 
@@ -63,20 +60,17 @@ let isLevelTransition = false;
 let nextLevelToStart = 2;
 let shouldSpawnBonusAfterTransition = false; 
 
-// 🔊 সাউন্ড অন/অফ ট্র্যাক করার গ্লোবাল ভেরিয়েবল
+// 🔊 সাউন্ড অন/অফ ট্র্যাক করার গ্লোবাল ভেরিয়েবল (Default: Sound On)
 let isMuted = false;
 
 // ==========================================
 // 🔒 ফায়ারবেস অথেনটিকেশন ও ডাটাবেজ হ্যান্ডলার
 // ==========================================
 auth.onAuthStateChanged(async (user) => {
+    const loginScreen = document.getElementById('login-screen');
     if (user) {
         currentUser = user;
-        if(loginScreen) loginScreen.classList.add('hidden'); 
-        
-        // লগইন সফল হলে কাস্টম হোমপেজ দেখাবে
-        if(customHomepage) customHomepage.classList.remove('hidden-layout');
-        if(gameContainer) gameContainer.classList.add('hidden-layout');
+        loginScreen.classList.add('hidden'); 
         
         userHighScoreRef = db.collection('highscores').doc(user.uid);
         
@@ -91,13 +85,11 @@ auth.onAuthStateChanged(async (user) => {
             console.error("Error loading highscore:", error);
             highScore = 0;
         }
-        if(highScoreText) highScoreText.innerHTML = highScore;
+        highScoreText.innerHTML = highScore;
         resetGame();
         draw();
     } else {
-        if(loginScreen) loginScreen.classList.remove('hidden'); 
-        if(customHomepage) customHomepage.classList.add('hidden-layout');
-        if(gameContainer) gameContainer.classList.add('hidden-layout');
+        loginScreen.classList.remove('hidden'); 
     }
 });
 
@@ -111,7 +103,7 @@ document.getElementById('google-login-btn').addEventListener('click', () => {
 function updateAndSaveHighScore(newScore) {
     if (newScore > highScore) {
         highScore = newScore;
-        if(highScoreText) highScoreText.innerHTML = highScore;
+        highScoreText.innerHTML = highScore;
         
         if (userHighScoreRef) {
             userHighScoreRef.set({
@@ -129,6 +121,7 @@ function updateAndSaveHighScore(newScore) {
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
+    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না
     if (isMuted) return;
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -160,7 +153,7 @@ function playSound(type) {
         oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
         oscillator.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.08); 
         gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2;
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.2);
     }
@@ -191,7 +184,6 @@ function initBubbles() {
 }
 
 function updateLivesUI() {
-    if(!livesContainer) return;
     let hearts = "";
     for (let i = 0; i < lives; i++) {
         hearts += "❤️ ";
@@ -318,12 +310,12 @@ function resetGame(){
     isSnakeMoving = false; 
 
     score = 0;
-    if(scoreText) scoreText.innerHTML = score;
+    scoreText.innerHTML = score;
     level = 1;
     lives = 3; 
     updateLivesUI(); 
     gameSpeed = BASE_SPEED;
-    if(levelText) levelText.innerHTML = level;
+    levelText.innerHTML = level;
     isLevelTransition = false;
     initBubbles();
     createFood();
@@ -350,6 +342,7 @@ function handleSnakeDeath() {
 }
 
 function draw(){
+    // ======= ডার্ক ওয়াটার ব্যাকগ্রাউন্ড =======
     let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     waterGradient.addColorStop(0, "#0f2027");   
     waterGradient.addColorStop(0.5, "#203a43"); 
@@ -357,6 +350,7 @@ function draw(){
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // ======= ওয়াটার গ্রিড ইফেক্ট =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
@@ -366,6 +360,7 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
+    // ======= =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -379,6 +374,7 @@ function draw(){
         }
     });
 
+    // ======= Obstacles =======
     ctx.fillStyle = "#e74c3c"; 
     ctx.shadowBlur = 8;
     ctx.shadowColor = "#e74c3c";
@@ -393,6 +389,7 @@ function draw(){
     });
     ctx.shadowBlur = 0; 
 
+    // ======= গোল্ডফিশ ফুড =======
     let fx = food.x + 10;
     let fy = food.y + 10;
 
@@ -430,6 +427,7 @@ function draw(){
 
     ctx.shadowBlur = 0; 
 
+    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -487,6 +485,7 @@ function draw(){
         }
     }
 
+    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
     ctx.textAlign = "left"; 
     ctx.strokeStyle = "#14b8a6"; 
     ctx.lineWidth = 18;           
@@ -613,7 +612,7 @@ canvas.addEventListener("click", function(e) {
 
 function startNextLevel() {
     level = nextLevelToStart;
-    if(levelText) levelText.innerHTML = level;
+    levelText.innerHTML = level;
     
     snake = [{x: 200, y: 200}]; 
     direction = null; 
@@ -678,7 +677,7 @@ function move(){
         playSound('eat'); 
         score++;
         normalFoodEatenCount++; 
-        if(scoreText) scoreText.innerHTML = score;
+        scoreText.innerHTML = score;
 
         let targetLevel = Math.floor((score - 1) / 20) + 1;
         if(score === 0) targetLevel = 1; 
@@ -709,7 +708,7 @@ function move(){
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
         playSound('eat_bonus'); 
         score += 3; 
-        if(scoreText) scoreText.innerHTML = score;
+        scoreText.innerHTML = score;
         
         clearTimeout(specialFoodTimer); 
         specialFood = null; 
@@ -759,9 +758,7 @@ function game(){
 function startGame(){
     clearInterval(gameLoop);
     resetGame();
-    
-    if(customHomepage) customHomepage.classList.add("hidden-layout");
-    if(gameContainer) gameContainer.classList.remove("hidden-layout");
+    menu.classList.add("hidden");
     
     if(pauseBtn) {
         pauseBtn.style.display = "block";
@@ -772,45 +769,31 @@ function startGame(){
     gameLoop = setInterval(game, gameSpeed);
 }
 
-// ==========================================
-// ⏸ গেম পজ এবং রিজিউম ফাংশন (ফিক্সড)
-// ==========================================
 function pauseGame(){
     if (isLevelTransition) return; 
+    if (!isSnakeMoving) return; 
     
     if(running){
-        // গেম পজ করা হচ্ছে
         clearInterval(gameLoop);
         gameLoop = null;
         running = false;
-        if(pauseBtn) pauseBtn.innerHTML = "▶ Resume";
-        
-        // ক্যানভাসে পজ স্ক্রিন ড্র করা
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 24px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("⏸ GAME PAUSED", canvas.width / 2, canvas.height / 2);
-    } else {
-        // গেম রিজিউম করা হচ্ছে
-        running = true;
-        if(pauseBtn) pauseBtn.innerHTML = "⏸ Pause";
-        
-        // গেম লুপ পুনরায় চালু করা
-        clearInterval(gameLoop);
+        pauseBtn.innerHTML = "▶ Resume";
+    }else{
         gameLoop = setInterval(game, gameSpeed);
+        running = true;
+        pauseBtn.innerHTML = "⏸ Pause";
     }
 }
 
+// 🔊 মিউট/আনমিউট কন্ট্রোল লজিক ফাংশন
 function toggleMute() {
     isMuted = !isMuted;
     if (isMuted) {
         muteBtn.innerHTML = "🔇 Sound: Off";
-        muteBtn.style.background = "#7f8c8d"; 
+        muteBtn.style.background = "#7f8c8d"; // মিউট হলে গ্রে কালার ব্যাকগ্রাউন্ড
     } else {
         muteBtn.innerHTML = "🔊 Sound: On";
-        muteBtn.style.background = "#3498db"; 
+        muteBtn.style.background = "#3498db"; // আনমিউট হলে ব্লু কালার ব্যাকগ্রাউন্ড
     }
 }
 
@@ -819,17 +802,24 @@ function restartGame(){
     resetGame();
     draw();
     
-    if(gameContainer) gameContainer.classList.add("hidden-layout");
-    if(customHomepage) customHomepage.classList.remove("hidden-layout");
-
-    if(homeTitleText) {
-        homeTitleText.innerHTML = `🐍 SKY SNAKE`;
+    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 SKY SNAKE`;
     }
     if(playBtn) {
         playBtn.innerHTML = "▶ Play";
     }
-    if(menuRestartBtn) menuRestartBtn.style.display = "none";
-    if(cancelBtn) cancelBtn.style.display = "none";
+    if(menuRestartBtn) {
+        menuRestartBtn.style.display = "block";
+    }
+    if(cancelBtn) {
+        cancelBtn.style.display = "none";
+    }
+    if(pauseBtn) {
+        pauseBtn.style.display = "none";
+    }
+
+    menu.classList.remove("hidden");
     running = false;
 }
 
@@ -841,20 +831,27 @@ function gameOver(){
     specialFoodTimer = null;
     shouldSpawnBonusAfterTransition = false;
 
-    if(gameContainer) gameContainer.classList.add("hidden-layout");
-    if(customHomepage) customHomepage.classList.remove("hidden-layout");
+    menu.classList.remove("hidden");
 
-    if(homeTitleText) {
-        homeTitleText.innerHTML = `🐍 Game Over!<br><span style="font-size: 16px; color: #fff; font-weight: normal;">Score: ${score}</span>`;
+    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 20px; color: #fff;">Your Score: ${score}</span>`;
     }
 
     if(playBtn) {
         playBtn.innerHTML = "▶ Play Again";
     }
-    
-    if(menuRestartBtn) menuRestartBtn.style.display = "block";
-    if(cancelBtn) cancelBtn.style.display = "block";
+    if(menuRestartBtn) {
+        menuRestartBtn.style.display = "none";
+    }
+    if(cancelBtn) {
+        cancelBtn.style.display = "block";
+    }
+    if(pauseBtn) {
+        pauseBtn.style.display = "none";
+    }
 }
+
 
 // =========================================================================
 // 🔄 টাচ কন্ট্রোল (মোবাইলের জন্য)
@@ -868,7 +865,7 @@ canvas.addEventListener("touchstart", function(e){
 }, { passive: true });
 
 canvas.addEventListener("touchmove", function(e){
-    if (isLevelTransition || !running) return; // গেম পজ থাকলে টাচ কাজ করবে না
+    if (isLevelTransition) return; 
 
     let currentX = e.touches[0].clientX;
     let currentY = e.touches[0].clientY;
@@ -906,8 +903,9 @@ canvas.addEventListener("touchend", function(){
     touchStartY = 0;
 }, { passive: true });
 
+
 // =========================================================================
-// ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য - স্পেসবার ফিক্সড)
+// ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য)
 // =========================================================================
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
@@ -917,18 +915,13 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
-    // 🚀 স্পেসবার প্রেস করলে পজ বা রিজিউম হবে
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        // গেমটি যদি স্ক্রিনে চলমান ড্যাশবোর্ডে থাকে
-        if(gameContainer && !gameContainer.classList.contains('hidden-layout')) {
+        if(menu.classList.contains("hidden") && isSnakeMoving){ 
             pauseGame();
         }
         return;
     }
-
-    // গেম যদি পজ থাকে, তাহলে অ্যারো কি কাজ করবে না
-    if(!running) return;
 
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
         if (!isSnakeMoving) {
@@ -943,73 +936,82 @@ document.addEventListener("keydown", function(e){
 });
 
 // =========================================================================
-// 🏆 গ্লোবাল লিডারবোর্ড লজিক
+// 🏆 গ্লোবাল লিডারবোর্ড লজিক (গুগল সাইন-ইন সহ)
 // =========================================================================
 const leaderboardModal = document.getElementById("leaderboard-modal");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
 const closeLeaderboard = document.getElementById("closeLeaderboard");
 const leaderboardList = document.getElementById("leaderboard-list");
 
-if(leaderboardBtn) {
-    leaderboardBtn.onclick = async function() {
-        if(leaderboardModal) leaderboardModal.classList.remove("hidden");
-        if(leaderboardList) leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
+// লিডারবোর্ড বাটন ক্লিক ইভেন্ট
+leaderboardBtn.onclick = async function() {
+    leaderboardModal.classList.remove("hidden");
+    leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
 
-        try {
-            const snapshot = await db.collection("highscores")
-                .orderBy("score", "desc")
-                .limit(10)
-                .get();
+    try {
+        // Firestore থেকে বড় স্কোরগুলো আগে নিয়ে আসা (সর্বোচ্চ ১০টি)
+        const snapshot = await db.collection("highscores")
+            .orderBy("score", "desc")
+            .limit(10)
+            .get();
 
-            if(leaderboardList) leaderboardList.innerHTML = ""; 
-            
-            if (snapshot.empty) {
-                if(leaderboardList) leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>এখনো কোনো হাই স্কোর নেই!</p>";
-                return;
-            }
-
-            let rank = 1;
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const userName = data.email ? data.email.split('@')[0] : "Player";
-                const userScore = data.score || 0;
-
-                let rankClass = `rank-${rank}`;
-                let medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
-
-                const item = document.createElement("div");
-                item.className = "leaderboard-item";
-                item.innerHTML = `
-                    <span class="${rank <= 3 ? rankClass : ''}">${medal} ${userName}</span>
-                    <span style="font-weight: bold; color: #22c55e;">${userScore}</span>
-                `;
-                if(leaderboardList) leaderboardList.appendChild(item);
-                rank++;
-            });
-
-        } catch (error) {
-            console.error("Error fetching leaderboard:", error);
-            if(leaderboardList) leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
+        leaderboardList.innerHTML = ""; // আগের লোডিং লেখা মুছে ফেলা
+        
+        if (snapshot.empty) {
+            leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>এখনো কোনো হাই স্কোর নেই!</p>";
+            return;
         }
-    };
-}
 
-if(closeLeaderboard) {
-    closeLeaderboard.onclick = function() {
-        if(leaderboardModal) leaderboardModal.classList.add("hidden");
-    };
-}
+        let rank = 1;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const userName = data.email ? data.email.split('@')[0] : "Player";
+            const userScore = data.score || 0;
 
-window.onclick = function(event) {
-    if (event.target == leaderboardModal) {
-        if(leaderboardModal) leaderboardModal.classList.add("hidden");
+            let rankClass = `rank-${rank}`;
+            let medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+
+            const item = document.createElement("div");
+            item.className = "leaderboard-item";
+            item.innerHTML = `
+                <span class="${rank <= 3 ? rankClass : ''}">${medal} ${userName}</span>
+                <span style="font-weight: bold; color: #22c55e;">${userScore}</span>
+            `;
+            leaderboardList.appendChild(item);
+            rank++;
+        });
+
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
     }
 };
 
-if(playBtn) playBtn.onclick = startGame;
-if(pauseBtn) pauseBtn.onclick = pauseGame;
-if(menuRestartBtn) menuRestartBtn.onclick = restartGame;
-if(cancelBtn) cancelBtn.onclick = restartGame; 
-if(muteBtn) muteBtn.onclick = toggleMute;
+// 🔙 "Back" বাটনে ক্লিক করলে লিডারবোর্ড বন্ধ হবে
+closeLeaderboard.onclick = function() {
+    leaderboardModal.classList.add("hidden");
+};
+
+// লিডারবোর্ডের বাইরে ফাঁকা জায়গায় ক্লিক করলেও যাতে বন্ধ হয়
+window.onclick = function(event) {
+    if (event.target == leaderboardModal) {
+        leaderboardModal.classList.add("hidden");
+    }
+};
+
+playBtn.onclick = startGame;
+pauseBtn.onclick = pauseGame;
+menuRestartBtn.onclick = restartGame;
+
+// 🔊 মিউট বাটন ক্লিক ইভেন্ট লিসেনার সেট করা
+if(muteBtn) {
+    muteBtn.onclick = toggleMute;
+}
+
+if(cancelBtn) {
+    cancelBtn.onclick = function() {
+        restartGame(); 
+    };
+}
 
 initBubbles();
