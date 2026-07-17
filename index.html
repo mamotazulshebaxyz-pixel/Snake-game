@@ -1,79 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sky Snake Game</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- 🔥 Firebase Core and Services SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
 
-    <!-- 💡 ফায়ারবেস লগইন ওভারলে -->
+    <!-- 🔒 ফায়ারবেস লগইন ওভারলে -->
     <div id="login-screen" class="auth-container">
         <h2>🐍 SKY SNAKE</h2>
-        <p>যেকোনো ডিভাইস থেকে হাই স্কোর সেভ রাখতে লগইন করুন</p>
+        <p>লিডারবোর্ডে আপনার হাই স্কোর সেভ করতে এবং বন্ধুদের সাথে প্রতিযোগিতা করতে গুগল দিয়ে লগইন করুন।</p>
         <button id="google-login-btn">
             <svg style="width:20px; height:20px;" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.9h6.69c-.29 1.5-.14 3.01-.1 4.5l3.12 2.42c1.84-1.7 2.91-4.2 2.91-7.25z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.12-2.42c-.9.6-2.01.94-3.24.94-2.5 0-4.61-1.69-5.36-3.97L5.05 18.1c1.55 3.1 4.78 5.14 8.51 5.14z"/>
-                <path fill="#FBBC05" d="M6.64 15.64c-.2-.6-.31-1.24-.31-1.89s.11-1.29.31-1.89L3.45 9.42C2.52 11.23 2 13.29 2 15.5s.52 4.27 1.45 6.08l3.19-2.44z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 8.27 0 5.04 2.04 3.45 5.14l3.19 2.44c.75-2.28 2.86-3.97 5.36-3.97z"/>
+                <path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.137 4.114-3.466 0-6.277-2.81-6.277-6.277 0-3.466 2.81-6.277 6.277-6.277 1.488 0 2.843.523 3.911 1.39l3.076-3.076C18.995 2.05 15.82 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.158 0 11.107-4.953 11.107-11.107 0-.7-.06-1.383-.18-2.038H12.24z"/>
             </svg>
-            Sign in with Google
+            Google দিয়ে লগইন করুন
         </button>
     </div>
 
-    <!-- মূল গেম কন্টেইনার -->
+    <!-- 🎮 মেইন গেম কন্টেইনার -->
     <div class="game">
-        <!-- হেডার সেকশন -->
         <div class="game-header">
-            <h1>🐍 SKY SNAKE</h1>
+            <h1>Sky Snake</h1>
             <div id="lives-container">❤️ ❤️ ❤️</div>
         </div>
-        
+
         <div class="score-board">
-            <div>🍎 Score: <span id="score">0</span></div>
-            <div>🏆 High: <span id="highScore">0</span></div>
-            <div>⭐ Level: <span id="level">1</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>High Score: <span id="highScore">0</span></div>
         </div>
 
-        <!-- গেম ক্যানভাস -->
         <canvas id="gameCanvas" width="400" height="400"></canvas>
 
-        <!-- পজ বাটন -->
         <div class="controls">
-            <button id="pauseBtn">⏸ Pause</button>
+            <button id="pauseBtn" style="display: none;">⏸ Pause</button>
         </div>
-
-        <div class="info">🎮 Desktop: Use Arrows | Mobile: Drag on Screen</div>
+        
+        <div class="info">পিসিতে খেলতে Arrow Keys এবং মোবাইলের জন্য Swipe করুন।</div>
     </div>
 
-    <!-- স্টার্ট / গেম ওভার মেনু -->
-    <div id="menu">
-        <h2 class="title">🐍 SKY SNAKE</h2>
+    <!-- 🎮 মেইন স্টার্ট/গেমওভার মেনু -->
+    <div id="menu" class="hidden">
+        <h2>🐍 SKY SNAKE</h2>
         <button id="playBtn">▶ Play</button>
-        <!-- 🏆 প্লে বাটনের নিচে সরাসরি গ্লোবাল লিডারবোর্ড বাটন -->
-        <button id="leaderboardBtn">🏆 Global Leaderboard</button>
         <button id="restart" style="display: none;">🔄 Restart</button>
-        <button id="cancelBtn" style="display: none;">❌ Quit</button>
+        <button id="cancelBtn" style="display: none;">❌ Cancel</button>
+        <button id="leaderboardBtn">🏆 Leaderboard</button>
     </div>
 
-    <!-- 🏆 গ্লোবাল লিডারবোর্ড মডাল পপ-আপ -->
+    <!-- 🏆 লিডারবোর্ড পপ-আপ মডাল -->
     <div id="leaderboard-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>🏆 Global Leaderboard</h2>
+            <h2>🏆 Top 10 Leaders</h2>
             <div id="leaderboard-list">
-                <p>লোডিং...</p>
+                <!-- ডায়নামিক স্কোর এখানে লোড হবে -->
             </div>
-            <!-- 🔙 ফিরে যাওয়ার জন্য নিচে প্রফেশনাল ব্যাক বাটন -->
-            <button id="closeLeaderboard" style="width: 100%; margin-top: 20px; background: #ef4444;">🔙 Back</button>
+            <button id="closeLeaderboard">🔙 Back</button>
         </div>
     </div>
-
-    <!-- Firebase Compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script src="script.js"></script>
 </body>
