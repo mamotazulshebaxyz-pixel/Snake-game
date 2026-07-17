@@ -23,8 +23,8 @@ let userHighScoreRef = null;
 // ==========================================
 const loginScreen = document.getElementById('login-screen');
 const customHomepage = document.getElementById('custom-homepage'); 
-const gameContainer = document.getElementById('main-game-layout'); // ✨ HTML ID এর সাথে ফিক্সড
-const homeTitleText = document.getElementById('home-title-text');   // ✨ সুনির্দিষ্ট আইডি সিলেক্টর
+const gameContainer = document.getElementById('main-game-layout'); 
+const homeTitleText = document.getElementById('home-title-text');   
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -160,7 +160,7 @@ function playSound(type) {
         oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
         oscillator.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.08); 
         gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2;
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.2);
     }
@@ -772,19 +772,34 @@ function startGame(){
     gameLoop = setInterval(game, gameSpeed);
 }
 
+// ==========================================
+// ⏸ গেম পজ এবং রিজিউম ফাংশন (ফিক্সড)
+// ==========================================
 function pauseGame(){
     if (isLevelTransition) return; 
-    if (!isSnakeMoving) return; 
     
     if(running){
+        // গেম পজ করা হচ্ছে
         clearInterval(gameLoop);
         gameLoop = null;
         running = false;
-        pauseBtn.innerHTML = "▶ Resume";
-    }else{
-        gameLoop = setInterval(game, gameSpeed);
+        if(pauseBtn) pauseBtn.innerHTML = "▶ Resume";
+        
+        // ক্যানভাসে পজ স্ক্রিন ড্র করা
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 24px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("⏸ GAME PAUSED", canvas.width / 2, canvas.height / 2);
+    } else {
+        // গেম রিজিউম করা হচ্ছে
         running = true;
-        pauseBtn.innerHTML = "⏸ Pause";
+        if(pauseBtn) pauseBtn.innerHTML = "⏸ Pause";
+        
+        // গেম লুপ পুনরায় চালু করা
+        clearInterval(gameLoop);
+        gameLoop = setInterval(game, gameSpeed);
     }
 }
 
@@ -837,7 +852,6 @@ function gameOver(){
         playBtn.innerHTML = "▶ Play Again";
     }
     
-    // গেম ওভারের পর হোমপেজে রিস্টার্ট ও কুইট বাটন শো করা
     if(menuRestartBtn) menuRestartBtn.style.display = "block";
     if(cancelBtn) cancelBtn.style.display = "block";
 }
@@ -854,7 +868,7 @@ canvas.addEventListener("touchstart", function(e){
 }, { passive: true });
 
 canvas.addEventListener("touchmove", function(e){
-    if (isLevelTransition) return; 
+    if (isLevelTransition || !running) return; // গেম পজ থাকলে টাচ কাজ করবে না
 
     let currentX = e.touches[0].clientX;
     let currentY = e.touches[0].clientY;
@@ -893,7 +907,7 @@ canvas.addEventListener("touchend", function(){
 }, { passive: true });
 
 // =========================================================================
-// ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য)
+// ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য - স্পেসবার ফিক্সড)
 // =========================================================================
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
@@ -903,13 +917,18 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
+    // 🚀 স্পেসবার প্রেস করলে পজ বা রিজিউম হবে
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        if(running && isSnakeMoving){ 
+        // গেমটি যদি স্ক্রিনে চলমান ড্যাশবোর্ডে থাকে
+        if(gameContainer && !gameContainer.classList.contains('hidden-layout')) {
             pauseGame();
         }
         return;
     }
+
+    // গেম যদি পজ থাকে, তাহলে অ্যারো কি কাজ করবে না
+    if(!running) return;
 
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
         if (!isSnakeMoving) {
