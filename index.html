@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- 💡 ফায়ারবেস লগইন ওভারলে (খেলার শুরুতে দেখাবে) -->
+    <!-- 💡 ফায়ারবেস লগইন ওভারলে -->
     <div id="login-screen" class="auth-container">
         <h2>🐍 SKY SNAKE</h2>
         <p>যেকোনো ডিভাইস থেকে হাই স্কোর সেভ রাখতে লগইন করুন</p>
@@ -25,7 +25,7 @@
 
     <!-- মূল গেম কন্টেইনার -->
     <div class="game">
-        <!-- হেডার সেকশন যেখানে নাম এবং হার্ট পাশাপাশি থাকবে -->
+        <!-- হেডার সেকশন -->
         <div class="game-header">
             <h1>🐍 SKY SNAKE</h1>
             <div id="lives-container">❤️ ❤️ ❤️</div>
@@ -52,16 +52,29 @@
     <div id="menu">
         <h2 class="title">🐍 SKY SNAKE</h2>
         <button id="playBtn">▶ Play</button>
+        <!-- 🏆 প্লে বাটনের নিচে সরাসরি গ্লোবাল লিডারবোর্ড বাটন -->
+        <button id="leaderboardBtn">🏆 Global Leaderboard</button>
         <button id="restart" style="display: none;">🔄 Restart</button>
         <button id="cancelBtn" style="display: none;">❌ Quit</button>
     </div>
 
-    <!-- 💡 Firebase Compat SDKs (অনলাইন স্কোর সংরক্ষণের জন্য) -->
+    <!-- 🏆 গ্লোবাল লিডারবোর্ড মডাল পপ-আপ -->
+    <div id="leaderboard-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🏆 Global Leaderboard</h2>
+            <div id="leaderboard-list">
+                <p>লোডিং...</p>
+            </div>
+            <!-- 🔙 ফিরে যাওয়ার জন্য নিচে প্রফেশনাল ব্যাক বাটন -->
+            <button id="closeLeaderboard" style="width: 100%; margin-top: 20px; background: #ef4444;">🔙 Back</button>
+        </div>
+    </div>
+
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <!-- আপনার জাভাস্ক্রিপ্ট ফাইল -->
     <script src="script.js"></script>
 </body>
 </html>
