@@ -1,5 +1,5 @@
 // ==========================================
-// 🔥 FIREBASE কনফিগারেশন সেটআপ (আপনার আসল কোড দিয়ে আপডেট করুন)
+// 🔥 FIREBASE কনফিগারেশন সেটআপ
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
@@ -19,9 +19,11 @@ let currentUser = null;
 let userHighScoreRef = null;
 
 // ==========================================
-// 🎮 গেমের গ্লোবাল ভেরিয়েবলসমূহ
+// 🎮 গেমের গ্লোবাল ও লেআউট এলিমেন্টসমূহ
 // ==========================================
-const menu = document.getElementById("menu");
+const loginScreen = document.getElementById('login-screen');
+const customHomepage = document.getElementById('custom-homepage'); // 新 🏠 কাস্টম হোমপেজ
+const gameContainer = document.querySelector('.game');            // 🎮 গেম কন্টেইনার (যদি HTML-এ ক্লাস থাকে)
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -33,7 +35,7 @@ const livesContainer = document.getElementById("lives-container");
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const pauseBtn = document.getElementById("pauseBtn");
-const muteBtn = document.getElementById("muteBtn"); // 🔊 মিউট বাটন এলিমেন্ট
+const muteBtn = document.getElementById("muteBtn"); 
 const menuRestartBtn = document.getElementById("restart");
 
 const BASE_SPEED = 300; 
@@ -67,10 +69,13 @@ let isMuted = false;
 // 🔒 ফায়ারবেস অথেনটিকেশন ও ডাটাবেজ হ্যান্ডলার
 // ==========================================
 auth.onAuthStateChanged(async (user) => {
-    const loginScreen = document.getElementById('login-screen');
     if (user) {
         currentUser = user;
-        loginScreen.classList.add('hidden'); 
+        if(loginScreen) loginScreen.classList.add('hidden'); 
+        
+        // লগইন সফল হলে স্ক্রিনশটের মতো হোমপেজ দেখাবে, কিন্তু গেম কন্টেইনার লুকিয়ে থাকবে
+        if(customHomepage) customHomepage.classList.remove('hidden-layout');
+        if(gameContainer) gameContainer.classList.add('hidden-layout');
         
         userHighScoreRef = db.collection('highscores').doc(user.uid);
         
@@ -85,11 +90,13 @@ auth.onAuthStateChanged(async (user) => {
             console.error("Error loading highscore:", error);
             highScore = 0;
         }
-        highScoreText.innerHTML = highScore;
+        if(highScoreText) highScoreText.innerHTML = highScore;
         resetGame();
         draw();
     } else {
-        loginScreen.classList.remove('hidden'); 
+        if(loginScreen) loginScreen.classList.remove('hidden'); 
+        if(customHomepage) customHomepage.classList.add('hidden-layout');
+        if(gameContainer) gameContainer.classList.add('hidden-layout');
     }
 });
 
@@ -103,7 +110,7 @@ document.getElementById('google-login-btn').addEventListener('click', () => {
 function updateAndSaveHighScore(newScore) {
     if (newScore > highScore) {
         highScore = newScore;
-        highScoreText.innerHTML = highScore;
+        if(highScoreText) highScoreText.innerHTML = highScore;
         
         if (userHighScoreRef) {
             userHighScoreRef.set({
@@ -121,7 +128,6 @@ function updateAndSaveHighScore(newScore) {
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
-    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না
     if (isMuted) return;
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -184,6 +190,7 @@ function initBubbles() {
 }
 
 function updateLivesUI() {
+    if(!livesContainer) return;
     let hearts = "";
     for (let i = 0; i < lives; i++) {
         hearts += "❤️ ";
@@ -310,12 +317,12 @@ function resetGame(){
     isSnakeMoving = false; 
 
     score = 0;
-    scoreText.innerHTML = score;
+    if(scoreText) scoreText.innerHTML = score;
     level = 1;
     lives = 3; 
     updateLivesUI(); 
     gameSpeed = BASE_SPEED;
-    levelText.innerHTML = level;
+    if(levelText) levelText.innerHTML = level;
     isLevelTransition = false;
     initBubbles();
     createFood();
@@ -360,7 +367,7 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= =======
+    // ======= বুদবুদ রেন্ডার =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -612,7 +619,7 @@ canvas.addEventListener("click", function(e) {
 
 function startNextLevel() {
     level = nextLevelToStart;
-    levelText.innerHTML = level;
+    if(levelText) levelText.innerHTML = level;
     
     snake = [{x: 200, y: 200}]; 
     direction = null; 
@@ -677,7 +684,7 @@ function move(){
         playSound('eat'); 
         score++;
         normalFoodEatenCount++; 
-        scoreText.innerHTML = score;
+        if(scoreText) scoreText.innerHTML = score;
 
         let targetLevel = Math.floor((score - 1) / 20) + 1;
         if(score === 0) targetLevel = 1; 
@@ -708,7 +715,7 @@ function move(){
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
         playSound('eat_bonus'); 
         score += 3; 
-        scoreText.innerHTML = score;
+        if(scoreText) scoreText.innerHTML = score;
         
         clearTimeout(specialFoodTimer); 
         specialFood = null; 
@@ -758,7 +765,10 @@ function game(){
 function startGame(){
     clearInterval(gameLoop);
     resetGame();
-    menu.classList.add("hidden");
+    
+    // 🏠 কাস্টম হোমপেজ হাইড করে মূল 🎮 গেম লেআউট সামনে আনা
+    if(customHomepage) customHomepage.classList.add("hidden-layout");
+    if(gameContainer) gameContainer.classList.remove("hidden-layout");
     
     if(pauseBtn) {
         pauseBtn.style.display = "block";
@@ -790,10 +800,10 @@ function toggleMute() {
     isMuted = !isMuted;
     if (isMuted) {
         muteBtn.innerHTML = "🔇 Sound: Off";
-        muteBtn.style.background = "#7f8c8d"; // মিউট হলে গ্রে কালার ব্যাকগ্রাউন্ড
+        muteBtn.style.background = "#7f8c8d"; 
     } else {
         muteBtn.innerHTML = "🔊 Sound: On";
-        muteBtn.style.background = "#3498db"; // আনমিউট হলে ব্লু কালার ব্যাকগ্রাউন্ড
+        muteBtn.style.background = "#3498db"; 
     }
 }
 
@@ -802,24 +812,17 @@ function restartGame(){
     resetGame();
     draw();
     
-    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
-    if(menuTitle) {
-        menuTitle.innerHTML = `🐍 SKY SNAKE`;
+    // গেম থেকে ব্যাক বা রিস্টার্ট করলে পুনরায় কাস্টম হোমপেজে ফিরে যাওয়া
+    if(gameContainer) gameContainer.classList.add("hidden-layout");
+    if(customHomepage) customHomepage.classList.remove("hidden-layout");
+
+    const homeTitle = document.querySelector(".home-title");
+    if(homeTitle) {
+        homeTitle.innerHTML = `🐍 SKY SNAKE`;
     }
     if(playBtn) {
         playBtn.innerHTML = "▶ Play";
     }
-    if(menuRestartBtn) {
-        menuRestartBtn.style.display = "block";
-    }
-    if(cancelBtn) {
-        cancelBtn.style.display = "none";
-    }
-    if(pauseBtn) {
-        pauseBtn.style.display = "none";
-    }
-
-    menu.classList.remove("hidden");
     running = false;
 }
 
@@ -831,27 +834,19 @@ function gameOver(){
     specialFoodTimer = null;
     shouldSpawnBonusAfterTransition = false;
 
-    menu.classList.remove("hidden");
+    // গেম ওভার হলে মূল লেআউট লুকিয়ে কাস্টম হোমপেজ পপআপে স্কোর প্রদর্শন
+    if(gameContainer) gameContainer.classList.add("hidden-layout");
+    if(customHomepage) customHomepage.classList.remove("hidden-layout");
 
-    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
-    if(menuTitle) {
-        menuTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 20px; color: #fff;">Your Score: ${score}</span>`;
+    const homeTitle = document.querySelector(".home-title");
+    if(homeTitle) {
+        homeTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 16px; color: #fff; font-weight: normal;">Score: ${score}</span>`;
     }
 
     if(playBtn) {
         playBtn.innerHTML = "▶ Play Again";
     }
-    if(menuRestartBtn) {
-        menuRestartBtn.style.display = "none";
-    }
-    if(cancelBtn) {
-        cancelBtn.style.display = "block";
-    }
-    if(pauseBtn) {
-        pauseBtn.style.display = "none";
-    }
 }
-
 
 // =========================================================================
 // 🔄 টাচ কন্ট্রোল (মোবাইলের জন্য)
@@ -903,7 +898,6 @@ canvas.addEventListener("touchend", function(){
     touchStartY = 0;
 }, { passive: true });
 
-
 // =========================================================================
 // ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য)
 // =========================================================================
@@ -917,7 +911,7 @@ document.addEventListener("keydown", function(e){
 
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        if(menu.classList.contains("hidden") && isSnakeMoving){ 
+        if(running && isSnakeMoving){ 
             pauseGame();
         }
         return;
@@ -936,77 +930,73 @@ document.addEventListener("keydown", function(e){
 });
 
 // =========================================================================
-// 🏆 গ্লোবাল লিডারবোর্ড লজিক (গুগল সাইন-ইন সহ)
+// 🏆 গ্লোবাল লিডারবোর্ড লজিক
 // =========================================================================
 const leaderboardModal = document.getElementById("leaderboard-modal");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
 const closeLeaderboard = document.getElementById("closeLeaderboard");
 const leaderboardList = document.getElementById("leaderboard-list");
 
-// লিডারবোর্ড বাটন ক্লিক ইভেন্ট
-leaderboardBtn.onclick = async function() {
-    leaderboardModal.classList.remove("hidden");
-    leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
+if(leaderboardBtn) {
+    leaderboardBtn.onclick = async function() {
+        if(leaderboardModal) leaderboardModal.classList.remove("hidden");
+        if(leaderboardList) leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
 
-    try {
-        // Firestore থেকে বড় স্কোরগুলো আগে নিয়ে আসা (সর্বোচ্চ ১০টি)
-        const snapshot = await db.collection("highscores")
-            .orderBy("score", "desc")
-            .limit(10)
-            .get();
+        try {
+            const snapshot = await db.collection("highscores")
+                .orderBy("score", "desc")
+                .limit(10)
+                .get();
 
-        leaderboardList.innerHTML = ""; // আগের লোডিং লেখা মুছে ফেলা
-        
-        if (snapshot.empty) {
-            leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>এখনো কোনো হাই স্কোর নেই!</p>";
-            return;
+            if(leaderboardList) leaderboardList.innerHTML = ""; 
+            
+            if (snapshot.empty) {
+                if(leaderboardList) leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>এখনো কোনো হাই স্কোর নেই!</p>";
+                return;
+            }
+
+            let rank = 1;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const userName = data.email ? data.email.split('@')[0] : "Player";
+                const userScore = data.score || 0;
+
+                let rankClass = `rank-${rank}`;
+                let medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+
+                const item = document.createElement("div");
+                item.className = "leaderboard-item";
+                item.innerHTML = `
+                    <span class="${rank <= 3 ? rankClass : ''}">${medal} ${userName}</span>
+                    <span style="font-weight: bold; color: #22c55e;">${userScore}</span>
+                `;
+                if(leaderboardList) leaderboardList.appendChild(item);
+                rank++;
+            });
+
+        } catch (error) {
+            console.error("Error fetching leaderboard:", error);
+            if(leaderboardList) leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
         }
+    };
+}
 
-        let rank = 1;
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const userName = data.email ? data.email.split('@')[0] : "Player";
-            const userScore = data.score || 0;
+if(closeLeaderboard) {
+    closeLeaderboard.onclick = function() {
+        if(leaderboardModal) leaderboardModal.classList.add("hidden");
+    };
+}
 
-            let rankClass = `rank-${rank}`;
-            let medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
-
-            const item = document.createElement("div");
-            item.className = "leaderboard-item";
-            item.innerHTML = `
-                <span class="${rank <= 3 ? rankClass : ''}">${medal} ${userName}</span>
-                <span style="font-weight: bold; color: #22c55e;">${userScore}</span>
-            `;
-            leaderboardList.appendChild(item);
-            rank++;
-        });
-
-    } catch (error) {
-        console.error("Error fetching leaderboard:", error);
-        leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
-    }
-};
-
-// 🔙 "Back" বাটনে ক্লিক করলে লিডারবোর্ড বন্ধ হবে
-closeLeaderboard.onclick = function() {
-    leaderboardModal.classList.add("hidden");
-};
-
-// লিডারবোর্ডের বাইরে ফাঁকা জায়গায় ক্লিক করলেও যাতে বন্ধ হয়
 window.onclick = function(event) {
     if (event.target == leaderboardModal) {
-        leaderboardModal.classList.add("hidden");
+        if(leaderboardModal) leaderboardModal.classList.add("hidden");
     }
 };
 
-playBtn.onclick = startGame;
-pauseBtn.onclick = pauseGame;
-menuRestartBtn.onclick = restartGame;
-
-// 🔊 মিউট বাটন ক্লিক ইভেন্ট লিসেনার সেট করা
-if(muteBtn) {
-    muteBtn.onclick = toggleMute;
-}
+if(playBtn) playBtn.onclick = startGame;
+if(pauseBtn) pauseBtn.onclick = pauseGame;
+if(menuRestartBtn) menuRestartBtn.onclick = restartGame;
+if(muteBtn) muteBtn.onclick = toggleMute;
 
 if(cancelBtn) {
     cancelBtn.onclick = function() {
