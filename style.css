@@ -81,7 +81,7 @@ body {
     max-width: 410px; /* ক্যানভাস সাইজের সাথে সামঞ্জস্যপূর্ণ */
     height: 480px; 
     background-color: #1e293b; /* ক্যানভাস ব্যাকগ্রাউন্ড */
-    border: 4px solid #22c55e; /* চারপাশের ব্রাইট গ্রিন বর্ডার */
+    border: 4px solid #22c55e; /* চারপাশের ব্রایت গ্রিন বর্ডার */
     border-radius: 15px;
     box-shadow: 0 0 25px rgba(34, 197, 94, 0.25); /* নিয়ন গ্রিন গ্লো */
     display: flex;
@@ -241,9 +241,13 @@ button:hover {
     font-size: 14px;
 }
 
-/* অন/অফ করার জন্য স্পেশাল হেল্পার ক্লাস */
+/* 🛠️ অন/অফ করার জন্য শক্তিশালী হেল্পার ক্লাস (জাভাস্ক্রিপ্টের সাথে ম্যাচিং) */
 .hidden-layout {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
 }
 
 .hidden {
@@ -256,15 +260,15 @@ button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px; /* বাটনগুলোর মাঝখানের ফাঁকা জায়গা */
+    gap: 10px; /* বাটনগুলোর মাঝখানের ফাঁকা জায়গা */
     flex-wrap: wrap; /* মোবাইল স্ক্রিনে বাটন নিচে নামানোর জন্য */
     width: 100%;
     max-width: 400px;
 }
 
 .controls button {
-    flex: 1; /* ৩টি বাটন সমান জায়গা ভাগ করে নিবে */
-    min-width: 110px; /* স্ক্রিন ছোট হলে বাটন যেন একদম ছোট না হয়ে যায় */
+    flex: 1; /* ৩টি বাটন সমান জায়গা ভাগ করে নিবে */
+    min-width: 110px; /* স্ক্রিন ছোট হলে বাটন যেন একদম ছোট না হয়ে যায় */
     height: 42px;
     font-size: 15px;
     font-weight: bold;
