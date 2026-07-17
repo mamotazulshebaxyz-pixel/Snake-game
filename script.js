@@ -1,159 +1,208 @@
 // ==========================================
-// 🔥 FIREBASE কনফিগারেশন সেটআপ
+// 🔥 FIREBASE কনফিগারেশন সেটআপ (আপনার আসল কোড দিয়ে আপডেট করুন)
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
-  authDomain: "sky-snake-game.firebaseapp.com",
-  projectId: "sky-snake-game",
-  storageBucket: "sky-snake-game.firebasestorage.app",
-  messagingSenderId: "673768221080",
-  appId: "1:673768221080:web:4ee4ce3ac09386bc36e3ed"
+    apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
+    authDomain: "sky-snake-game.firebaseapp.com",
+    projectId: "sky-snake-game",
+    storageBucket: "sky-snake-game.firebasestorage.app",
+    messagingSenderId: "67376821080",
+    appId: "1:67376821080:web:4ee4ce3ac09386bc36e3ed"
 };
 
-// ফায়ারবেস ইনিশিয়ালাইজ করা
+// Firebase ইনিশিয়াল করা
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 const auth = firebase.auth();
-const provider = new firebase.auth.GoogleAuthProvider();
+const db = firebase.firestore();
+
+let currentUser = null;
+let userHighScoreRef = null;
 
 // ==========================================
 // 🎮 গেমের গ্লোবাল ভেরিয়েবলসমূহ
 // ==========================================
+const menu = document.getElementById("menu");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let snake = [{x: 200, y: 200}];
-let food = null;
+const scoreText = document.getElementById("score");
+const highScoreText = document.getElementById("highScore");
+const levelText = document.getElementById("level");
+const livesContainer = document.getElementById("lives-container");
+
+const playBtn = document.getElementById("playBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const menuRestartBtn = document.getElementById("restart");
+
+const BASE_SPEED = 300; 
+let gameSpeed = BASE_SPEED;
+
+let snake;
+let food;
+let direction;
+let score;
+let level = 1;
+let highScore = 0; 
+let lives = 3; 
+
+let gameLoop;
 let specialFood = null;
-let dx = 0;
-let dy = 0;
-let score = 0;
-let highScore = localStorage.getItem("highScore") || 0;
-let running = false;
-let isSnakeMoving = false;
-let gameSpeed = 100; // মিলিসেকেন্ড
-let gameInterval = null;
-
 let specialFoodTimer = null;
-let specialFoodRemainingTime = 5000; // বোনাস ফুডের সময় (৫ সেকেন্ড = ৫০০০ মিলি-সেকেন্ড)
-let foodEatenCount = 0;
-let obstacles = [];
-let currentStage = 1;
-let shouldSpawnBonusAfterTransition = false;
-let currentUser = null;
+let specialFoodStartTime = 0; 
+let normalFoodEatenCount = 0; 
+let running = false;
+let obstacles = []; 
 
-// সাউন্ড এফেক্টস
-const sounds = {
-    eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav'),
-    bonus_appear: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav'),
-    bonus_eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-84.wav'),
-    gameover: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-84.wav'),
-    stage_up: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-84.wav')
-};
-
-// সাউন্ড প্লেয়ার ফাংশন
-function playSound(type) {
-    if (sounds[type]) {
-        sounds[type].currentTime = 0;
-        sounds[type].play().catch(() => {});
-    }
-}
+let isSnakeMoving = false; 
+let isLevelTransition = false;
+let nextLevelToStart = 2;
+let shouldSpawnBonusAfterTransition = false; 
 
 // ==========================================
-// 🛠️ UI উপাদানসমূহ (HTML আইডি অনুযায়ী নির্ধারণ)
+// 🔒 ফায়ারবেস অথেনটিকেশন ও ডাটাবেজ হ্যান্ডলার
 // ==========================================
-const scoreEl = document.getElementById("score");
-const highScoreEl = document.getElementById("highScore");
-const stageEl = document.getElementById("stage");
-const startBtn = document.getElementById("startBtn");
-
-// লগইন এবং মেনু স্ক্রিন ভেরিয়েবল
-const loginScreen = document.getElementById("login-screen");
-const gameContainer = document.querySelector(".game");
-const googleLoginBtn = document.getElementById("google-login-btn");
-const menuScreen = document.getElementById("menu");
-
-// এইচটিএমএল এ যদি "leaderboardBtn" নামে কোনো বাটন থেকে থাকে তা খোঁজা
-const leaderboardBtn = document.getElementById("leaderboardBtn") || document.getElementById("viewLeaderboardBtn");
-
-highScoreEl.innerText = highScore;
-
-// ==========================================
-// 🔐 গুগল অথেন্টিকেশন (Firebase Login Logic)
-// ==========================================
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
+    const loginScreen = document.getElementById('login-screen');
     if (user) {
         currentUser = user;
-        // লগইন সফল হলে লগইন স্ক্রিন লুকিয়ে গেম স্ক্রিন দেখাবে
-        if (loginScreen) loginScreen.style.display = "none";
-        if (gameContainer) gameContainer.style.display = "block";
-        if (menuScreen) menuScreen.style.display = "flex";
+        loginScreen.classList.add('hidden'); 
         
-        // ডাটাবেজ থেকে ইউজারের হাই স্কোর সিঙ্ক করা
-        db.collection("users").doc(user.uid).get().then((doc) => {
-            if (doc.exists && doc.data().highScore) {
-                if (doc.data().highScore > highScore) {
-                    highScore = doc.data().highScore;
-                    localStorage.setItem("highScore", highScore);
-                    highScoreEl.innerText = highScore;
-                }
+        userHighScoreRef = db.collection('highscores').doc(user.uid);
+        
+        try {
+            const doc = await userHighScoreRef.get();
+            if (doc.exists) {
+                highScore = doc.data().score || 0;
+            } else {
+                highScore = 0;
             }
-        });
+        } catch (error) {
+            console.error("Error loading highscore:", error);
+            highScore = 0;
+        }
+        highScoreText.innerHTML = highScore;
+        resetGame();
+        draw();
     } else {
-        currentUser = null;
-        if (loginScreen) loginScreen.style.display = "flex";
-        if (gameContainer) gameContainer.style.display = "none";
-        if (menuScreen) menuScreen.style.display = "none";
+        loginScreen.classList.remove('hidden'); 
     }
 });
 
-// গুগল লগইন বাটনে ক্লিক ইভেন্ট
-if (googleLoginBtn) {
-    googleLoginBtn.addEventListener("click", () => {
-        auth.signInWithPopup(provider).catch((error) => {
-            console.error("Login Failed:", error);
-            alert("লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
-        });
+document.getElementById('google-login-btn').addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(error => {
+        alert("লগইন ব্যর্থ হয়েছে: " + error.message);
     });
+});
+
+function updateAndSaveHighScore(newScore) {
+    if (newScore > highScore) {
+        highScore = newScore;
+        highScoreText.innerHTML = highScore;
+        
+        if (userHighScoreRef) {
+            userHighScoreRef.set({
+                score: highScore,
+                email: currentUser.email,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(error => {
+                console.error("Score save error:", error);
+            });
+        }
+    }
 }
 
 // ==========================================
-// 🛠️ গেম কন্ট্রোল এবং লজিক ফাংশন
+// 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
-function initGame() {
-    snake = [{x: 200, y: 200}];
-    dx = 0;
-    dy = 0;
-    score = 0;
-    foodEatenCount = 0;
-    currentStage = 1;
-    gameSpeed = 100;
-    obstacles = [];
-    specialFood = null;
-    specialFoodRemainingTime = 0;
-    isSnakeMoving = false;
-    
-    scoreEl.innerText = score;
-    stageEl.innerText = currentStage;
-    
-    createFood();
-    if(gameInterval) clearInterval(gameInterval);
-    gameInterval = setInterval(game, gameSpeed);
+function playSound(type) {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    if (type === 'eat') {
+        oscillator.type = 'square'; 
+        oscillator.frequency.setValueAtTime(950, audioCtx.currentTime); 
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08); 
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.08);
+    } 
+    else if (type === 'bonus_appear') {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+        oscillator.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.15);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.25);
+    }
+    else if (type === 'eat_bonus') {
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        oscillator.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.08); 
+        gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.2);
+    }
+    else if (type === 'die') {
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+        oscillator.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.35);
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.35);
+    }
 }
 
-function createFood() {
+// ======= পানির বুদবুদ ইফেক্ট =======
+let bubbles = [];
+function initBubbles() {
+    bubbles = [];
+    for(let i = 0; i < 15; i++) {
+        bubbles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height + canvas.height, 
+            radius: Math.random() * 4 + 2,
+            speed: Math.random() * 1.5 + 0.5,
+            opacity: Math.random() * 0.4 + 0.1
+        });
+    }
+}
+
+function updateLivesUI() {
+    let hearts = "";
+    for (let i = 0; i < lives; i++) {
+        hearts += "❤️ ";
+    }
+    livesContainer.innerHTML = hearts.trim();
+}
+
+function createFood(){
     let valid = false;
     while(!valid){
         food = {
-            x: Math.floor(Math.random() * (canvas.width / 20)) * 20,
-            y: Math.floor(Math.random() * (canvas.height / 20)) * 20
+            x: Math.floor(Math.random()*20)*20,
+            y: Math.floor(Math.random()*20)*20
         };
         valid = true;
         for(let part of snake){
-            if(part.x === food.x && part.y === food.y) valid = false;
+            if(part.x === food.x && part.y === food.y){
+                valid = false;
+                break;
+            }
         }
         for(let obs of obstacles){
-            if(food.x === obs.x && food.y === obs.y) valid = false;
+            if(food.x === obs.x && food.y === obs.y){
+                valid = false;
+                break;
+            }
         }
     }
 }
@@ -162,153 +211,216 @@ function createSpecialFood() {
     let valid = false;
     while(!valid){
         specialFood = {
-            x: Math.floor(Math.random() * (canvas.width / 20)) * 20,
-            y: Math.floor(Math.random() * (canvas.height / 20)) * 20
+            x: Math.floor(Math.random()*20)*20,
+            y: Math.floor(Math.random()*20)*20
         };
         valid = true;
+        
         for(let part of snake){
-            if(part.x === specialFood.x && part.y === specialFood.y) valid = false;
+            if(part.x === specialFood.x && part.y === specialFood.y){
+                valid = false;
+                break;
+            }
         }
-        if(food && specialFood.x === food.x && specialFood.y === food.y) valid = false;
+        if(food && specialFood.x === food.x && specialFood.y === food.y) {
+            valid = false;
+        }
         for(let obs of obstacles){
-            if(specialFood.x === obs.x && specialFood.y === obs.y) valid = false;
+            if(specialFood.x === obs.x && specialFood.y === obs.y){
+                valid = false;
+                break;
+            }
         }
     }
-    specialFoodRemainingTime = 5000; // বোনাস টাইমার ৫ সেকেন্ড রিসেট
-    playSound('bonus_appear');
+    specialFoodStartTime = Date.now(); 
+    clearTimeout(specialFoodTimer);
+    specialFoodTimer = null; 
+    playSound('bonus_appear'); 
 }
 
-function generateObstacles() {
+function generateObstacles(targetLevel) {
+    let rawObstacles = [];
+    let lvl = targetLevel || level;
+    
+    if (lvl === 1) {
+        rawObstacles = [];
+    } else if (lvl === 2) {
+        rawObstacles = [
+            {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
+            {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
+        ];
+    } else if (lvl === 3) {
+        rawObstacles = [
+            {x: 60, y: 60}, {x: 80, y: 60}, {x: 60, y: 80},
+            {x: 320, y: 60}, {x: 300, y: 60}, {x: 320, y: 80},
+            {x: 60, y: 320}, {x: 80, y: 320}, {x: 60, y: 300},
+            {x: 320, y: 320}, {x: 300, y: 320}, {x: 320, y: 300}
+        ];
+    } else if (lvl === 4) {
+        rawObstacles = [
+            {x: 200, y: 100}, {x: 200, y: 120}, {x: 200, y: 140},
+            {x: 200, y: 240}, {x: 200, y: 260}, {x: 200, y: 280},
+            {x: 100, y: 200}, {x: 120, y: 200}, {x: 140, y: 200},
+            {x: 240, y: 200}, {x: 260, y: 200}, {x: 280, y: 200}
+        ];
+    } else if (lvl === 5) {
+        rawObstacles = [
+            {x: 100, y: 100}, {x: 120, y: 100}, {x: 100, y: 120}, {x: 120, y: 120},
+            {x: 260, y: 100}, {x: 280, y: 100}, {x: 260, y: 120}, {x: 280, y: 120},
+            {x: 100, y: 260}, {x: 100, y: 280}, {x: 120, y: 260}, {x: 120, y: 280},
+            {x: 260, y: 260}, {x: 260, y: 280}, {x: 280, y: 260}, {x: 280, y: 280}
+        ];
+    } else {
+        let obstacleCount = Math.min(12 + (lvl - 5) * 2, 32); 
+        while (rawObstacles.length < obstacleCount) {
+            let obsX = Math.floor(Math.random() * 20) * 20;
+            let obsY = Math.floor(Math.random() * 20) * 20;
+            let exists = rawObstacles.some(obs => obs.x === obsX && obs.y === obsY);
+            if (!exists) {
+                rawObstacles.push({x: obsX, y: obsY});
+            }
+        }
+    }
+
+    obstacles = rawObstacles.filter(obs => {
+        let distanceX = Math.abs(obs.x - 200);
+        let distanceY = Math.abs(obs.y - 200);
+        return !(distanceX <= 60 && distanceY <= 60);
+    });
+}
+
+function resetGame(){
+    snake = [{x:200,y:200}]; 
     obstacles = [];
-    let count = currentStage * 3; 
-    for(let i=0; i<count; i++){
-        let valid = false;
-        let obs = {};
-        while(!valid){
-            obs = {
-                x: Math.floor(Math.random() * (canvas.width / 20)) * 20,
-                y: Math.floor(Math.random() * (canvas.height / 20)) * 20
-            };
-            valid = true;
-            if(Math.abs(obs.x - 200) < 60 && Math.abs(obs.y - 200) < 60) valid = false;
-            for(let o of obstacles){
-                if(o.x === obs.x && o.y === obs.y) valid = false;
-            }
-        }
-        obstacles.push(obs);
-    }
-}
+    
+    specialFood = null;
+    normalFoodEatenCount = 0;
+    clearTimeout(specialFoodTimer);
+    specialFoodTimer = null;
+    shouldSpawnBonusAfterTransition = false;
 
-function updateStage() {
-    currentStage++;
-    stageEl.innerText = currentStage;
-    playSound('stage_up');
-    
-    // স্পিড বাড়ানো
-    gameSpeed = Math.max(40, 100 - (currentStage * 8));
-    clearInterval(gameInterval);
-    gameInterval = setInterval(game, gameSpeed);
-    
-    generateObstacles();
+    direction = null; 
+    isSnakeMoving = false; 
+
+    score = 0;
+    scoreText.innerHTML = score;
+    level = 1;
+    lives = 3; 
+    updateLivesUI(); 
+    gameSpeed = BASE_SPEED;
+    levelText.innerHTML = level;
+    isLevelTransition = false;
+    initBubbles();
     createFood();
-    
-    // স্টেজ পার হওয়ার পর বোনাস ফুড দেওয়ার ফ্ল্যাগ
-    shouldSpawnBonusAfterTransition = true; 
 }
 
-// ==========================================
-// 🔁 মেইন গেম লুপ (Game Loop)
-// ==========================================
-function game() {
-    if (isSnakeMoving && running) {
-        if (shouldSpawnBonusAfterTransition) {
-            createSpecialFood();
-            shouldSpawnBonusAfterTransition = false;
-        }
-
-        if (specialFood) {
-            specialFoodRemainingTime -= gameSpeed; 
-            if (specialFoodRemainingTime <= 0) {
-                specialFood = null;
-                specialFoodRemainingTime = 0;
-            }
-        }
-    }
-
-    move();
-    draw();
+function resetSnakePosition() {
+    snake = [{x:200,y:200}];
+    direction = null;
+    isSnakeMoving = false;
+    specialFood = null;
+    createFood();
 }
 
-function move() {
-    if(!isSnakeMoving || !running) return;
+function handleSnakeDeath() {
+    playSound('die'); 
+    lives--; 
+    updateLivesUI(); 
 
-    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-    
-    // দেয়াল পারাপার (Wall Wrap)
-    if(head.x < 0) head.x = canvas.width - 20;
-    if(head.x >= canvas.width) head.x = 0;
-    if(head.y < 0) head.y = canvas.height - 20;
-    if(head.y >= canvas.height) head.y = 0;
-
-    // নিজের শরীর বা অবস্ট্যাকলের সাথে ধাক্কা লাগলে গেম ওভার
-    for(let part of snake){
-        if(head.x === part.x && head.y === part.y) { gameOver(); return; }
-    }
-    for(let obs of obstacles){
-        if(head.x === obs.x && head.y === obs.y) { gameOver(); return; }
-    }
-
-    snake.unshift(head);
-
-    // সাধারণ খাবার খাওয়া
-    if(head.x === food.x && head.y === food.y){
-        score += 10;
-        foodEatenCount++;
-        scoreEl.innerText = score;
-        playSound('eat');
-        createFood();
-
-        if(foodEatenCount % 5 === 0){
-            updateStage();
-        } else if(foodEatenCount % 3 === 0 && !specialFood){
-            createSpecialFood();
-        }
-    } 
-    // বোনাস ক্রিস্টাল খাওয়া
-    else if(specialFood && head.x === specialFood.x && head.y === specialFood.y){
-        score += 50;
-        scoreEl.innerText = score;
-        playSound('bonus_eat');
-        specialFood = null;
-        specialFoodRemainingTime = 0;
-    } 
-    else {
-        snake.pop();
+    if (lives > 0) {
+        resetSnakePosition();
+    } else {
+        gameOver();
     }
 }
 
-// ==========================================
-// 🎨 গ্রাফিক্স ও ক্যানভাস ড্রয়িং (Drawing)
-// ==========================================
-function draw() {
-    ctx.fillStyle = "#1e272e";
+function draw(){
+    // ======= ডার্ক ওয়াটার ব্যাকগ্রাউন্ড =======
+    let waterGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    waterGradient.addColorStop(0, "#0f2027");   
+    waterGradient.addColorStop(0.5, "#203a43"); 
+    waterGradient.addColorStop(1, "#2c5364");   
+    ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // অবস্ট্যাকল (বাঁধা) আঁকা
-    ctx.fillStyle = "#ea2027";
-    for(let obs of obstacles){
-        ctx.fillRect(obs.x + 2, obs.y + 2, 16, 16);
+    // ======= ওয়াটার গ্রিড ইফেক্ট =======
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+    ctx.lineWidth = 1;
+    for(let i = 0; i < canvas.width; i += 20) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+    }
+    for(let i = 0; i < canvas.height; i += 20) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // সাধারণ খাবার (আপেল) আঁকা
-    if(food){
-        ctx.fillStyle = "#ffdd59";
+    // ======= অ্যানিমেটেড বুদবুদ =======
+    bubbles.forEach(b => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
-        ctx.arc(food.x + 10, food.y + 10, 8, 0, Math.PI * 2);
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fill();
-    }
 
-    // 💎 বোনাস ক্রিস্টাল এবং স্টপ-ওয়াচ টাইমার আঁকা
+        b.y -= b.speed;
+        if(b.y < -10) {
+            b.y = canvas.height + 10;
+            b.x = Math.random() * canvas.width;
+        }
+    });
+
+    // ======= Obstacles =======
+    ctx.fillStyle = "#e74c3c"; 
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "#e74c3c";
+    obstacles.forEach(obs => {
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(obs.x + 1, obs.y + 1, 18, 18, 4);
+        } else {
+            ctx.rect(obs.x + 1, obs.y + 1, 18, 18);
+        }
+        ctx.fill();
+    });
+    ctx.shadowBlur = 0; 
+
+    // ======= গোল্ডফিশ ফুড =======
+    let fx = food.x + 10;
+    let fy = food.y + 10;
+
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#ff7675";
+
+    ctx.fillStyle = "#ff7675";
+    ctx.beginPath();
+    ctx.moveTo(fx + 2, fy);
+    ctx.lineTo(fx + 13, fy - 9);
+    ctx.lineTo(fx + 9, fy);
+    ctx.lineTo(fx + 13, fy + 9);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#ff7675";
+    ctx.beginPath();
+    ctx.ellipse(fx - 3, fy, 11, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fab1a0";
+    ctx.beginPath();
+    ctx.ellipse(fx - 3, fy + 2, 8, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(fx - 8, fy - 2, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.arc(fx - 8.5, fy - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = "#e74c3c";
+    ctx.beginPath();
+    ctx.ellipse(fx - 1, fy + 3, 4, 2.5, Math.PI/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0; 
+
+    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -334,158 +446,548 @@ function draw() {
         ctx.closePath();
         ctx.fill();
 
+        ctx.fillStyle = "#81ecec";
+        ctx.beginPath();
+        ctx.moveTo(sx - 6, sy - 11);
+        ctx.lineTo(sx + 6, sy - 11);
+        ctx.lineTo(sx, sy - 4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - 4);
+        ctx.lineTo(sx + 4, sy - 4);
+        ctx.lineTo(sx, sy + 6);
+        ctx.closePath();
+        ctx.fill();
+
         ctx.shadowBlur = 0; 
 
-        // ⏱️ পজ-বান্ধব ভিজ্যুয়াল টাইমার
-        let timeLeft = Math.max(0, specialFoodRemainingTime / 1000);
-        if (timeLeft > 0) {
+        let timeLeft = 5.0;
+        if (specialFoodStartTime > 0) {
+            let elapsedTime = Date.now() - specialFoodStartTime;
+            timeLeft = Math.max(0, (5000 - elapsedTime) / 1000);
+        }
+
+        if (specialFood && timeLeft > 0) {
             ctx.fillStyle = "#ffd700"; 
-            ctx.font = "bold 13px sans-serif";
+            ctx.font = "bold 14px sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText(`⏱️ Bonus: ${timeLeft.toFixed(1)}s`, canvas.width / 2, canvas.height - 15); 
+            ctx.fillText(`⏱ Bonus: ${timeLeft.toFixed(1)}s`, canvas.width / 2, canvas.height - 15); 
         }
     }
 
-    // সাপ আঁকা (Neon Green Style)
-    snake.forEach((part, index) => {
-        ctx.fillStyle = index === 0 ? "#0be881" : "#05c46b";
-        ctx.fillRect(part.x + 1, part.y + 1, 18, 18);
-    });
-}
+    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
+    ctx.textAlign = "left"; 
+    ctx.strokeStyle = "#14b8a6"; 
+    ctx.lineWidth = 18;           
+    ctx.lineCap = "round";        
+    ctx.lineJoin = "round";       
 
-// ==========================================
-// 🛑 গেম ওভার ও লিডারবোর্ড সাবমিশন
-// ==========================================
-function gameOver() {
-    running = false;
-    isSnakeMoving = false;
-    clearInterval(gameInterval);
-    playSound('gameover');
+    for (let i = 1; i < snake.length; i++) {
+        let prev = snake[i - 1];
+        let curr = snake[i];
 
-    if(score > highScore) {
-        highScore = score;
-        localStorage.setItem("highScore", highScore);
-        highScoreEl.innerText = highScore;
-
-        if (currentUser) {
-            db.collection("users").doc(currentUser.uid).set({
-                highScore: highScore
-            }, { merge: true });
+        if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
+            continue; 
         }
+
+        ctx.beginPath();
+        ctx.moveTo(prev.x + 10, prev.y + 10);
+        ctx.lineTo(curr.x + 10, curr.y + 10);
+        ctx.stroke();
     }
 
-    // নাম চাওয়া এবং লিডারবোর্ডে যুক্ত করা
-    setTimeout(() => {
-        let playerName = currentUser ? currentUser.displayName : prompt(`Game Over! আপনার স্কোর: ${score}\nগ্লোবাল লিডারবোর্ডের জন্য আপনার নাম লিখুন:`);
-        if (playerName && playerName.trim() !== "") {
-            db.collection("leaderboard").add({
-                name: playerName.trim(),
-                score: score,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                alert("আপনার স্কোর লিডারবোর্ডে সফলভাবে যুক্ত হয়েছে! 🏆");
-                showLeaderboard(); 
-            }).catch((error) => {
-                console.error("Error writing document: ", error);
-            });
-        }
-    }, 300);
+    let head = snake[0];
+    let centerX = head.x + 10;
+    let centerY = head.y + 10;
 
-    if (startBtn) {
-        startBtn.innerText = "Play Again";
-        startBtn.style.background = "#0be881";
-        startBtn.style.color = "#fff";
-    }
-}
+    let isNearNormalFood = Math.abs(head.x - food.x) <= 40 && Math.abs(head.y - food.y) <= 40;
+    let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
+    let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
 
-// ==========================================
-// 🏆 গ্লোবাল লিডারবোর্ড ভিউ ফাংশন
-// ==========================================
-function showLeaderboard() {
-    db.collection("leaderboard")
-      .orderBy("score", "desc")
-      .limit(10)
-      .get()
-      .then((querySnapshot) => {
-          let listHtml = `<div style="text-align:left; font-family:sans-serif; max-height:300px; overflow-y:auto;">
-                            <h3 style="text-align:center; color:#0be881; margin-top:0;">🏆 Top 10 High Scores</h3>
-                            <ol style="padding-left:20px; color:#fff;">`;
-          querySnapshot.forEach((doc) => {
-              let data = doc.data();
-              listHtml += `<li style="margin-bottom:8px; border-bottom:1px solid #444; padding-bottom:4px;">
-                            <strong>${data.name}</strong>: <span style="color:#ffdd59;">${data.score} Pts</span>
-                          </li>`;
-          });
-          listHtml += `</ol></div>`;
+    ctx.fillStyle = "#14b8a6"; 
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+    ctx.fill();
 
-          // লিডারবোর্ড দেখানোর জন্য পপআপ তৈরি
-          let modal = document.createElement("div");
-          modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:9999;";
-          modal.innerHTML = `
-            <div style="background:#2c3e50; padding:25px; border-radius:12px; width:320px; text-align:center; box-shadow:0 0 20px rgba(11,232,129,0.3); border:2px solid #0be881;">
-                ${listHtml}
-                <button id="closeLeaderboardBtn" style="background:#ea2027; color:#fff; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-weight:bold; margin-top:10px;">Close</button>
-            </div>
-          `;
-          document.body.appendChild(modal);
-          document.getElementById("closeLeaderboardBtn").onclick = () => modal.remove();
-      });
-}
-
-// ==========================================
-// ⌨️ Controls & Event Listeners
-// ==========================================
-window.addEventListener("keydown", e => {
-    if(!running) return;
+    ctx.save();
+    ctx.translate(centerX, centerY);
     
-    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD"].includes(e.code)){
-        isSnakeMoving = true;
+    if (direction === "UP") ctx.rotate(-Math.PI / 2);
+    else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
+    else if (direction === "LEFT") ctx.rotate(Math.PI);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
+    ctx.arc(0, 6, 4.5, 0, Math.PI * 2);  
+    ctx.fill();
+
+    ctx.fillStyle = "#0f766e"; 
+    ctx.beginPath();
+    ctx.arc(1, -6, 2, 0, Math.PI * 2);
+    ctx.arc(1, 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (isEatingTime) {
+        ctx.fillStyle = "#115e59"; 
+        ctx.beginPath();
+        ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); 
+        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   
+        ctx.fill();
+    } else {
+        ctx.strokeStyle = "#115e59";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
+        ctx.stroke();
     }
 
-    switch(e.code) {
-        case "ArrowUp":
-        case "KeyW":
-            if(dy === 0) { dx = 0; dy = -20; }
-            break;
-        case "ArrowDown":
-        case "KeyS":
-            if(dy === 0) { dx = 0; dy = 20; }
-            break;
-        case "ArrowLeft":
-        case "KeyA":
-            if(dx === 0) { dx = -20; dy = 0; }
-            break;
-        case "ArrowRight":
-        case "KeyD":
-            if(dx === 0) { dx = 20; dy = 0; }
-            break;
+    ctx.restore(); 
+
+    if (running && !isSnakeMoving && !isLevelTransition) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("🎮 Swipe or Slide on Screen to Move", canvas.width / 2, canvas.height / 2 - 10);
+    }
+
+    if (isLevelTransition) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#00bfff";
+        ctx.font = "bold 32px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`LEVEL ${nextLevelToStart}`, canvas.width / 2, canvas.height / 2 - 40);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "16px sans-serif";
+        ctx.fillText(nextLevelToStart > 5 ? "⚠️ Random Obstacles Active!" : "Get ready for new challenges!", canvas.width / 2, canvas.height / 2);
+
+        ctx.fillStyle = "#2ecc71";
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(canvas.width / 2 - 80, canvas.height / 2 + 40, 160, 45, 10);
+        } else {
+            ctx.rect(canvas.width / 2 - 80, canvas.height / 2 + 40, 160, 45);
+        }
+        ctx.fill();
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText("Click to Start", canvas.width / 2, canvas.height / 2 + 68);
+    }
+}
+
+canvas.addEventListener("click", function(e) {
+    if (isLevelTransition) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (x >= canvas.width / 2 - 80 && x <= canvas.width / 2 + 80 && y >= canvas.height / 2 + 40 && y <= canvas.height / 2 + 85) {
+            startNextLevel();
+        }
     }
 });
 
-// স্টার্ট / পজ বাটনের কাজ
-if (startBtn) {
-    startBtn.addEventListener("click", () => {
-        if(!running) {
-            running = true;
-            startBtn.innerText = "Pause";
-            startBtn.style.background = "#ffdd59";
-            startBtn.style.color = "#000";
-            if(snake.length === 1 && dx === 0 && dy === 0) {
-                initGame();
-            } else {
-                gameInterval = setInterval(game, gameSpeed);
-            }
-        } else {
-            running = false;
-            clearInterval(gameInterval);
-            startBtn.innerText = "Resume";
-            startBtn.style.background = "#0be881";
-            startBtn.style.color = "#fff";
-        }
-    });
+function startNextLevel() {
+    level = nextLevelToStart;
+    levelText.innerHTML = level;
+    
+    snake = [{x: 200, y: 200}]; 
+    direction = null; 
+    isSnakeMoving = false; 
+    
+    let speedFactor = Math.min((level - 1) * 15, 180);
+    gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
+    
+    generateObstacles(level); 
+    createFood(); 
+    isLevelTransition = false;
+    
+    clearInterval(gameLoop);
+    gameLoop = setInterval(game, gameSpeed);
 }
 
-// গ্লোবাল লিডারবোর্ড বাটন ক্লিকের কাজ (নিরাপদ চেক সহ)
-if (leaderboardBtn) {
-    leaderboardBtn.addEventListener("click", showLeaderboard);
+function triggerLevelTransition(targetLevel) {
+    isLevelTransition = true;
+    nextLevelToStart = targetLevel;
+    clearInterval(gameLoop); 
+    
+    clearTimeout(specialFoodTimer);
+    specialFoodTimer = null;
+    
+    generateObstacles(targetLevel); 
+    draw(); 
 }
+
+function move(){
+    if (isLevelTransition) return; 
+    if (!isSnakeMoving) return; 
+
+    let head = {...snake[0]};
+
+    if(direction=="RIGHT") head.x+=20;
+    if(direction=="LEFT") head.x-=20;
+    if(direction=="UP") head.y-=20;
+    if(direction=="DOWN") head.y+=20;
+
+    if(head.x < 0) head.x = 380;
+    if(head.x >= 400) head.x = 0;
+    if(head.y < 0) head.y = 380;
+    if(head.y >= 400) head.y = 0;
+
+    for(let obs of obstacles){
+        if(head.x === obs.x && head.y === obs.y){
+            handleSnakeDeath();
+            return;
+        }
+    }
+
+    snake.unshift(head);
+
+    for(let i = 1; i < snake.length; i++){
+        if(head.x === snake[i].x && head.y === snake[i].y){
+            handleSnakeDeath();
+            return;
+        }
+    }
+
+    if(head.x == food.x && head.y == food.y){
+        playSound('eat'); 
+        score++;
+        normalFoodEatenCount++; 
+        scoreText.innerHTML = score;
+
+        let targetLevel = Math.floor((score - 1) / 20) + 1;
+        if(score === 0) targetLevel = 1; 
+
+        if(normalFoodEatenCount % 5 === 0){
+            if(targetLevel > level) {
+                shouldSpawnBonusAfterTransition = true; 
+            } else {
+                createSpecialFood();
+            }
+        }
+
+        if(targetLevel > level){
+            triggerLevelTransition(targetLevel);
+        } else {
+            let scoreInCurrentLevel = (score - 1) % 20; 
+            let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
+            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60); 
+            
+            clearInterval(gameLoop);
+            gameLoop = setInterval(game, gameSpeed);
+        }
+
+        updateAndSaveHighScore(score);
+
+        if (!isLevelTransition) createFood();
+    } 
+    else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
+        playSound('eat_bonus'); 
+        score += 3; 
+        scoreText.innerHTML = score;
+        
+        clearTimeout(specialFoodTimer); 
+        specialFood = null; 
+
+        let targetLevel = Math.floor((score - 1) / 20) + 1;
+        if(targetLevel > level){
+            triggerLevelTransition(targetLevel);
+        } else {
+            let scoreInCurrentLevel = (score - 1) % 20;
+            let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
+            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60);
+            clearInterval(gameLoop);
+            gameLoop = setInterval(game, gameSpeed);
+        }
+
+        updateAndSaveHighScore(score);
+    } 
+    else {
+        snake.pop();
+    }
+}
+
+function game(){
+    if (isSnakeMoving) {
+        if (shouldSpawnBonusAfterTransition) {
+            createSpecialFood();
+            shouldSpawnBonusAfterTransition = false;
+        }
+
+        if (specialFood && specialFoodStartTime > 0) {
+            let elapsedTime = Date.now() - specialFoodStartTime;
+            if (elapsedTime >= 5000) {
+                specialFood = null;
+                specialFoodStartTime = 0;
+            }
+        }
+    } else {
+        if (specialFood && specialFoodStartTime > 0) {
+            specialFoodStartTime = Date.now();
+        }
+    }
+
+    move();
+    draw();
+}
+
+function startGame(){
+    clearInterval(gameLoop);
+    resetGame();
+    menu.classList.add("hidden");
+    
+    if(pauseBtn) {
+        pauseBtn.style.display = "block";
+        pauseBtn.innerHTML = "⏸ Pause";
+    }
+    
+    running = true;
+    gameLoop = setInterval(game, gameSpeed);
+}
+
+function pauseGame(){
+    if (isLevelTransition) return; 
+    if (!isSnakeMoving) return; 
+    
+    if(running){
+        clearInterval(gameLoop);
+        gameLoop = null;
+        running = false;
+        pauseBtn.innerHTML = "▶ Resume";
+    }else{
+        gameLoop = setInterval(game, gameSpeed);
+        running = true;
+        pauseBtn.innerHTML = "⏸ Pause";
+    }
+}
+
+function restartGame(){
+    clearInterval(gameLoop);
+    resetGame();
+    draw();
+    
+    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 SKY SNAKE`;
+    }
+    if(playBtn) {
+        playBtn.innerHTML = "▶ Play";
+    }
+    if(menuRestartBtn) {
+        menuRestartBtn.style.display = "block";
+    }
+    if(cancelBtn) {
+        cancelBtn.style.display = "none";
+    }
+    if(pauseBtn) {
+        pauseBtn.style.display = "none";
+    }
+
+    menu.classList.remove("hidden");
+    running = false;
+}
+
+function gameOver(){
+    clearInterval(gameLoop);
+    running = false;
+    isSnakeMoving = false;
+    clearTimeout(specialFoodTimer); 
+    specialFoodTimer = null;
+    shouldSpawnBonusAfterTransition = false;
+
+    menu.classList.remove("hidden");
+
+    const menuTitle = menu.querySelector("h1") || menu.querySelector("h2") || menu.querySelector(".title");
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 Game Over!<br><span style="font-size: 20px; color: #fff;">Your Score: ${score}</span>`;
+    }
+
+    if(playBtn) {
+        playBtn.innerHTML = "▶ Play Again";
+    }
+    if(menuRestartBtn) {
+        menuRestartBtn.style.display = "none";
+    }
+    if(cancelBtn) {
+        cancelBtn.style.display = "block";
+    }
+    if(pauseBtn) {
+        pauseBtn.style.display = "none";
+    }
+}
+
+
+// =========================================================================
+// 🔄 টাচ কন্ট্রোল (মোবাইলের জন্য)
+// =========================================================================
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener("touchstart", function(e){
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+canvas.addEventListener("touchmove", function(e){
+    if (isLevelTransition) return; 
+
+    let currentX = e.touches[0].clientX;
+    let currentY = e.touches[0].clientY;
+
+    let dx = currentX - touchStartX;
+    let dy = currentY - touchStartY;
+
+    const threshold = 15; 
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > threshold) {
+            if (!isSnakeMoving) isSnakeMoving = true; 
+
+            if (dx > 0 && direction !== "LEFT") direction = "RIGHT";
+            else if (dx < 0 && direction !== "RIGHT") direction = "LEFT";
+            
+            touchStartX = currentX;
+            touchStartY = currentY;
+        }
+    } else {
+        if (Math.abs(dy) > threshold) {
+            if (!isSnakeMoving) isSnakeMoving = true;
+
+            if (dy > 0 && direction !== "UP") direction = "DOWN";
+            else if (dy < 0 && direction !== "DOWN") direction = "UP";
+            
+            touchStartX = currentX;
+            touchStartY = currentY;
+        }
+    }
+}, { passive: true });
+
+canvas.addEventListener("touchend", function(){
+    touchStartX = 0;
+    touchStartY = 0;
+}, { passive: true });
+
+
+// =========================================================================
+// ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য)
+// =========================================================================
+document.addEventListener("keydown", function(e){
+    if (isLevelTransition) {
+        if(e.key === "Enter") {
+            startNextLevel();
+        }
+        return;
+    }
+
+    if(e.key === " " || e.key === "Spacebar"){
+        e.preventDefault(); 
+        if(menu.classList.contains("hidden") && isSnakeMoving){ 
+            pauseGame();
+        }
+        return;
+    }
+
+    if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)){
+        if (!isSnakeMoving) {
+            isSnakeMoving = true;
+        }
+    }
+
+    if(e.key=="ArrowUp" && direction!="DOWN") direction="UP";
+    if(e.key=="ArrowDown" && direction!="UP") direction="DOWN";
+    if(e.key=="ArrowLeft" && direction!="RIGHT") direction="LEFT";
+    if(e.key=="ArrowRight" && direction!="LEFT") direction="RIGHT";
+});
+
+// =========================================================================
+// 🏆 গ্লোবাল লিডারবোর্ড লজিক (গুগল সাইন-ইন সহ)
+// =========================================================================
+const leaderboardModal = document.getElementById("leaderboard-modal");
+const leaderboardBtn = document.getElementById("leaderboardBtn");
+const closeLeaderboard = document.getElementById("closeLeaderboard");
+const leaderboardList = document.getElementById("leaderboard-list");
+
+// লিডারবোর্ড বাটন ক্লিক ইভেন্ট
+leaderboardBtn.onclick = async function() {
+    leaderboardModal.classList.remove("hidden");
+    leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
+
+    try {
+        // Firestore থেকে বড় স্কোরগুলো আগে নিয়ে আসা (সর্বোচ্চ ১০টি)
+        const snapshot = await db.collection("highscores")
+            .orderBy("score", "desc")
+            .limit(10)
+            .get();
+
+        leaderboardList.innerHTML = ""; // আগের লোডিং লেখা মুছে ফেলা
+        
+        if (snapshot.empty) {
+            leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>এখনো কোনো হাই স্কোর নেই!</p>";
+            return;
+        }
+
+        let rank = 1;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const userName = data.email ? data.email.split('@')[0] : "Player";
+            const userScore = data.score || 0;
+
+            let rankClass = `rank-${rank}`;
+            let medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+
+            const item = document.createElement("div");
+            item.className = "leaderboard-item";
+            item.innerHTML = `
+                <span class="${rank <= 3 ? rankClass : ''}">${medal} ${userName}</span>
+                <span style="font-weight: bold; color: #22c55e;">${userScore}</span>
+            `;
+            leaderboardList.appendChild(item);
+            rank++;
+        });
+
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
+    }
+};
+
+// 🔙 "Back" বাটনে ক্লিক করলে লিডারবোর্ড বন্ধ হবে
+closeLeaderboard.onclick = function() {
+    leaderboardModal.classList.add("hidden");
+};
+
+// লিডারবোর্ডের বাইরে ফাঁকা জায়গায় ক্লিক করলেও যাতে বন্ধ হয়
+window.onclick = function(event) {
+    if (event.target == leaderboardModal) {
+        leaderboardModal.classList.add("hidden");
+    }
+};
+
+playBtn.onclick = startGame;
+pauseBtn.onclick = pauseGame;
+menuRestartBtn.onclick = restartGame;
+
+if(cancelBtn) {
+    cancelBtn.onclick = function() {
+        restartGame(); 
+    };
+}
+
+initBubbles();
