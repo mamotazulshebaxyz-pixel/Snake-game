@@ -5,6 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sky Snake Game</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 🏠 আলাদা হোমপেজের জন্য কাস্টম সিএসএস (আপনার দেওয়া স্ক্রিনশটের হুবহু ডিজাইন) */
+        #custom-homepage {
+            width: 400px;
+            height: 480px; 
+            background-color: #1a252f; /* স্ক্রিনশটের ডার্ক ব্লু-ইশ ব্যাকগ্রাউন্ড */
+            border: 3px solid #2ecc71; /* সি-গ্রিন বর্ডার */
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            font-family: sans-serif;
+            margin: 20px auto;
+            box-sizing: border-box;
+        }
+
+        /* মাঝের ডার্ক বক্সটি */
+        .home-box {
+            background-color: #0f172a; /* গাঢ় কালো বক্স */
+            padding: 35px 25px;
+            border-radius: 20px;
+            width: 280px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.2);
+            box-sizing: border-box;
+        }
+
+        /* টাইটেল */
+        .home-title {
+            color: #2ecc71;
+            font-size: 26px;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* বাটন স্টাইল */
+        .home-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .home-btn:last-child {
+            margin-bottom: 0;
+        }
+
+        /* সবুজ বাটন (Play & Leaderboard) */
+        .btn-green {
+            background-color: #27ae60;
+        }
+        .btn-green:hover {
+            background-color: #2ecc71;
+        }
+
+        /* নিচের ইনস্ট্রাকশন টেক্সট */
+        .home-footer {
+            position: absolute;
+            bottom: 20px;
+            color: #94a3b8;
+            font-size: 13px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* অন/অফ করার জন্য হেল্পার ক্লাস */
+        .hidden-layout {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -23,8 +108,21 @@
         </button>
     </div>
 
-    <!-- মূল গেম কন্টেইনার -->
-    <div class="game">
+    <!-- 🏠 আলাদা নতুন হোমপেজ স্ক্রিন (শুরুতে শুধু এটি দেখাবে) -->
+    <div id="custom-homepage">
+        <div class="home-box">
+            <!-- জাভাস্ক্রিপ্ট দিয়ে টাইটেল ও বাটন টেক্সট গেম ওভারের সময় পরিবর্তন করা যাবে -->
+            <h2 id="home-title-text" class="home-title">🐍 SKY SNAKE</h2>
+            <button id="playBtn" class="home-btn btn-green">▶ Play</button>
+            <button id="leaderboardBtn" class="home-btn btn-green">🏆 Global Leaderboard</button>
+            <button id="restart" class="home-btn btn-green" style="display: none;">🔄 Restart</button>
+            <button id="cancelBtn" class="home-btn" style="display: none; background: #7f8c8d;">❌ Quit</button>
+        </div>
+        <div class="home-footer">🎮 Desktop: Use Arrows | Mobile: Drag on Screen</div>
+    </div>
+
+    <!-- 🎮 মূল গেম কন্টেইনার (শুরুতে hidden-layout ক্লাস দিয়ে লুকানো থাকবে) -->
+    <div id="main-game-layout" class="game hidden-layout">
         <!-- হেডার সেকশন -->
         <div class="game-header">
             <h1>🐍 SKY SNAKE</h1>
@@ -43,21 +141,10 @@
         <!-- পজ এবং মিউট বাটন সেকশন -->
         <div class="controls">
             <button id="pauseBtn">⏸ Pause</button>
-            <!-- 🔊 গেম স্ক্রিনের জন্য মিউট বাটন -->
             <button id="muteBtn" style="background: #3498db; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px;">🔊 Sound: On</button>
         </div>
 
         <div class="info">🎮 Desktop: Use Arrows | Mobile: Drag on Screen</div>
-    </div>
-
-    <!-- স্টার্ট / গেম ওভার মেনু -->
-    <div id="menu">
-        <h2 class="title">🐍 SKY SNAKE</h2>
-        <button id="playBtn">▶ Play</button>
-        <!-- 🏆 প্লে বাটনের নিচে সরাসরি গ্লোবাল লিডারবোর্ড বাটন -->
-        <button id="leaderboardBtn">🏆 Global Leaderboard</button>
-        <button id="restart" style="display: none;">🔄 Restart</button>
-        <button id="cancelBtn" style="display: none;">❌ Quit</button>
     </div>
 
     <!-- 🏆 গ্লোবাল লিডারবোর্ড মডাল পপ-আপ -->
@@ -67,7 +154,6 @@
             <div id="leaderboard-list">
                 <p>লোডিং...</p>
             </div>
-            <!-- 🔙 ফিরে যাওয়ার জন্য নিচে প্রফেশনাল ব্যাক বাটন -->
             <button id="closeLeaderboard" style="width: 100%; margin-top: 20px; background: #ef4444;">🔙 Back</button>
         </div>
     </div>
