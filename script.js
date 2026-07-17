@@ -1,10 +1,10 @@
 const firebaseConfig = {
-    apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
-    authDomain: "sky-snake-game.firebaseapp.com",
-    projectId: "sky-snake-game",
-    storageBucket: "sky-snake-game.firebasestorage.app",
-    messagingSenderId: "67376821080",
-    appId: "1:67376821080:web:4ee4ce3ac09386bc36e3ed"
+  apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
+  authDomain: "sky-snake-game.firebaseapp.com",
+  projectId: "sky-snake-game",
+  storageBucket: "sky-snake-game.firebasestorage.app",
+  messagingSenderId: "673768221080",
+  appId: "1:673768221080:web:4ee4ce3ac09386bc36e3ed"
 };
 
 // ফায়ারবেস ইনিশিয়ালাইজ করা
