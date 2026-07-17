@@ -40,7 +40,7 @@ let food;
 let direction;
 let score;
 let level = 1;
-let highScore = 0; // ডাটাবেজ থেকে লোড হবে
+let highScore = 0; 
 let lives = 3; 
 
 let gameLoop;
@@ -63,12 +63,10 @@ auth.onAuthStateChanged(async (user) => {
     const loginScreen = document.getElementById('login-screen');
     if (user) {
         currentUser = user;
-        loginScreen.classList.add('hidden'); // লগইন সফল হলে ওভারলে লুকানো হবে
+        loginScreen.classList.add('hidden'); 
         
-        // ফায়ারস্টোর ডাটাবেজ রেফারেন্স
         userHighScoreRef = db.collection('highscores').doc(user.uid);
         
-        // ডাটাবেজ থেকে ইউজারের সেভ করা সর্বোচ্চ স্কোর লোড করা
         try {
             const doc = await userHighScoreRef.get();
             if (doc.exists) {
@@ -84,11 +82,10 @@ auth.onAuthStateChanged(async (user) => {
         resetGame();
         draw();
     } else {
-        loginScreen.classList.remove('hidden'); // লগইন না থাকলে লগইন স্ক্রিন দেখাবে
+        loginScreen.classList.remove('hidden'); 
     }
 });
 
-// গুগলে লগইন করার হ্যান্ডলার
 document.getElementById('google-login-btn').addEventListener('click', () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).catch(error => {
@@ -96,7 +93,6 @@ document.getElementById('google-login-btn').addEventListener('click', () => {
     });
 });
 
-// ডাটাবেজে নতুন হাই স্কোর সেভ করার হ্যান্ডলার
 function updateAndSaveHighScore(newScore) {
     if (newScore > highScore) {
         highScore = newScore;
@@ -177,7 +173,6 @@ function initBubbles() {
     }
 }
 
-// হার্ট এর সংখ্যা UI-তে দেখানোর ফাংশন
 function updateLivesUI() {
     let hearts = "";
     for (let i = 0; i < lives; i++) {
@@ -369,7 +364,7 @@ function draw(){
         }
     });
 
-    // ======= Obstacles (বাঁধা) =======
+    // ======= Obstacles =======
     ctx.fillStyle = "#e74c3c"; 
     ctx.shadowBlur = 8;
     ctx.shadowColor = "#e74c3c";
@@ -696,7 +691,6 @@ function move(){
             gameLoop = setInterval(game, gameSpeed);
         }
 
-        // 💡 ফায়ারবেস ডাটাবেজে স্কোর সেভ করার কল
         updateAndSaveHighScore(score);
 
         if (!isLevelTransition) createFood();
@@ -720,7 +714,6 @@ function move(){
             gameLoop = setInterval(game, gameSpeed);
         }
 
-        // 💡 ফায়ারবেস ডাটাবেজে স্কোর সেভ করার কল
         updateAndSaveHighScore(score);
     } 
     else {
@@ -919,6 +912,70 @@ document.addEventListener("keydown", function(e){
     if(e.key=="ArrowLeft" && direction!="RIGHT") direction="LEFT";
     if(e.key=="ArrowRight" && direction!="LEFT") direction="RIGHT";
 });
+
+// =========================================================================
+// 🏆 গ্লোবাল লিডারবোর্ড লজিক (গুগল সাইন-ইন সহ)
+// =========================================================================
+const leaderboardModal = document.getElementById("leaderboard-modal");
+const leaderboardBtn = document.getElementById("leaderboardBtn");
+const closeLeaderboard = document.getElementById("closeLeaderboard");
+const leaderboardList = document.getElementById("leaderboard-list");
+
+// লিডারবোর্ড বাটন ক্লিক ইভেন্ট
+leaderboardBtn.onclick = async function() {
+    leaderboardModal.classList.remove("hidden");
+    leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>লোডিং...</p>";
+
+    try {
+        // Firestore থেকে বড় স্কোরগুলো আগে নিয়ে আসা (সর্বোচ্চ ১০টি)
+        const snapshot = await db.collection("highscores")
+            .orderBy("score", "desc")
+            .limit(10)
+            .get();
+
+        leaderboardList.innerHTML = ""; // আগের লোডিং লেখা মুছে ফেলা
+        
+        if (snapshot.empty) {
+            leaderboardList.innerHTML = "<p style='padding: 15px; color: #94a3b8;'>এখনো কোনো হাই স্কোর নেই!</p>";
+            return;
+        }
+
+        let rank = 1;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const userName = data.email ? data.email.split('@')[0] : "Player";
+            const userScore = data.score || 0;
+
+            let rankClass = `rank-${rank}`;
+            let medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+
+            const item = document.createElement("div");
+            item.className = "leaderboard-item";
+            item.innerHTML = `
+                <span class="${rank <= 3 ? rankClass : ''}">${medal} ${userName}</span>
+                <span style="font-weight: bold; color: #22c55e;">${userScore}</span>
+            `;
+            leaderboardList.appendChild(item);
+            rank++;
+        });
+
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        leaderboardList.innerHTML = "<p style='padding: 15px; color: #ef4444;'>স্কোর লোড করতে সমস্যা হয়েছে!</p>";
+    }
+};
+
+// 🔙 "Back" বাটনে ক্লিক করলে লিডারবোর্ড বন্ধ হবে
+closeLeaderboard.onclick = function() {
+    leaderboardModal.classList.add("hidden");
+};
+
+// লিডারবোর্ডের বাইরে ফাঁকা জায়গায় ক্লিক করলেও যাতে বন্ধ হয়
+window.onclick = function(event) {
+    if (event.target == leaderboardModal) {
+        leaderboardModal.classList.add("hidden");
+    }
+};
 
 playBtn.onclick = startGame;
 pauseBtn.onclick = pauseGame;
