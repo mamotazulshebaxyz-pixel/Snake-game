@@ -11,14 +11,13 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /* 📱 মোবাইল স্ক্রোল এবং বাউন্স ইফেক্ট বন্ধ রাখার জন্য */
     overflow: hidden;
     touch-action: none; 
     -webkit-user-select: none;
     user-select: none;
 }
 
-/* 💡 ফায়ারবেস লগইন ওভারলে ডিজাইন */
+/* ফায়ারবেস লগইন ওভারলে ডিজাইন */
 .auth-container {
     position: fixed;
     top: 0;
@@ -74,7 +73,7 @@ body {
     transform: translateY(-2px);
 }
 
-/* 📱 গেম কন্টেইনার: মোবাইলে পুরো স্ক্রিন জুড়ে দেখাবে */
+/* গেম কন্টেইনার */
 .game {
     background: #1e293b;
     padding: 25px;
@@ -82,14 +81,13 @@ body {
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,.4);
     width: 95vw; 
-    max-width: 450px; /* পিসিতে যেন সুন্দর দেখায় */
+    max-width: 450px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-/* হেডার কন্টেইনার */
 .game-header {
     display: flex;
     justify-content: space-between;
@@ -104,7 +102,6 @@ h1 {
     font-size: 28px;
 }
 
-/* হার্ট সাইজ এবং ডিজাইন */
 #lives-container {
     font-size: 22px;
     letter-spacing: 3px;
@@ -123,7 +120,7 @@ h1 {
     max-width: 400px;
 }
 
-/* ক্যানভাস সাইজিং */
+/* ক্যানভাস */
 canvas {
     background: #111827;
     border: 4px solid #22c55e;
@@ -160,7 +157,7 @@ button:hover {
     font-size: 14px;
 }
 
-/* মেইন স্টার্ট মেনু ডিজাইন */
+/* মেইন স্টার্ট মেনু */
 #menu {
     position: fixed;
     top: 50%;
@@ -192,7 +189,7 @@ button:hover {
     display: none !important;
 }
 
-/* পজ বাটন ডিজাইন */
+/* পজ বাটন */
 .controls {
     margin-top: 20px;
     display: flex;
@@ -221,7 +218,70 @@ button:hover {
     transform: translateY(-2px);
 }
 
-/* 📱 মোবাইল স্ক্রিনের অ্যাডজাস্টমেন্ট */
+/* 🏆 লিডারবোর্ড পপ-আপ (মডাল) স্টাইল */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 350px;
+    border: 2px solid #22c55e;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    color: white;
+    text-align: center;
+}
+
+.modal-content h2 {
+    color: #22c55e;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+#leaderboard-list {
+    margin-top: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+    background: #111827;
+    border-radius: 8px;
+    padding: 5px 10px;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid #1f2937;
+    font-size: 16px;
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+/* র‍্যাংক হাইলাইট কালার */
+.rank-1 { color: #ffd700; font-weight: bold; }
+.rank-2 { color: #c0c0c0; font-weight: bold; }
+.rank-3 { color: #cd7f32; font-weight: bold; }
+
+#closeLeaderboard:hover {
+    background: #dc2626 !important;
+}
+
+/* মোবাইল অ্যাডজাস্টমেন্ট */
 @media (max-width: 480px) {
     .game {
         padding: 15px;
