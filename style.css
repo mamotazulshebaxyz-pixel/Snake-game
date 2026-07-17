@@ -74,13 +74,13 @@ body {
 }
 
 /* ==========================================================
-   🏠 নতুন কাস্টম হোমপেজ ডিজাইন (আপনার স্ক্রিনশটের হুবহু কপি)
+   🏠 নতুন কাস্টম হোমপেজ ডিজাইন (স্ক্রিনশটের হুবহু কপি)
    ========================================================== */
 #custom-homepage {
     width: 95vw;
     max-width: 410px; /* ক্যানভাস সাইজের সাথে সামঞ্জস্যপূর্ণ */
     height: 480px; 
-    background-color: #1e293b; /* স্ক্রিনশটের ভেতরের ক্যানভাস ব্যাকগ্রাউন্ড */
+    background-color: #1e293b; /* ক্যানভাস ব্যাকগ্রাউন্ড */
     border: 4px solid #22c55e; /* চারপাশের ব্রাইট গ্রিন বর্ডার */
     border-radius: 15px;
     box-shadow: 0 0 25px rgba(34, 197, 94, 0.25); /* নিয়ন গ্রিন গ্লো */
@@ -95,7 +95,7 @@ body {
 
 /* মাঝের ডার্ক সেন্ট্রাল বক্সটি */
 .home-box {
-    background-color: #111827; /* গাঢ় ব্ল্যাকিশ-ব্লু বক্স */
+    background-color: #111827; /* গাঢ় ব্ল্যাকিশ-ব্লু বক্স */
     padding: 35px 25px;
     border-radius: 18px;
     width: 280px;
@@ -250,19 +250,23 @@ button:hover {
     display: none !important;
 }
 
-/* পজ এবং সাউন্ড বাটন সেকশন */
+/* 🔥 পজ, সাউন্ড এবং ব্যাক বাটনের জন্য আপডেটেড কন্ট্রোল সেকশন */
 .controls {
     margin-top: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 10px; /* বাটনগুলোর মাঝখানের ফাঁকা জায়গা */
+    flex-wrap: wrap; /* মোবাইল স্ক্রিনে বাটন নিচে নামানোর জন্য */
     width: 100%;
+    max-width: 400px;
 }
 
 .controls button {
-    width: 180px;
-    height: 45px;
-    font-size: 17px;
+    flex: 1; /* ৩টি বাটন সমান জায়গা ভাগ করে নিবে */
+    min-width: 110px; /* স্ক্রিন ছোট হলে বাটন যেন একদম ছোট না হয়ে যায় */
+    height: 42px;
+    font-size: 15px;
     font-weight: bold;
     background: #22c55e;
     color: white;
@@ -271,7 +275,7 @@ button:hover {
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     transition: 0.2s ease;
-    margin: 0;
+    margin: 0; /* গ্লোবাল মার্জিন ওভাররাইড */
 }
 
 .controls button:hover {
@@ -366,8 +370,11 @@ button:hover {
     }
     .controls {
         margin-top: 10px;
+        gap: 8px;
     }
     .controls button {
-        width: 100%;
+        min-width: 100px;
+        font-size: 13px;
+        height: 38px;
     }
 }
