@@ -1,3 +1,26 @@
+// ==========================================
+// 🔥 FIREBASE কনফিগারেশন সেটআপ
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
+  authDomain: "sky-snake-game.firebaseapp.com",
+  projectId: "sky-snake-game",
+  storageBucket: "sky-snake-game.firebasestorage.app",
+  messagingSenderId: "673768221080",
+  appId: "1:673768221080:web:4ee4ce3ac09386bc36e3ed"
+};
+
+// Firebase ইনিশিয়াল করা
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+let userHighScoreRef = null;
+
+// ==========================================
+// 🎮 গেমের গ্লোবাল ভেরিয়েবলসমূহ
+// ==========================================
 const menu = document.getElementById("menu");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -5,7 +28,7 @@ const ctx = canvas.getContext("2d");
 const scoreText = document.getElementById("score");
 const highScoreText = document.getElementById("highScore");
 const levelText = document.getElementById("level");
-const livesContainer = document.getElementById("lives-container"); // 💡 হার্ট দেখানোর জন্য DOM সিলেক্টর
+const livesContainer = document.getElementById("lives-container");
 
 const playBtn = document.getElementById("playBtn");
 const cancelBtn = document.getElementById("cancelBtn");
@@ -20,7 +43,7 @@ let food;
 let direction;
 let score;
 let level = 1;
-let highScore = localStorage.getItem("snakeHighScore") || 0;
+let highScore = 0; // ডাটাবেজ থেকে লোড হবে
 let lives = 3; 
 
 let gameLoop;
@@ -35,6 +58,64 @@ let isSnakeMoving = false;
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 let shouldSpawnBonusAfterTransition = false; 
+
+// ==========================================
+// 🔒 ফায়ারবেস অথেনটিকেশন ও ডাটাবেজ হ্যান্ডলার
+// ==========================================
+auth.onAuthStateChanged(async (user) => {
+    const loginScreen = document.getElementById('login-screen');
+    if (user) {
+        currentUser = user;
+        loginScreen.classList.add('hidden'); // লগইন সফল হলে ওভারলে লুকানো হবে
+        
+        // ফায়ারস্টোর ডাটাবেজ রেফারেন্স
+        userHighScoreRef = db.collection('highscores').doc(user.uid);
+        
+        // ডাটাবেজ থেকে ইউজারের সেভ করা সর্বোচ্চ স্কোর লোড করা
+        try {
+            const doc = await userHighScoreRef.get();
+            if (doc.exists) {
+                highScore = doc.data().score || 0;
+            } else {
+                highScore = 0;
+            }
+        } catch (error) {
+            console.error("Error loading highscore:", error);
+            highScore = 0;
+        }
+        highScoreText.innerHTML = highScore;
+        resetGame();
+        draw();
+    } else {
+        loginScreen.classList.remove('hidden'); // লগইন না থাকলে লগইন স্ক্রিন দেখাবে
+    }
+});
+
+// গুগলে লগইন করার হ্যান্ডলার
+document.getElementById('google-login-btn').addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(error => {
+        alert("লগইন ব্যর্থ হয়েছে: " + error.message);
+    });
+});
+
+// ডাটাবেজে নতুন হাই স্কোর সেভ করার হ্যান্ডলার
+function updateAndSaveHighScore(newScore) {
+    if (newScore > highScore) {
+        highScore = newScore;
+        highScoreText.innerHTML = highScore;
+        
+        if (userHighScoreRef) {
+            userHighScoreRef.set({
+                score: highScore,
+                email: currentUser.email,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(error => {
+                console.error("Score save error:", error);
+            });
+        }
+    }
+}
 
 // ==========================================
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম
@@ -99,9 +180,7 @@ function initBubbles() {
     }
 }
 
-highScoreText.innerHTML = highScore;
-
-// 💡 হার্ট এর সংখ্যা UI-তে দেখানোর ফাংশন
+// হার্ট এর সংখ্যা UI-তে দেখানোর ফাংশন
 function updateLivesUI() {
     let hearts = "";
     for (let i = 0; i < lives; i++) {
@@ -232,7 +311,7 @@ function resetGame(){
     scoreText.innerHTML = score;
     level = 1;
     lives = 3; 
-    updateLivesUI(); // 💡 লাইভ ৩টি করে দেওয়া হলো
+    updateLivesUI(); 
     gameSpeed = BASE_SPEED;
     levelText.innerHTML = level;
     isLevelTransition = false;
@@ -251,7 +330,7 @@ function resetSnakePosition() {
 function handleSnakeDeath() {
     playSound('die'); 
     lives--; 
-    updateLivesUI(); // 💡 একটি হার্ট কমে যাবে
+    updateLivesUI(); 
 
     if (lives > 0) {
         resetSnakePosition();
@@ -620,11 +699,9 @@ function move(){
             gameLoop = setInterval(game, gameSpeed);
         }
 
-        if(score > highScore){
-            highScore = score;
-            localStorage.setItem("snakeHighScore", highScore);
-            highScoreText.innerHTML = highScore;
-        }
+        // 💡 ফায়ারবেস ডাটাবেজে স্কোর সেভ করার কল
+        updateAndSaveHighScore(score);
+
         if (!isLevelTransition) createFood();
     } 
     else if(specialFood && head.x == specialFood.x && head.y == specialFood.y){
@@ -646,11 +723,8 @@ function move(){
             gameLoop = setInterval(game, gameSpeed);
         }
 
-        if(score > highScore){
-            highScore = score;
-            localStorage.setItem("snakeHighScore", highScore);
-            highScoreText.innerHTML = highScore;
-        }
+        // 💡 ফায়ারবেস ডাটাবেজে স্কোর সেভ করার কল
+        updateAndSaveHighScore(score);
     } 
     else {
         snake.pop();
@@ -768,7 +842,7 @@ function gameOver(){
 
 
 // =========================================================================
-// 🔄 কন্টিনিউয়াস ড্র্যাগ অ্যান্ড টাচ কন্ট্রোল (মোবাইলের জন্য)
+// 🔄 টাচ কন্ট্রোল (মোবাইলের জন্য)
 // =========================================================================
 let touchStartX = 0;
 let touchStartY = 0;
@@ -859,5 +933,4 @@ if(cancelBtn) {
     };
 }
 
-resetGame();
-draw();
+initBubbles();
