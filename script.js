@@ -2,7 +2,7 @@
 const eatSound = new Audio("eat.mp3"); 
 const bonusSound = new Audio("bonus.mp3");
 
-// 🔥 FIREBASE CONFIGURATION SETUP
+// 🔥 FIREBASE কনফিগারেশন সেটআপ
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
@@ -130,7 +130,7 @@ function updateAndSaveHighScore(newScore) {
             userHighScoreRef.set({
                 score: highScore,
                 email: currentUser.email,
-                name: currentUser.displayName || currentUser.email.split('@')[0], 
+                name: currentUser.displayName || currentUser.email.split('@')[0], // 👈 এই লাইনটি যোগ করুন
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true }).catch(error => {
                 console.error("Score save error:", error);
@@ -348,7 +348,7 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= বাবলস ড্রয়িং =======
+    // ======= বাবলস ড্রয়িং =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -473,26 +473,80 @@ function draw(){
         }
     }
 
-    // ======= 🕹️ ওল্ড-স্কুল নোকিয়া পিক্সেল আর্ট সাপ (মোটা মাথা সহ) =======
-    snake.forEach((part, index) => {
-        if (index === 0) {
-            // 🐍 সাপের মাথা: বডির (২০x২০) চেয়ে ২ পিক্সেল বাড়িয়ে ২৪x২৪ করা হলো
-            ctx.fillStyle = "#091318"; 
-            ctx.fillRect(part.x - 2, part.y - 2, 24, 24);
-            
-            // মাথার ভেতরের ফাঁপা পিক্সেল ডট (এটিও একটু বড় হবে)
-            ctx.fillStyle = "#203a43"; 
-            ctx.fillRect(part.x + 6, part.y + 6, 8, 8);
-        } else {
-            // 🧱 সাপের বডি: আগের মতোই সাধারণ ২০x২০ সাইজ
-            ctx.fillStyle = "#091318"; 
-            ctx.fillRect(part.x, part.y, 20, 20);
-            
-            // বডির ভেতরের ফাঁপা পিক্সেল ডট
-            ctx.fillStyle = "#203a43"; 
-            ctx.fillRect(part.x + 6, part.y + 6, 8, 8);
+    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
+    ctx.textAlign = "left"; 
+    ctx.strokeStyle = "#14b8a6"; 
+    ctx.lineWidth = 18;           
+    ctx.lineCap = "round";        
+    ctx.lineJoin = "round";       
+
+    for (let i = 1; i < snake.length; i++) {
+        let prev = snake[i - 1];
+        let curr = snake[i];
+
+        if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
+            continue; 
         }
-    });
+
+        ctx.beginPath();
+        ctx.moveTo(prev.x + 10, prev.y + 10);
+        ctx.lineTo(curr.x + 10, curr.y + 10);
+        ctx.stroke();
+    }
+
+    let head = snake[0];
+    let centerX = head.x + 10;
+    let centerY = head.y + 10;
+
+    let isNearNormalFood = Math.abs(head.x - food.x) <= 40 && Math.abs(head.y - food.y) <= 40;
+    let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
+    let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
+
+    ctx.fillStyle = "#14b8a6"; 
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    
+    if (direction === "UP") ctx.rotate(-Math.PI / 2);
+    else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
+    else if (direction === "LEFT") ctx.rotate(Math.PI);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
+    ctx.arc(0, 6, 4.5, 0, Math.PI * 2);  
+    ctx.fill();
+
+    ctx.fillStyle = "#0f766e"; 
+    ctx.beginPath();
+    ctx.arc(1, -6, 2, 0, Math.PI * 2);
+    ctx.arc(1, 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (isEatingTime) {
+        ctx.fillStyle = "#115e59"; 
+        ctx.beginPath();
+        ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); 
+        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   
+        ctx.fill();
+    } else {
+        ctx.strokeStyle = "#115e59";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
+        ctx.stroke();
+    }
+
+    ctx.restore(); 
 
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
@@ -722,7 +776,7 @@ function pauseGame(){
         pauseBtn.innerHTML = "⏸ Pause";
     }
     
-    // 💡 বাটন থেকে ফোকাস সরিয়ে নেওয়া হচ্ছে যেন কিবোর্ডের স্পেসবার ঠিকমতো কাজ করে
+    // 💡 বাটন থেকে ফোকাস সরিয়ে নেওয়া হচ্ছে যেন কিবোর্ডের স্পেসবার ঠিকমতো কাজ করে
     if(pauseBtn) {
         pauseBtn.blur();
     }
@@ -744,7 +798,7 @@ function restartGame(){
     resetGame();
     draw();
     
-   // 💡 এখানে আপনার ৮০২ নম্বর লাইনের পারফেক্ট কোডসহ পুরো ফাংশনটি দেওয়া হলো
+   // 💡 এখানে আপনার ৮০২ নম্বর লাইনের পারফেক্ট কোডসহ পুরো ফাংশনটি দেওয়া হলো
     const menuTitle = document.getElementById("homeTitleText");
     if(menuTitle) {
         menuTitle.innerHTML = `🐍 NOKIA SNAKE 2.0`;
@@ -908,13 +962,16 @@ leaderboardBtn.onclick = async function() {
         let rank = 1;
         snapshot.forEach(doc => {
             const data = doc.data();
-            let userName = data.name || (data.email ? data.email.split('@')[0] : "Player");
+            // প্রথমে ডেটাবেজের 'name' ফিল্ড চেক করবে, না থাকলে মেইলের প্রথম অংশ নেবে
+let userName = data.name || (data.email ? data.email.split('@')[0] : "Player");
 
-            if (userName.includes('.')) {
-                userName = userName.split('.')[0];
-            }
+// যদি নামে কোনো ডট (.) থাকে (যেমন: mamotazul.sheba.xyz), তবে ডটের আগের অংশটুকু শুধু দেখাবে
+if (userName.includes('.')) {
+    userName = userName.split('.')[0];
+}
 
-            userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+// প্রথম অক্ষর বড় হাতের (Capitalize) করার জন্য (ঐচ্ছিক, দেখতে সুন্দর লাগবে)
+userName = userName.charAt(0).toUpperCase() + userName.slice(1);
             const userScore = data.score || 0;
 
             let rankClass = `rank-${rank}`;
