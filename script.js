@@ -774,6 +774,11 @@ function pauseGame(){
         running = true;
         pauseBtn.innerHTML = "⏸ Pause";
     }
+    
+    // 💡 বাটন থেকে ফোকাস সরিয়ে নেওয়া হচ্ছে যেন কিবোর্ডের স্পেসবার ঠিকমতো কাজ করে
+    if(pauseBtn) {
+        pauseBtn.blur();
+    }
 }
 
 function toggleMute() {
@@ -906,9 +911,11 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
+    // 💡 স্পেসবার বা স্পেস ক্লিকের লজিক (রানিং অথবা পজ উভয় ক্ষেত্রেই কাজ করবে)
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        if(running && isSnakeMoving){ 
+        // সাপ যদি চলা শুরু করে থাকে, তবে স্পেসবার চাপলেই পজ বা রিজুম হবে
+        if(isSnakeMoving){ 
             pauseGame();
         }
         return;
