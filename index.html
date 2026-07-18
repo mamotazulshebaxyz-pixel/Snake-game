@@ -23,8 +23,23 @@
         </button>
     </div>
 
-    <!-- মূল গেম কন্টেইনার -->
-    <div class="game">
+    <!-- 🏠 নতুন কাস্টম হোমপেজ / মেনু স্ক্রিন (আপনার CSS এর সাথে পারফেক্টলি ম্যাচড) -->
+    <div id="custom-homepage">
+        <div class="home-box">
+            <h2 id="homeTitleText" class="home-title">🐍 SKY SNAKE</h2>
+            
+            <button id="playBtn" class="home-btn btn-green">▶ Play</button>
+            <button id="leaderboardBtn" class="home-btn btn-green" style="background-color: #15803d;">🏆 Global Leaderboard</button>
+            
+            <!-- গেম ওভারের পর দেখানোর জন্য রিস্টার্ট ও কুইট বাটন -->
+            <button id="restart" class="home-btn btn-green" style="display: none; background-color: #3b82f6;">🔄 Restart</button>
+            <button id="cancelBtn" class="home-btn btn-green" style="display: none; background-color: #ef4444;">❌ Quit</button>
+        </div>
+        <div class="home-footer">Developed for Sheba.xyz</div>
+    </div>
+
+    <!-- 🎮 মূল গেম কন্টেইনার (গেম চালু হলে এটি দেখাবে, হোমপেজ লুকিয়ে যাবে) -->
+    <div id="game-container" class="game hidden-layout">
         <!-- হেডার সেকশন -->
         <div class="game-header">
             <h1>🐍 SKY SNAKE</h1>
@@ -43,21 +58,11 @@
         <!-- পজ এবং মিউট বাটন সেকশন -->
         <div class="controls">
             <button id="pauseBtn">⏸ Pause</button>
-            <!-- 🔊 গেম স্ক্রিনের জন্য মিউট বাটন -->
-            <button id="muteBtn" style="background: #3498db; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px;">🔊 Sound: On</button>
+            <!-- 🔊 গেম স্ক্রিনের জন্য সুন্দর মিউট বাটন -->
+            <button id="muteBtn" style="background: #3498db; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">🔊 Sound: On</button>
         </div>
 
         <div class="info">🎮 Desktop: Use Arrows | Mobile: Drag on Screen</div>
-    </div>
-
-    <!-- স্টার্ট / গেম ওভার মেনু -->
-    <div id="menu">
-        <h2 class="title">🐍 SKY SNAKE</h2>
-        <button id="playBtn">▶ Play</button>
-        <!-- 🏆 প্লে বাটনের নিচে সরাসরি গ্লোবাল লিডারবোর্ড বাটন -->
-        <button id="leaderboardBtn">🏆 Global Leaderboard</button>
-        <button id="restart" style="display: none;">🔄 Restart</button>
-        <button id="cancelBtn" style="display: none;">❌ Quit</button>
     </div>
 
     <!-- 🏆 গ্লোবাল লিডারবোর্ড মডাল পপ-আপ -->
