@@ -2,7 +2,7 @@
 const eatSound = new Audio("eat.mp3"); 
 const bonusSound = new Audio("bonus.mp3");
 
-// 🔥 FIREBASE কনফিগারেশন সেটআপ
+// 🔥 FIREBASE - কনফিগারেশন সেটআপ
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyBYacL6qWCicCFKCOCJ7ajHZc36NoW94sM",
@@ -130,7 +130,7 @@ function updateAndSaveHighScore(newScore) {
             userHighScoreRef.set({
                 score: highScore,
                 email: currentUser.email,
-                name: currentUser.displayName || currentUser.email.split('@')[0], // 👈 এই লাইনটি যোগ করুন
+                name: currentUser.displayName || currentUser.email.split('@')[0],
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true }).catch(error => {
                 console.error("Score save error:", error);
@@ -348,7 +348,7 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= বাবলস ড্রয়িং =======
+    // ======= বাবলস ড্রয়িং =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -415,7 +415,7 @@ function draw(){
 
     ctx.shadowBlur = 0; 
 
-    // ======= ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
+    // ======= 💎 ক্রিস্টাল ডায়মন্ড (বোনাস ফুড) =======
     if (specialFood) {
         let sx = specialFood.x + 10;
         let sy = specialFood.y + 10;
@@ -473,81 +473,32 @@ function draw(){
         }
     }
 
-    // ======= প্রিমিয়াম সি-গ্রিন সাপ =======
-    ctx.textAlign = "left"; 
-    ctx.strokeStyle = "#14b8a6"; 
-    ctx.lineWidth = 18;           
-    ctx.lineCap = "round";        
-    ctx.lineJoin = "round";       
+    // ======= 🕹️ সাপের বডি ডিজাইন (আপনার আগের কোড অনুযায়ী অক্ষত) =======
+    snake.forEach((part, index) => {
+        if (index === 0) {
+            ctx.fillStyle = "#091318";
+            ctx.beginPath();
+            ctx.arc(part.x + 10, part.y + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
 
-    for (let i = 1; i < snake.length; i++) {
-        let prev = snake[i - 1];
-        let curr = snake[i];
+            ctx.fillStyle = "#203a43";
+            ctx.beginPath();
+            ctx.arc(part.x + 10, part.y + 10, 5, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = "#091318";
+            ctx.beginPath();
+            ctx.arc(part.x + 10, part.y + 10, 9, 0, Math.PI * 2);
+            ctx.fill();
 
-        if (Math.abs(prev.x - curr.x) > 20 || Math.abs(prev.y - curr.y) > 20) {
-            continue; 
+            ctx.fillStyle = "#203a43";
+            ctx.beginPath();
+            ctx.arc(part.x + 10, part.y + 10, 4, 0, Math.PI * 2);
+            ctx.fill();
         }
+    });
 
-        ctx.beginPath();
-        ctx.moveTo(prev.x + 10, prev.y + 10);
-        ctx.lineTo(curr.x + 10, curr.y + 10);
-        ctx.stroke();
-    }
-
-    let head = snake[0];
-    let centerX = head.x + 10;
-    let centerY = head.y + 10;
-
-    let isNearNormalFood = Math.abs(head.x - food.x) <= 40 && Math.abs(head.y - food.y) <= 40;
-    let isNearSpecialFood = specialFood && Math.abs(head.x - specialFood.x) <= 40 && Math.abs(head.y - specialFood.y) <= 40;
-    let isEatingTime = (isNearNormalFood || isNearSpecialFood) && isSnakeMoving;
-
-    ctx.fillStyle = "#14b8a6"; 
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    
-    if (direction === "UP") ctx.rotate(-Math.PI / 2);
-    else if (direction === "DOWN") ctx.rotate(Math.PI / 2);
-    else if (direction === "LEFT") ctx.rotate(Math.PI);
-
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(0, -6, 4.5, 0, Math.PI * 2); 
-    ctx.arc(0, 6, 4.5, 0, Math.PI * 2);  
-    ctx.fill();
-
-    ctx.fillStyle = "#0f766e"; 
-    ctx.beginPath();
-    ctx.arc(1, -6, 2, 0, Math.PI * 2);
-    ctx.arc(1, 6, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (isEatingTime) {
-        ctx.fillStyle = "#115e59"; 
-        ctx.beginPath();
-        ctx.arc(4, 0, 8, -Math.PI/2, Math.PI/2, false);
-        ctx.fill();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.moveTo(7, -4); ctx.lineTo(9, -3); ctx.lineTo(6, -2); 
-        ctx.moveTo(7, 4); ctx.lineTo(9, 3); ctx.lineTo(6, 2);   
-        ctx.fill();
-    } else {
-        ctx.strokeStyle = "#115e59";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.arc(2, 0, 4, -Math.PI/3, Math.PI/3, false);
-        ctx.stroke();
-    }
-
-    ctx.restore(); 
-
+    // ======= লেভেল ট্রানজিশন এবং অন্যান্য স্ক্রিন মেসেজ =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -573,7 +524,6 @@ function draw(){
 
         ctx.fillStyle = "#2ecc71";
         ctx.beginPath();
-        ctx.if = function(cond) { return cond; };
         if (ctx.roundRect) {
             ctx.roundRect(canvas.width / 2 - 80, canvas.height / 2 + 40, 160, 45, 10);
         } else {
@@ -748,7 +698,6 @@ function startGame(){
     clearInterval(gameLoop);
     resetGame();
     
-    // হোমপেজ স্কিন হাইড করে গেম স্কিন ভিজিবল করা
     if(homepage) homepage.classList.add("hidden");
     if(gameContainer) gameContainer.classList.remove("hidden-layout");
     
@@ -776,7 +725,6 @@ function pauseGame(){
         pauseBtn.innerHTML = "⏸ Pause";
     }
     
-    // 💡 বাটন থেকে ফোকাস সরিয়ে নেওয়া হচ্ছে যেন কিবোর্ডের স্পেসবার ঠিকমতো কাজ করে
     if(pauseBtn) {
         pauseBtn.blur();
     }
@@ -798,7 +746,6 @@ function restartGame(){
     resetGame();
     draw();
     
-   // 💡 এখানে আপনার ৮০২ নম্বর লাইনের পারফেক্ট কোডসহ পুরো ফাংশনটি দেওয়া হলো
     const menuTitle = document.getElementById("homeTitleText");
     if(menuTitle) {
         menuTitle.innerHTML = `🐍 NOKIA SNAKE 2.0`;
@@ -852,9 +799,9 @@ function gameOver(){
     }
 }
 
-// =========================================================================
+// ==========================================
 // 🔄 টাচ কন্ট্রোল (মোবাইলের জন্য)
-// =========================================================================
+// ==========================================
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -903,9 +850,9 @@ canvas.addEventListener("touchend", function(){
 }, { passive: true });
 
 
-// =========================================================================
+// ==========================================
 // ⌨️ কি-বোর্ড কন্ট্রোল (পিসির জন্য)
-// =========================================================================
+// ==========================================
 document.addEventListener("keydown", function(e){
     if (isLevelTransition) {
         if(e.key === "Enter") {
@@ -935,7 +882,7 @@ document.addEventListener("keydown", function(e){
 });
 
 // =========================================================================
-// 🏆 গ্লোবাল লিডারবোর্ড লজিক
+// 🏆 গ্লোবাল লিডারবোর্ড লজিক (২টি শব্দ এবং ডট ফিক্সড)
 // =========================================================================
 const leaderboardModal = document.getElementById("leaderboard-modal");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
@@ -963,15 +910,21 @@ leaderboardBtn.onclick = async function() {
         snapshot.forEach(doc => {
             const data = doc.data();
             // প্রথমে ডেটাবেজের 'name' ফিল্ড চেক করবে, না থাকলে মেইলের প্রথম অংশ নেবে
-let userName = data.name || (data.email ? data.email.split('@')[0] : "Player");
+            let userName = data.name || (data.email ? data.email.split('@')[0] : "Player");
 
-// যদি নামে কোনো ডট (.) থাকে (যেমন: mamotazul.sheba.xyz), তবে ডটের আগের অংশটুকু শুধু দেখাবে
-if (userName.includes('.')) {
-    userName = userName.split('.')[0];
-}
+            // নামটিকে স্পেস দিয়ে ভেঙে প্রথম ২টি শব্দ নেওয়া হচ্ছে (ডট থাকলেও কাটবে না)
+            let nameWords = userName.trim().split(/\s+/);
+            if (nameWords.length > 2) {
+                userName = nameWords.slice(0, 2).join(' ');
+            }
 
-// প্রথম অক্ষর বড় হাতের (Capitalize) করার জন্য (ঐচ্ছিক, দেখতে সুন্দর লাগবে)
-userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+            // প্রতিটি শব্দের প্রথম অক্ষর বড় হাতের (Capitalize) করার নিখুঁত লজিক
+            userName = userName
+                .toLowerCase()
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+
             const userScore = data.score || 0;
 
             let rankClass = `rank-${rank}`;
