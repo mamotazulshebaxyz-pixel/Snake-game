@@ -962,7 +962,16 @@ leaderboardBtn.onclick = async function() {
         let rank = 1;
         snapshot.forEach(doc => {
             const data = doc.data();
-            const userName = data.email ? data.email.split('@')[0] : "Player";
+            // প্রথমে ডেটাবেজের 'name' ফিল্ড চেক করবে, না থাকলে মেইলের প্রথম অংশ নেবে
+let userName = data.name || (data.email ? data.email.split('@')[0] : "Player");
+
+// যদি নামে কোনো ডট (.) থাকে (যেমন: mamotazul.sheba.xyz), তবে ডটের আগের অংশটুকু শুধু দেখাবে
+if (userName.includes('.')) {
+    userName = userName.split('.')[0];
+}
+
+// প্রথম অক্ষর বড় হাতের (Capitalize) করার জন্য (ঐচ্ছিক, দেখতে সুন্দর লাগবে)
+userName = userName.charAt(0).toUpperCase() + userName.slice(1);
             const userScore = data.score || 0;
 
             let rankClass = `rank-${rank}`;
