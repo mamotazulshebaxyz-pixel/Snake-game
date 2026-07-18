@@ -798,9 +798,9 @@ function restartGame(){
     draw();
     
     const menuTitle = document.getElementById("homeTitleText");
-    if(menuTitle) {
-        menuTitle.innerHTML = `🐍 SKY SNAKE`;
-    }
+if(menuTitle) {
+    menuTitle.innerHTML = `🐍 NOKIA SNAKE 2.0; // এখানে আপনার পছন্দের নাম দিন
+}
     if(playBtn) {
         playBtn.innerHTML = "▶ Play";
     }
