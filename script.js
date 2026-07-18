@@ -1,4 +1,7 @@
-// ==========================================
+// 🎵 আপনার আপলোড করা কাস্টম অডিও ফাইলের নাম
+const eatSound = new Audio("eat.mp3"); 
+const bonusSound = new Audio("bonus.mp3");
+
 // 🔥 FIREBASE কনফিগারেশন সেটআপ (আপনার আসল কোড দিয়ে আপডেট করুন)
 // ==========================================
 const firebaseConfig = {
@@ -121,43 +124,26 @@ function updateAndSaveHighScore(newScore) {
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
-    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না
+    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না (আগের কমান্ড ঠিক রাখা হলো)
     if (isMuted) return;
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
     if (type === 'eat') {
-        oscillator.type = 'square'; 
-        oscillator.frequency.setValueAtTime(950, audioCtx.currentTime); 
-        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08); 
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.08);
+        eatSound.currentTime = 0; // প্রতিবার খাবার খাওয়ার সাথে সাথে শুরু থেকে বাজবে
+        eatSound.play().catch(e => console.log("Audio play blocked:", e));
     } 
-    else if (type === 'bonus_appear') {
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
-        oscillator.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.15);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.25);
-    }
-    else if (type === 'eat_bonus') {
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        oscillator.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.08); 
-        gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.2);
+    else if (type === 'bonus_appear' || type === 'eat_bonus') {
+        bonusSound.currentTime = 0; // বোনাস খাবার এলে বা খেলে বাজবে
+        bonusSound.play().catch(e => console.log("Audio play blocked:", e));
     }
     else if (type === 'die') {
+        // 💥 সাপ মারা যাওয়ার সাউন্ড (আপনার আগের কোডের অরিজিনাল কমান্ড ঠিক রাখা হলো)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
         oscillator.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.35);
@@ -167,7 +153,6 @@ function playSound(type) {
         oscillator.stop(audioCtx.currentTime + 0.35);
     }
 }
-
 // ======= পানির বুদবুদ ইফেক্ট =======
 let bubbles = [];
 function initBubbles() {
