@@ -125,11 +125,12 @@ function updateAndSaveHighScore(newScore) {
     if (newScore > highScore) {
         highScore = newScore;
         highScoreText.innerHTML = highScore;
-        
+
         if (userHighScoreRef) {
             userHighScoreRef.set({
                 score: highScore,
                 email: currentUser.email,
+                name: currentUser.displayName || currentUser.email.split('@')[0], // 👈 এই লাইনটি যোগ করুন
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true }).catch(error => {
                 console.error("Score save error:", error);
