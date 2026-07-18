@@ -124,19 +124,21 @@ function updateAndSaveHighScore(newScore) {
 // 🎵 WEB AUDIO API সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
-    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না (আগের কমান্ড ঠিক রাখা হলো)
+    // 🔇 গেম মিউট করা থাকলে সাউন্ড প্লে হবে না
     if (isMuted) return;
 
-    if (type === 'eat') {
-        eatSound.currentTime = 0; // প্রতিবার খাবার খাওয়ার সাথে সাথে শুরু থেকে বাজবে
+    // 🍎 নরমাল খাবার খেলে অথবা বোনাস খাবার খেলেও একই সাউন্ড হবে
+    if (type === 'eat' || type === 'eat_bonus') {
+        eatSound.currentTime = 0; // প্রতিবার শুরু থেকে বাজার জন্য
         eatSound.play().catch(e => console.log("Audio play blocked:", e));
     } 
-    else if (type === 'bonus_appear' || type === 'eat_bonus') {
-        bonusSound.currentTime = 0; // বোনাস খাবার এলে বা খেলে বাজবে
+    // ✨ শুধুমাত্র বোনাস খাবার যখন স্ক্রিনে আসবে, তখন এই আলাদা সাউন্ড হবে
+    else if (type === 'bonus_appear') {
+        bonusSound.currentTime = 0;
         bonusSound.play().catch(e => console.log("Audio play blocked:", e));
     }
     else if (type === 'die') {
-        // 💥 সাপ মারা যাওয়ার সাউন্ড (আপনার আগের কোডের অরিজিনাল কমান্ড ঠিক রাখা হলো)
+        // 💥 সাপ মারা যাওয়ার সাউন্ড (আগের মতোই থাকবে)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
@@ -151,20 +153,6 @@ function playSound(type) {
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.35);
-    }
-}
-// ======= পানির বুদবুদ ইফেক্ট =======
-let bubbles = [];
-function initBubbles() {
-    bubbles = [];
-    for(let i = 0; i < 15; i++) {
-        bubbles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height + canvas.height, 
-            radius: Math.random() * 4 + 2,
-            speed: Math.random() * 1.5 + 0.5,
-            opacity: Math.random() * 0.4 + 0.1
-        });
     }
 }
 
