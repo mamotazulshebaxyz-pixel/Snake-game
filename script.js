@@ -797,10 +797,12 @@ function restartGame(){
     resetGame();
     draw();
     
+   // 💡 এখানে আপনার ৮০২ নম্বর লাইনের পারফেক্ট কোডসহ পুরো ফাংশনটি দেওয়া হলো
     const menuTitle = document.getElementById("homeTitleText");
-if(menuTitle) {
-    menuTitle.innerHTML = `🐍 NOKIA SNAKE 2.0'; // এখানে আপনার পছন্দের নাম দিন
-}
+    if(menuTitle) {
+        menuTitle.innerHTML = `🐍 NOKIA SNAKE 2.0`;
+    }
+    
     if(playBtn) {
         playBtn.innerHTML = "▶ Play";
     }
@@ -911,10 +913,8 @@ document.addEventListener("keydown", function(e){
         return;
     }
 
-    // 💡 স্পেসবার বা স্পেস ক্লিকের লজিক (রানিং অথবা পজ উভয় ক্ষেত্রেই কাজ করবে)
     if(e.key === " " || e.key === "Spacebar"){
         e.preventDefault(); 
-        // সাপ যদি চলা শুরু করে থাকে, তবে স্পেসবার চাপলেই পজ বা রিজুম হবে
         if(isSnakeMoving){ 
             pauseGame();
         }
@@ -1007,5 +1007,4 @@ if(cancelBtn) {
     };
 }
 
-// শুরুতে বাবলস জেনারেট করা
 initBubbles();
