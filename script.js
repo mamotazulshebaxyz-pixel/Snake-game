@@ -473,13 +473,13 @@ function draw(){
     }
 
     // =========================================================================
-    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (বড় চোখ এবং পারফেক্ট মুখ হাঁ করার লজিক)
+    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (পারফেক্ট মুখ হাঁ করার ফিক্সড লজিক)
     // =========================================================================
     let head = snake[0];
     let hx = head.x + 10;
     let hy = head.y + 10;
 
-    // খাবার ও মাথার কেন্দ্রের পারফেক্ট দূরত্বের পরিমাপ
+    // খাবার ও মাথার কেন্দ্রের দূরত্বের পরিমাপ
     let distToNormal = Math.hypot((food.x + 10) - hx, (food.y + 10) - hy);
     let distToSpecial = specialFood ? Math.hypot((specialFood.x + 10) - hx, (specialFood.y + 10) - hy) : 999;
     let closeToFood = (distToNormal < 60 || distToSpecial < 60);
@@ -492,40 +492,48 @@ function draw(){
         ctx.fill();
     }
 
-    // ২. সাপের মাথা ও ডিরেকশন অনুযায়ী মুখ হাঁ করার লজিক
-    ctx.fillStyle = "#0984e3"; // মেইন গাঢ় নীল মাথা
+    // ২. মেইন মাথা আঁকা (পুরো গোল সুন্দর নীল মাথা)
+    ctx.fillStyle = "#0984e3"; 
     ctx.beginPath();
-
-    if (closeToFood && direction) {
-        let startAngle = 0;
-        let endAngle = Math.PI * 2;
-
-        // সাপ যেদিকে মুখ করে আছে, ঠিক সেদিকে মুখ হাঁ করবে (Pac-man স্টাইল)
-        if (direction === "RIGHT") { startAngle = 0.2 * Math.PI; endAngle = 1.8 * Math.PI; }
-        else if (direction === "LEFT") { startAngle = 1.2 * Math.PI; endAngle = 0.8 * Math.PI; }
-        else if (direction === "UP") { startAngle = 1.7 * Math.PI; endAngle = 1.3 * Math.PI; }
-        else if (direction === "DOWN") { startAngle = 0.7 * Math.PI; endAngle = 0.3 * Math.PI; }
-        
-        ctx.moveTo(hx, hy); 
-        ctx.arc(hx, hy, 11, startAngle, endAngle, false);
-        ctx.lineTo(hx, hy);
-    } else {
-        ctx.arc(hx, hy, 11, 0, Math.PI * 2);
-    }
+    ctx.arc(hx, hy, 11, 0, Math.PI * 2);
     ctx.fill();
 
-    // ৩. বড় বড় দুটো চোখ (Slither.io স্টাইল - মাথার সাইডে বসবে)
+    // ৩. খাবার কাছে আসলে ডিরেকশন অনুযায়ী মুখ হাঁ করা (লাল ভেতরের অংশ স্পষ্ট দেখাবে)
+    if (closeToFood && direction) {
+        ctx.fillStyle = "#ff4d4d"; // মুখের ভেতরের অংশ
+        ctx.beginPath();
+        ctx.moveTo(hx, hy); 
+
+        // সাপ যেদিকে মুখ করে আছে, ঠিক সেদিকে ত্রিভুজ আকারে মুখ হাঁ করবে
+        if (direction === "RIGHT") {
+            ctx.lineTo(hx + 12, hy - 7);
+            ctx.lineTo(hx + 12, hy + 7);
+        } else if (direction === "LEFT") {
+            ctx.lineTo(hx - 12, hy - 7);
+            ctx.lineTo(hx - 12, hy + 7);
+        } else if (direction === "UP") {
+            ctx.lineTo(hx - 7, hy - 12);
+            ctx.lineTo(hx + 7, hy - 12);
+        } else if (direction === "DOWN") {
+            ctx.lineTo(hx - 7, hy + 12);
+            ctx.lineTo(hx + 7, hy + 12);
+        }
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // ৪. বড় বড় দুটো চোখ (Slither.io স্টাইল - মাথার ডিরেকশন অনুযায়ী দুপাশে বসবে)
     let eyeOffsetX1 = 0, eyeOffsetY1 = 0;
     let eyeOffsetX2 = 0, eyeOffsetY2 = 0;
 
     if (direction === "RIGHT" || !direction) {
-        eyeOffsetX1 = 2; eyeOffsetY1 = -5; eyeOffsetX2 = 2; eyeOffsetY2 = 5;
+        eyeOffsetX1 = 1; eyeOffsetY1 = -5; eyeOffsetX2 = 1; eyeOffsetY2 = 5;
     } else if (direction === "LEFT") {
-        eyeOffsetX1 = -2; eyeOffsetY1 = -5; eyeOffsetX2 = -2; eyeOffsetY2 = 5;
+        eyeOffsetX1 = -1; eyeOffsetY1 = -5; eyeOffsetX2 = -1; eyeOffsetY2 = 5;
     } else if (direction === "UP") {
-        eyeOffsetX1 = -5; eyeOffsetY1 = -2; eyeOffsetX2 = 5; eyeOffsetY2 = -2;
+        eyeOffsetX1 = -5; eyeOffsetY1 = -1; eyeOffsetX2 = 5; eyeOffsetY2 = -1;
     } else if (direction === "DOWN") {
-        eyeOffsetX1 = -5; eyeOffsetY1 = 2; eyeOffsetX2 = 5; eyeOffsetY2 = 2;
+        eyeOffsetX1 = -5; eyeOffsetY1 = 1; eyeOffsetX2 = 5; eyeOffsetY2 = 1;
     }
 
     // চোখের সাদা অংশ (বড় গোল্লা)
