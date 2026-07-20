@@ -473,18 +473,18 @@ function draw(){
     }
 
     // =========================================================================
-    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (পারফেক্ট মুখ হাঁ করার ফিক্সড লজিক)
+    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (স্মুথ ওপেন/ক্লোজড মাউথ লজিক)
     // =========================================================================
     let head = snake[0];
     let hx = head.x + 10;
     let hy = head.y + 10;
 
-    // খাবার ও মাথার কেন্দ্রের দূরত্বের পরিমাপ
+    // খাবার ও মাথার দূরত্বের পরিমাপ
     let distToNormal = Math.hypot((food.x + 10) - hx, (food.y + 10) - hy);
     let distToSpecial = specialFood ? Math.hypot((specialFood.x + 10) - hx, (specialFood.y + 10) - hy) : 999;
     let closeToFood = (distToNormal < 60 || distToSpecial < 60);
 
-    // ১. সাপের বডি আঁকা (সুন্দর নিয়ন সায়ান/ব্লু ভরাট বৃত্ত)
+    // ১. সাপের বডি আঁকা (সুন্দর নিয়ন সায়ান ভরাট বৃত্ত)
     for (let i = snake.length - 1; i > 0; i--) {
         ctx.fillStyle = "#00d2d3"; 
         ctx.beginPath();
@@ -492,51 +492,53 @@ function draw(){
         ctx.fill();
     }
 
-    // ২. মেইন মাথা আঁকা (পুরো গোল সুন্দর নীল মাথা)
+    // ২. মেইন মাথা আঁকা (ডিরেকশন অনুযায়ী নিখুঁত প্যাকম্যান স্টাইল হাঁ মুখ)
     ctx.fillStyle = "#0984e3"; 
     ctx.beginPath();
-    ctx.arc(hx, hy, 11, 0, Math.PI * 2);
-    ctx.fill();
 
-    // ৩. খাবার কাছে আসলে ডিরেকশন অনুযায়ী মুখ হাঁ করা (লাল ভেতরের অংশ স্পষ্ট দেখাবে)
-    if (closeToFood && direction) {
-        ctx.fillStyle = "#ff4d4d"; // মুখের ভেতরের অংশ
-        ctx.beginPath();
-        ctx.moveTo(hx, hy); 
+    // সাপ যেদিকে মুখ করে আছে সেই অ্যাঙ্গেল (কোণ) বের করা
+    let startAngle = 0;
+    let endAngle = Math.PI * 2;
+    let currentDir = direction || "RIGHT";
 
-        // সাপ যেদিকে মুখ করে আছে, ঠিক সেদিকে ত্রিভুজ আকারে মুখ হাঁ করবে
-        if (direction === "RIGHT") {
-            ctx.lineTo(hx + 12, hy - 7);
-            ctx.lineTo(hx + 12, hy + 7);
-        } else if (direction === "LEFT") {
-            ctx.lineTo(hx - 12, hy - 7);
-            ctx.lineTo(hx - 12, hy + 7);
-        } else if (direction === "UP") {
-            ctx.lineTo(hx - 7, hy - 12);
-            ctx.lineTo(hx + 7, hy - 12);
-        } else if (direction === "DOWN") {
-            ctx.lineTo(hx - 7, hy + 12);
-            ctx.lineTo(hx + 7, hy + 12);
-        }
-        ctx.closePath();
-        ctx.fill();
+    // খাবার কাছে আসলে মুখ হাঁ হবে (০.২5 র্যাডিয়ান ফাঁকা), দূরে থাকলে মুখ বন্ধ (০.০২ র্যাডিয়ান সামান্য দাগের মতো)
+    let mouthSize = closeToFood ? 0.25 : 0.02; 
+
+    if (currentDir === "RIGHT") {
+        startAngle = mouthSize * Math.PI;
+        endAngle = (2 - mouthSize) * Math.PI;
+    } else if (currentDir === "LEFT") {
+        startAngle = (1 + mouthSize) * Math.PI;
+        endAngle = (1 - mouthSize) * Math.PI;
+    } else if (currentDir === "UP") {
+        startAngle = (1.5 + mouthSize) * Math.PI;
+        endAngle = (1.5 - mouthSize) * Math.PI;
+    } else if (currentDir === "DOWN") {
+        startAngle = (0.5 + mouthSize) * Math.PI;
+        endAngle = (0.5 - mouthSize) * Math.PI;
     }
 
-    // ৪. বড় বড় দুটো চোখ (Slither.io স্টাইল - মাথার ডিরেকশন অনুযায়ী দুপাশে বসবে)
+    // মাথাটি গোল করে কেটে আঁকা যাতে মুখটা প্রাকৃতিক দেখায়
+    ctx.moveTo(hx, hy);
+    ctx.arc(hx, hy, 11, startAngle, endAngle);
+    ctx.lineTo(hx, hy);
+    ctx.fill();
+
+    // ৩. বড় বড় দুটো চোখ (মাথার ডিরেকশন অনুযায়ী পারফেক্ট পজিশনিং)
     let eyeOffsetX1 = 0, eyeOffsetY1 = 0;
     let eyeOffsetX2 = 0, eyeOffsetY2 = 0;
 
-    if (direction === "RIGHT" || !direction) {
-        eyeOffsetX1 = 1; eyeOffsetY1 = -5; eyeOffsetX2 = 1; eyeOffsetY2 = 5;
-    } else if (direction === "LEFT") {
-        eyeOffsetX1 = -1; eyeOffsetY1 = -5; eyeOffsetX2 = -1; eyeOffsetY2 = 5;
-    } else if (direction === "UP") {
-        eyeOffsetX1 = -5; eyeOffsetY1 = -1; eyeOffsetX2 = 5; eyeOffsetY2 = -1;
-    } else if (direction === "DOWN") {
-        eyeOffsetX1 = -5; eyeOffsetY1 = 1; eyeOffsetX2 = 5; eyeOffsetY2 = 1;
+    if (currentDir === "RIGHT") {
+        eyeOffsetX1 = 0; eyeOffsetY1 = -5; eyeOffsetX2 = 0; eyeOffsetY2 = 5;
+    } else if (currentDir === "LEFT") {
+        eyeOffsetX1 = 0; eyeOffsetY1 = -5; eyeOffsetX2 = 0; eyeOffsetY2 = 5;
+    } else if (currentDir === "UP") {
+        eyeOffsetX1 = -5; eyeOffsetY1 = 0; eyeOffsetX2 = 5; eyeOffsetY2 = 0;
+    } else if (currentDir === "DOWN") {
+        eyeOffsetX1 = -5; eyeOffsetY1 = 0; eyeOffsetX2 = 5; eyeOffsetY2 = 0;
     }
 
-    // চোখের সাদা অংশ (বড় গোল্লা)
+    // চোখের সাদা অংশ 
     ctx.fillStyle = "#ffffff";
     ctx.beginPath(); ctx.arc(hx + eyeOffsetX1, hy + eyeOffsetY1, 4, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(hx + eyeOffsetX2, hy + eyeOffsetY2, 4, 0, Math.PI * 2); ctx.fill();
@@ -712,7 +714,7 @@ function move(){
         } else {
             let scoreInCurrentLevel = (score - 1) % 20;
             let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
-            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60);
+            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentSpeed * 7), 60);
             clearInterval(gameLoop);
             gameLoop = setInterval(game, gameSpeed);
         }
