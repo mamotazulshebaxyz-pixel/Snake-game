@@ -139,7 +139,7 @@ function updateAndSaveHighScore(newScore) {
 }
 
 // ==========================================
-// 🎵 সাউন্ড সিস্টেম
+// 🎵 সাউন্ড SYSTEM
 // ==========================================
 function playSound(type) {
     if (isMuted) return;
@@ -337,7 +337,7 @@ function draw(){
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= ওয়াটার গ্রিড  =======
+    // ======= ওয়াটার গ্রিড =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
@@ -473,70 +473,67 @@ function draw(){
     }
 
     // =========================================================================
-    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (বড় চোখ এবং খাবার দেখে মুখ হাঁ করার লজিক)
+    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (বড় চোখ এবং পারফেক্ট মুখ হাঁ করার লজিক)
     // =========================================================================
     let head = snake[0];
     let hx = head.x + 10;
     let hy = head.y + 10;
 
-    // ১. খাবার কত কাছে আছে তা মাপা
-    let distToNormal = Math.hypot(food.x - head.x, food.y - head.y);
-    let distToSpecial = specialFood ? Math.hypot(specialFood.x - head.x, specialFood.y - head.y) : 999;
-    let closeToFood = (distToNormal < 50 || distToSpecial < 50);
+    // খাবার ও মাথার কেন্দ্রের পারফেক্ট দূরত্বের পরিমাপ
+    let distToNormal = Math.hypot((food.x + 10) - hx, (food.y + 10) - hy);
+    let distToSpecial = specialFood ? Math.hypot((specialFood.x + 10) - hx, (specialFood.y + 10) - hy) : 999;
+    let closeToFood = (distToNormal < 60 || distToSpecial < 60);
 
-    // ২. সাপের বডি আঁকা (গাঢ় নিয়ন ব্লু ভরাট বৃত্ত)
+    // ১. সাপের বডি আঁকা (সুন্দর নিয়ন সায়ান/ব্লু ভরাট বৃত্ত)
     for (let i = snake.length - 1; i > 0; i--) {
-        ctx.fillStyle = "#00d2d3"; // Neon Blue বডি
-        ctx.shadowBlur = i === 1 ? 4 : 0;
-        ctx.shadowColor = "#00aea9";
+        ctx.fillStyle = "#00d2d3"; 
         ctx.beginPath();
         ctx.arc(snake[i].x + 10, snake[i].y + 10, 9, 0, Math.PI * 2);
         ctx.fill();
     }
-    ctx.shadowBlur = 0;
 
-    // ৩. সাপের মাথা ও মুখ হাঁ করার ইফেক্ট
+    // ২. সাপের মাথা ও ডিরেকশন অনুযায়ী মুখ হাঁ করার লজিক
     ctx.fillStyle = "#0984e3"; // মেইন গাঢ় নীল মাথা
     ctx.beginPath();
 
-    let startAngle = 0;
-    let endAngle = Math.PI * 2;
-
-    // মুখ হাঁ করার জন্য আর্কের অ্যাঙ্গেল সেটআপ (দিক অনুযায়ী)
     if (closeToFood && direction) {
-        if (direction === "RIGHT") { startAngle = 0.25 * Math.PI; endAngle = 1.75 * Math.PI; }
-        else if (direction === "LEFT") { startAngle = 1.25 * Math.PI; endAngle = 0.75 * Math.PI; }
-        else if (direction === "UP") { startAngle = 1.75 * Math.PI; endAngle = 1.25 * Math.PI; }
-        else if (direction === "DOWN") { startAngle = 0.75 * Math.PI; endAngle = 0.25 * Math.PI; }
+        let startAngle = 0;
+        let endAngle = Math.PI * 2;
+
+        // সাপ যেদিকে মুখ করে আছে, ঠিক সেদিকে মুখ হাঁ করবে (Pac-man স্টাইল)
+        if (direction === "RIGHT") { startAngle = 0.2 * Math.PI; endAngle = 1.8 * Math.PI; }
+        else if (direction === "LEFT") { startAngle = 1.2 * Math.PI; endAngle = 0.8 * Math.PI; }
+        else if (direction === "UP") { startAngle = 1.7 * Math.PI; endAngle = 1.3 * Math.PI; }
+        else if (direction === "DOWN") { startAngle = 0.7 * Math.PI; endAngle = 0.3 * Math.PI; }
         
-        ctx.moveTo(hx, hy); // মুখের ভেতরের পয়েন্ট
+        ctx.moveTo(hx, hy); 
         ctx.arc(hx, hy, 11, startAngle, endAngle, false);
         ctx.lineTo(hx, hy);
     } else {
-        ctx.arc(hx, hy, 11, startAngle, endAngle);
+        ctx.arc(hx, hy, 11, 0, Math.PI * 2);
     }
     ctx.fill();
 
-    // ৪. বড় বড় দুটো চোখ (Slither.io স্টাইল)
+    // ৩. বড় বড় দুটো চোখ (Slither.io স্টাইল - মাথার সাইডে বসবে)
     let eyeOffsetX1 = 0, eyeOffsetY1 = 0;
     let eyeOffsetX2 = 0, eyeOffsetY2 = 0;
 
     if (direction === "RIGHT" || !direction) {
-        eyeOffsetX1 = 4; eyeOffsetY1 = -5; eyeOffsetX2 = 4; eyeOffsetY2 = 5;
+        eyeOffsetX1 = 2; eyeOffsetY1 = -5; eyeOffsetX2 = 2; eyeOffsetY2 = 5;
     } else if (direction === "LEFT") {
-        eyeOffsetX1 = -4; eyeOffsetY1 = -5; eyeOffsetX2 = -4; eyeOffsetY2 = 5;
+        eyeOffsetX1 = -2; eyeOffsetY1 = -5; eyeOffsetX2 = -2; eyeOffsetY2 = 5;
     } else if (direction === "UP") {
-        eyeOffsetX1 = -5; eyeOffsetY1 = -4; eyeOffsetX2 = 5; eyeOffsetY2 = -4;
+        eyeOffsetX1 = -5; eyeOffsetY1 = -2; eyeOffsetX2 = 5; eyeOffsetY2 = -2;
     } else if (direction === "DOWN") {
-        eyeOffsetX1 = -5; eyeOffsetY1 = 4; eyeOffsetX2 = 5; eyeOffsetY2 = 4;
+        eyeOffsetX1 = -5; eyeOffsetY1 = 2; eyeOffsetX2 = 5; eyeOffsetY2 = 2;
     }
 
-    // চোখের সাদা অংশ (বড় সাইজ)
+    // চোখের সাদা অংশ (বড় গোল্লা)
     ctx.fillStyle = "#ffffff";
-    ctx.beginPath(); ctx.arc(hx + eyeOffsetX1, hy + eyeOffsetY1, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx + eyeOffsetX2, hy + eyeOffsetY2, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX1, hy + eyeOffsetY1, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX2, hy + eyeOffsetY2, 4, 0, Math.PI * 2); ctx.fill();
 
-    // চোখের মণি (খাবারের দিকে তাকাবে)
+    // চোখের কালো মণি (খাবারের দিকে ট্র্যাক করবে)
     ctx.fillStyle = "#000000";
     let pupX = 0, pupY = 0;
     if (closeToFood) {
@@ -545,8 +542,8 @@ function draw(){
         pupX = Math.cos(angleToFood) * 1.5;
         pupY = Math.sin(angleToFood) * 1.5;
     }
-    ctx.beginPath(); ctx.arc(hx + eyeOffsetX1 + pupX, hy + eyeOffsetY1 + pupY, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx + eyeOffsetX2 + pupX, hy + eyeOffsetY2 + pupY, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX1 + pupX, hy + eyeOffsetY1 + pupY, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX2 + pupX, hy + eyeOffsetY2 + pupY, 1.8, 0, Math.PI * 2); ctx.fill();
 
     // ======= লেভেল ট্রানজিশন মেসেজ =======
     if (running && !isSnakeMoving && !isLevelTransition) {
