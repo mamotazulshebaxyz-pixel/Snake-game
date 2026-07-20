@@ -473,7 +473,7 @@ function draw(){
     }
 
     // =========================================================================
-    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (স্মুথ ওপেন/ক্লোজড মাউথ লজিক)
+    // 🕹️ SLITHER.IO স্টাইল নীল সাপ (পারফেক্ট ক্লোজ-রেন্জ মাউথ ওপেনিং লজিক)
     // =========================================================================
     let head = snake[0];
     let hx = head.x + 10;
@@ -482,9 +482,11 @@ function draw(){
     // খাবার ও মাথার দূরত্বের পরিমাপ
     let distToNormal = Math.hypot((food.x + 10) - hx, (food.y + 10) - hy);
     let distToSpecial = specialFood ? Math.hypot((specialFood.x + 10) - hx, (specialFood.y + 10) - hy) : 999;
-    let closeToFood = (distToNormal < 60 || distToSpecial < 60);
+    
+    // 🛠️ ফিক্স: দূরত্ব ২৫ এর নিচে আসলে (অর্থাৎ একদম মুখের কাছে পৌঁছালে) কেবল মুখ খুলবে
+    let closeToFood = (distToNormal < 25 || distToSpecial < 25);
 
-    // ১. সাপের বডি আঁকা (সুন্দর নিয়ন সায়ান ভরাট বৃত্ত)
+    // ১. সাপের বডি আঁকা 
     for (let i = snake.length - 1; i > 0; i--) {
         ctx.fillStyle = "#00d2d3"; 
         ctx.beginPath();
@@ -492,16 +494,15 @@ function draw(){
         ctx.fill();
     }
 
-    // ২. মেইন মাথা আঁকা (ডিরেকশন অনুযায়ী নিখুঁত প্যাকম্যান স্টাইল হাঁ মুখ)
+    // ২. মেইন মাথা আঁকা 
     ctx.fillStyle = "#0984e3"; 
     ctx.beginPath();
 
-    // সাপ যেদিকে মুখ করে আছে সেই অ্যাঙ্গেল (কোণ) বের করা
     let startAngle = 0;
     let endAngle = Math.PI * 2;
     let currentDir = direction || "RIGHT";
 
-    // খাবার কাছে আসলে মুখ হাঁ হবে (০.২5 র্যাডিয়ান ফাঁকা), দূরে থাকলে মুখ বন্ধ (০.০২ র্যাডিয়ান সামান্য দাগের মতো)
+    // মুখ হাঁ করার সাইজ রেগুলেশন (কাছে আসলে ০.২৫ র্যাডিয়ান হাঁ হবে, দূরে থাকলে ০.০২ বন্ধ মুখ)
     let mouthSize = closeToFood ? 0.25 : 0.02; 
 
     if (currentDir === "RIGHT") {
@@ -518,13 +519,12 @@ function draw(){
         endAngle = (0.5 - mouthSize) * Math.PI;
     }
 
-    // মাথাটি গোল করে কেটে আঁকা যাতে মুখটা প্রাকৃতিক দেখায়
     ctx.moveTo(hx, hy);
     ctx.arc(hx, hy, 11, startAngle, endAngle);
     ctx.lineTo(hx, hy);
     ctx.fill();
 
-    // ৩. বড় বড় দুটো চোখ (মাথার ডিরেকশন অনুযায়ী পারফেক্ট পজিশনিং)
+    // ৩. চোখ পজিশনিং
     let eyeOffsetX1 = 0, eyeOffsetY1 = 0;
     let eyeOffsetX2 = 0, eyeOffsetY2 = 0;
 
@@ -543,10 +543,10 @@ function draw(){
     ctx.beginPath(); ctx.arc(hx + eyeOffsetX1, hy + eyeOffsetY1, 4, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(hx + eyeOffsetX2, hy + eyeOffsetY2, 4, 0, Math.PI * 2); ctx.fill();
 
-    // চোখের কালো মণি (খাবারের দিকে ট্র্যাক করবে)
+    // চোখের কালো মণি 
     ctx.fillStyle = "#000000";
     let pupX = 0, pupY = 0;
-    if (closeToFood) {
+    if (distToNormal < 80 || distToSpecial < 80) { // মণি খাবারের দিকে তাকাবে একটু দূর থেকেই
         let targetF = (distToSpecial < distToNormal) ? specialFood : food;
         let angleToFood = Math.atan2((targetF.y + 10) - hy, (targetF.x + 10) - hx);
         pupX = Math.cos(angleToFood) * 1.5;
@@ -714,7 +714,7 @@ function move(){
         } else {
             let scoreInCurrentLevel = (score - 1) % 20;
             let currentLevelBaseSpeed = Math.max(BASE_SPEED - Math.min((level - 1) * 15, 180), 80);
-            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentSpeed * 7), 60);
+            gameSpeed = Math.max(currentLevelBaseSpeed - (scoreInCurrentLevel * 7), 60);
             clearInterval(gameLoop);
             gameLoop = setInterval(game, gameSpeed);
         }
