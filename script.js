@@ -22,7 +22,7 @@ let currentUser = null;
 let userHighScoreRef = null;
 
 // ==========================================
-// 🎮 গেমের গলোবাল ভেরিয়েবলসমূহ (HTML এর সাথে মিলিয়ে আপডেট করা)
+// 🎮 গেমের গলোবাল ভেরিয়েবলসমূহ
 // ==========================================
 const homepage = document.getElementById("custom-homepage");
 const gameContainer = document.getElementById("game-container");
@@ -58,18 +58,17 @@ let specialFoodStartTime = 0;
 let normalFoodEatenCount = 0; 
 let running = false;
 let obstacles = []; 
-let bubbles = []; // বাবলস ট্র্যাকিং অ্যারে
+let bubbles = []; 
 
 let isSnakeMoving = false; 
 let isLevelTransition = false;
 let nextLevelToStart = 2;
 let shouldSpawnBonusAfterTransition = false; 
 
-// 🔊 সাউন্ড অন/অফ ট্র্যাক করার গলোবাল ভেরিয়েবল
 let isMuted = false;
 
 // ==========================================
-// 🫧 বাবল ইফেক্ট ফাংশন (যা আগে কোডে মিসিং ছিল)
+// 🫧 বাবল ইফেক্ট ফাংশন
 // ==========================================
 function initBubbles() {
     bubbles = [];
@@ -140,7 +139,7 @@ function updateAndSaveHighScore(newScore) {
 }
 
 // ==========================================
-// 🎵 সাউন্ড সিস্টেম (কাস্টম অডিও সহ)
+// 🎵 সাউন্ড সিস্টেম
 // ==========================================
 function playSound(type) {
     if (isMuted) return;
@@ -338,7 +337,7 @@ function draw(){
     ctx.fillStyle = waterGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ======= ওয়াটার গ্রিড ইফেক্ট =======
+    // ======= ওয়াটার গ্রিড  =======
     ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
     ctx.lineWidth = 1;
     for(let i = 0; i < canvas.width; i += 20) {
@@ -348,7 +347,7 @@ function draw(){
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
     }
 
-    // ======= বাবলস ড্রয়িং =======
+    // ======= বাবলস =======
     bubbles.forEach(b => {
         ctx.fillStyle = `rgba(255, 255, 255, ${b.opacity})`;
         ctx.beginPath();
@@ -473,36 +472,86 @@ function draw(){
         }
     }
 
-    // ======= 🕹️ সাপের বডি ডিজাইন (আপনার আগের কোড অনুযায়ী অক্ষত) =======
-    snake.forEach((part, index) => {
-        if (index === 0) {
-            ctx.fillStyle = "#091318";
-            ctx.beginPath();
-            ctx.arc(part.x + 10, part.y + 10, 10, 0, Math.PI * 2);
-            ctx.fill();
+    // =========================================================================
+    // 🕹️ 🆕 SLITHER.IO স্টাইল নীল সাপ (বড় চোখ এবং খাবার দেখে মুখ হাঁ করার লজিক)
+    // =========================================================================
+    let head = snake[0];
+    let hx = head.x + 10;
+    let hy = head.y + 10;
 
-            ctx.fillStyle = "#203a43";
-            ctx.beginPath();
-            ctx.arc(part.x + 10, part.y + 10, 5, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            ctx.fillStyle = "#091318";
-            ctx.beginPath();
-            ctx.arc(part.x + 10, part.y + 10, 9, 0, Math.PI * 2);
-            ctx.fill();
+    // ১. খাবার কত কাছে আছে তা মাপা
+    let distToNormal = Math.hypot(food.x - head.x, food.y - head.y);
+    let distToSpecial = specialFood ? Math.hypot(specialFood.x - head.x, specialFood.y - head.y) : 999;
+    let closeToFood = (distToNormal < 50 || distToSpecial < 50);
 
-            ctx.fillStyle = "#203a43";
-            ctx.beginPath();
-            ctx.arc(part.x + 10, part.y + 10, 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    });
+    // ২. সাপের বডি আঁকা (গাঢ় নিয়ন ব্লু ভরাট বৃত্ত)
+    for (let i = snake.length - 1; i > 0; i--) {
+        ctx.fillStyle = "#00d2d3"; // Neon Blue বডি
+        ctx.shadowBlur = i === 1 ? 4 : 0;
+        ctx.shadowColor = "#00aea9";
+        ctx.beginPath();
+        ctx.arc(snake[i].x + 10, snake[i].y + 10, 9, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.shadowBlur = 0;
 
-    // ======= লেভেল ট্রানজিশন এবং অন্যান্য স্ক্রিন মেসেজ =======
+    // ৩. সাপের মাথা ও মুখ হাঁ করার ইফেক্ট
+    ctx.fillStyle = "#0984e3"; // মেইন গাঢ় নীল মাথা
+    ctx.beginPath();
+
+    let startAngle = 0;
+    let endAngle = Math.PI * 2;
+
+    // মুখ হাঁ করার জন্য আর্কের অ্যাঙ্গেল সেটআপ (দিক অনুযায়ী)
+    if (closeToFood && direction) {
+        if (direction === "RIGHT") { startAngle = 0.25 * Math.PI; endAngle = 1.75 * Math.PI; }
+        else if (direction === "LEFT") { startAngle = 1.25 * Math.PI; endAngle = 0.75 * Math.PI; }
+        else if (direction === "UP") { startAngle = 1.75 * Math.PI; endAngle = 1.25 * Math.PI; }
+        else if (direction === "DOWN") { startAngle = 0.75 * Math.PI; endAngle = 0.25 * Math.PI; }
+        
+        ctx.moveTo(hx, hy); // মুখের ভেতরের পয়েন্ট
+        ctx.arc(hx, hy, 11, startAngle, endAngle, false);
+        ctx.lineTo(hx, hy);
+    } else {
+        ctx.arc(hx, hy, 11, startAngle, endAngle);
+    }
+    ctx.fill();
+
+    // ৪. বড় বড় দুটো চোখ (Slither.io স্টাইল)
+    let eyeOffsetX1 = 0, eyeOffsetY1 = 0;
+    let eyeOffsetX2 = 0, eyeOffsetY2 = 0;
+
+    if (direction === "RIGHT" || !direction) {
+        eyeOffsetX1 = 4; eyeOffsetY1 = -5; eyeOffsetX2 = 4; eyeOffsetY2 = 5;
+    } else if (direction === "LEFT") {
+        eyeOffsetX1 = -4; eyeOffsetY1 = -5; eyeOffsetX2 = -4; eyeOffsetY2 = 5;
+    } else if (direction === "UP") {
+        eyeOffsetX1 = -5; eyeOffsetY1 = -4; eyeOffsetX2 = 5; eyeOffsetY2 = -4;
+    } else if (direction === "DOWN") {
+        eyeOffsetX1 = -5; eyeOffsetY1 = 4; eyeOffsetX2 = 5; eyeOffsetY2 = 4;
+    }
+
+    // চোখের সাদা অংশ (বড় সাইজ)
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX1, hy + eyeOffsetY1, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX2, hy + eyeOffsetY2, 4.5, 0, Math.PI * 2); ctx.fill();
+
+    // চোখের মণি (খাবারের দিকে তাকাবে)
+    ctx.fillStyle = "#000000";
+    let pupX = 0, pupY = 0;
+    if (closeToFood) {
+        let targetF = (distToSpecial < distToNormal) ? specialFood : food;
+        let angleToFood = Math.atan2((targetF.y + 10) - hy, (targetF.x + 10) - hx);
+        pupX = Math.cos(angleToFood) * 1.5;
+        pupY = Math.sin(angleToFood) * 1.5;
+    }
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX1 + pupX, hy + eyeOffsetY1 + pupY, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + eyeOffsetX2 + pupX, hy + eyeOffsetY2 + pupY, 2, 0, Math.PI * 2); ctx.fill();
+
+    // ======= লেভেল ট্রানজিশন মেসেজ =======
     if (running && !isSnakeMoving && !isLevelTransition) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#fff";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
@@ -882,7 +931,7 @@ document.addEventListener("keydown", function(e){
 });
 
 // =========================================================================
-// 🏆 গ্লোবাল লিডারবোর্ড লজিক (২টি শব্দ এবং ডট ফিক্সড)
+// 🏆 গ্লোবাল লিডারবোর্ড লজিক
 // =========================================================================
 const leaderboardModal = document.getElementById("leaderboard-modal");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
@@ -909,16 +958,13 @@ leaderboardBtn.onclick = async function() {
         let rank = 1;
         snapshot.forEach(doc => {
             const data = doc.data();
-            // প্রথমে ডেটাবেজের 'name' ফিল্ড চেক করবে, না থাকলে মেইলের প্রথম অংশ নেবে
             let userName = data.name || (data.email ? data.email.split('@')[0] : "Player");
 
-            // নামটিকে স্পেস দিয়ে ভেঙে প্রথম ২টি শব্দ নেওয়া হচ্ছে (ডট থাকলেও কাটবে না)
             let nameWords = userName.trim().split(/\s+/);
             if (nameWords.length > 2) {
                 userName = nameWords.slice(0, 2).join(' ');
             }
 
-            // প্রতিটি শব্দের প্রথম অক্ষর বড় হাতের (Capitalize) করার নিখুঁত লজিক
             userName = userName
                 .toLowerCase()
                 .split(' ')
