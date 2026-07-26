@@ -609,24 +609,21 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
 
-    // 🔥 লেভেল চেঞ্জ হলে লাইফ রিসেট করার কোড:
-    lives = 3; 
+    // 🔥 লেভেল চেঞ্জ হলে ৩টি লাইফ রিসেট
+    lives = 3;
     document.getElementById("lives-container").innerHTML = "❤️ ❤️ ❤️";
 
     snake = [{x: 200, y: 200}];
     direction = null;
     isSnakeMoving = false;
 
-    // ... বাকি কোড যা ছিল তেমনই থাকবে
-}
-    
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
-    
-    generateObstacles(level); 
-    createFood(); 
+
+    generateObstacles(level);
+    createFood();
     isLevelTransition = false;
-    
+
     clearInterval(gameLoop);
     gameLoop = setInterval(game, gameSpeed);
 }
