@@ -609,17 +609,16 @@ function startNextLevel() {
     level = nextLevelToStart;
     levelText.innerHTML = level;
 
-    // 🔥 এখানে নতুন ৩টি লাইন যোগ করুন:
+    // 🔥 লেভেল চেঞ্জ হলে লাইফ রিসেট করার কোড:
     lives = 3; 
-    if (typeof updateLivesDisplay === 'function') {
-        updateLivesDisplay(); // যদি লাইফ আপডেট করার কোনো ফাংশন আগে থেকেই থাকে
-    } else if (typeof livesText !== 'undefined') {
-        livesText.innerHTML = lives; // অথবা লাইফ টেক্সটের HTML আপডেট করুন
-    }
+    document.getElementById("lives-container").innerHTML = "❤️ ❤️ ❤️";
 
     snake = [{x: 200, y: 200}];
     direction = null;
     isSnakeMoving = false;
+
+    // ... বাকি কোড যা ছিল তেমনই থাকবে
+}
     
     let speedFactor = Math.min((level - 1) * 15, 180);
     gameSpeed = Math.max(BASE_SPEED - speedFactor, 80);
