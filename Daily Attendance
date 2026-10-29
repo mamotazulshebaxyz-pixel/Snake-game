@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance & Duty Management</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Hind Siliguri for Bengali support & Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                        bordercolor: '#334155',
+                        brand: {
+                            emerald: '#10b981',
+                            rose: '#f43f5e',
+                            indigo: '#6366f1',
+                            amber: '#f59e0b',
+                            cyan: '#06b6d4'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Hind Siliguri', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Hind Siliguri', 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .glow-emerald {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+        .glow-rose {
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-900 text-slate-100 antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-800/90 backdrop-blur-md border-b border-slate-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- App Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">
+                            WorkDuty Pro
+                        </h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">উপস্থিতি ও ডিউটি ব্যবস্থাপনা সিস্টেম</p>
+                    </div>
+                </div>
+
+                <!-- Clock & Role Switcher -->
+                <div class="flex items-center space-x-4">
+                    <!-- Real-Time Clock -->
+                    <div class="hidden md:flex flex-col items-end px-3 py-1 bg-slate-900/60 rounded-lg border border-slate-700/60">
+                        <span id="headerClock" class="text-sm font-semibold font-mono text-cyan-400">00:00:00 AM</span>
+                        <span id="headerDate" class="text-[10px] text-slate-400">Loading date...</span>
+                    </div>
+
+                    <!-- Role Switcher Segmented Control -->
+                    <div class="bg-slate-900 p-1 rounded-xl border border-slate-700 flex items-center shadow-inner">
+                        <button id="btnRoleEmp" onclick="switchRole('employee')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 bg-indigo-600 text-white shadow-md">
+                            <i class="fa-solid fa-user-check"></i>
+                            <span>কর্মচারী (Employee)</span>
+                        </button>
+                        <button id="btnRoleAdmin" onclick="switchRole('admin')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all duration-200">
+                            <i class="fa-solid fa-user-shield"></i>
+                            <span>এডমিন (Admin)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- EMPLOYEE VIEW -->
+        <div id="employeeView" class="space-y-6">
+
+            <!-- Check-In Banner & Current Shift Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Check In/Out Card -->
+                <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+                    <div class="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <!-- Clock & Dynamic Timer -->
+                        <div class="text-center md:text-left space-y-1">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                লাইভ কর্মঘণ্টা ট্র্যাকার
+                            </div>
+                            <h2 id="liveTimeDisplay" class="text-3xl sm:text-4xl font-extrabold font-mono tracking-wider text-slate-100">
+                                00:00:00
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-400 flex items-center justify-center md:justify-start gap-1">
+                                <i class="fa-solid fa-location-dot text-rose-400"></i>
+                                <span id="locationDisplay">অবস্থান: Dhaka HQ (GPS Verified)</span>
+                            </p>
+                        </div>
+
+                        <!-- Check-In/Out Action Button -->
+                        <div class="flex flex-col items-center gap-2 w-full md:w-auto">
+                            <button id="checkInOutBtn" onclick="toggleCheckInOut()" class="w-full md:w-48 py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg glow-emerald transform hover:-translate-y-0.5 active:translate-y-0">
+                                <i class="fa-solid fa-right-to-bracket text-2xl"></i>
+                                <span id="checkInOutBtnText">চেক ইন (Check In)</span>
+                            </button>
+                            <span id="shiftStatusBadge" class="text-xs px-3 py-1 rounded-full font-medium bg-slate-700/80 text-slate-300">
+                                স্ট্যাটাস: চেক আউট অবস্থায় আছেন
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Daily Timer Counter -->
+                    <div class="mt-6 pt-4 border-t border-slate-700/60 grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/40">
+                            <span class="text-[11px] text-slate-400 block">আজকের আগমন</span>
+                            <span id="todayCheckInTime" class="text-sm font-bold font-mono text-emerald-400">--:--</span>
+                        </div>
+                        <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/40">
+                            <span class="text-[11px] text-slate-400 block">আজকের প্রস্থান</span>
+                            <span id="todayCheckOutTime" class="text-sm font-bold font-mono text-rose-400">--:--</span>
+                        </div>
+                        <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/40">
+                            <span class="text-[11px] text-slate-400 block">মোট ডিউটি টাইম</span>
+                            <span id="totalWorkingHours" class="text-sm font-bold font-mono text-cyan-400">0 ঘণ্টা 0 মি.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assigned Duty Roster Card -->
+                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-day text-indigo-400"></i>
+                                বর্তমান ডিউটি শিডিউল
+                            </h3>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                মর্নিং শিফট
+                            </span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-700/50">
+                                <div class="text-xs text-slate-400">নির্ধারিত সময়</div>
+                                <div id="assignedShiftTime" class="text-sm font-bold text-slate-200 font-mono">09:00 AM - 05:00 PM</div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-700/50">
+                                <div class="text-xs text-slate-400">ওভারটাইম অবস্থা</div>
+                                <div class="text-sm font-semibold text-emerald-400">প্রযোজ্য (১.৫ গুণ)</div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-700/50">
+                                <div class="text-xs text-slate-400">সাপ্তাহিক ছুটি</div>
+                                <div class="text-sm font-semibold text-indigo-300">শুক্রবার</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-700/50 flex gap-2">
+                        <button onclick="openModal('leaveModal')" class="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 shadow">
+                            <i class="fa-solid fa-plane-departure"></i>
+                            ছুটির আবেদন
+                        </button>
+                        <button onclick="openModal('shiftModal')" class="flex-1 py-2 px-3 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-600">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            টাইম পরিবর্তন
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request History & Status Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- My Leave Requests -->
+                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-file-pen text-amber-400"></i>
+                            আমার ছুটির আবেদনের তালিকা
+                        </h3>
+                        <button onclick="openModal('leaveModal')" class="text-xs text-indigo-400 hover:underline">নতুন আবেদন +</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-400 bg-slate-900/50 uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="py-2.5 px-3">ধরন</th>
+                                    <th class="py-2.5 px-3">তারিখ</th>
+                                    <th class="py-2.5 px-3">কারণ</th>
+                                    <th class="py-2.5 px-3">স্ট্যাটাস</th>
+                                </tr>
+                            </thead>
+                            <tbody id="empLeaveTable" class="divide-y divide-slate-700/50 text-slate-300">
+                                <!-- Dynamic items -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- My Shift Change Requests -->
+                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-business-time text-cyan-400"></i>
+                            ডিউটি টাইম পরিবর্তনের আবেদনসমূহ
+                        </h3>
+                        <button onclick="openModal('shiftModal')" class="text-xs text-indigo-400 hover:underline">নতুন আবেদন +</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-400 bg-slate-900/50 uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="py-2.5 px-3">অনুরোধিত শিফট</th>
+                                    <th class="py-2.5 px-3">তারিখ</th>
+                                    <th class="py-2.5 px-3">কারণ</th>
+                                    <th class="py-2.5 px-3">স্ট্যাটাস</th>
+                                </tr>
+                            </thead>
+                            <tbody id="empShiftTable" class="divide-y divide-slate-700/50 text-slate-300">
+                                <!-- Dynamic items -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance History Logs -->
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-user-clock text-indigo-400"></i>
+                            ব্যক্তিগত উপস্থিতির ইতিহাস (Attendance Logs)
+                        </h3>
+                        <p class="text-xs text-slate-400">চলতি মাসের সমস্ত চেক ইন ও চেক আউট রেকর্ড</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="month" id="empHistoryMonth" onchange="renderEmpAttendanceHistory()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-slate-400 bg-slate-900/80 uppercase border-b border-slate-700">
+                            <tr>
+                                <th class="py-3 px-4">তারিখ</th>
+                                <th class="py-3 px-4">চেক ইন</th>
+                                <th class="py-3 px-4">চেক আউট</th>
+                                <th class="py-3 px-4">কাজ করা ঘণ্টা</th>
+                                <th class="py-3 px-4">অবস্থান</th>
+                                <th class="py-3 px-4">স্ট্যাটাস</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empAttendanceHistoryBody" class="divide-y divide-slate-700/60 text-slate-300">
+                            <!-- Dynamic history -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ADMIN / MANAGER VIEW -->
+        <div id="adminView" class="space-y-6 hidden">
+
+            <!-- Admin Overview Metrics Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Total Staff -->
+                <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl shadow-xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">মোট কর্মচারী</p>
+                        <h4 id="metricTotalEmp" class="text-2xl font-bold text-slate-100 mt-1">0</h4>
+                        <span class="text-[10px] text-emerald-400">সক্রিয় নিয়োজিত</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl border border-indigo-500/20">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+
+                <!-- Present Today -->
+                <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl shadow-xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">আজকে উপস্থিত</p>
+                        <h4 id="metricPresent" class="text-2xl font-bold text-emerald-400 mt-1">0</h4>
+                        <span class="text-[10px] text-slate-400">সময়ে চেক-ইনকৃত</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl border border-emerald-500/20">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                </div>
+
+                <!-- On Leave Today -->
+                <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl shadow-xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">ছুটিতে আছেন</p>
+                        <h4 id="metricOnLeave" class="text-2xl font-bold text-rose-400 mt-1">0</h4>
+                        <span class="text-[10px] text-slate-400">অনুমোদিত ছুটি</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl border border-rose-500/20">
+                        <i class="fa-solid fa-bed"></i>
+                    </div>
+                </div>
+
+                <!-- Pending Requests -->
+                <div class="bg-slate-800/80 border border-slate-700 p-5 rounded-2xl shadow-xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">অপেক্ষমাণ আবেদন</p>
+                        <h4 id="metricPending" class="text-2xl font-bold text-amber-400 mt-1">0</h4>
+                        <span class="text-[10px] text-amber-400">অনুমোদন প্রয়োজন</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl border border-amber-500/20">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approvals Hub & Management Tabs -->
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-6">
+                <!-- Navigation Subtabs -->
+                <div class="flex flex-wrap items-center justify-between border-b border-slate-700 pb-3 gap-4">
+                    <div class="flex space-x-2 bg-slate-900 p-1 rounded-xl border border-slate-700/60">
+                        <button id="tabBtnLeaves" onclick="switchAdminTab('leaves')" class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">
+                            <i class="fa-solid fa-envelope-open-text mr-1"></i> ছুটির আবেদনসমূহ
+                        </button>
+                        <button id="tabBtnShifts" onclick="switchAdminTab('shifts')" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition">
+                            <i class="fa-solid fa-rotate mr-1"></i> শিফট পরিবর্তনের আবেদন
+                        </button>
+                        <button id="tabBtnRoster" onclick="switchAdminTab('roster')" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition">
+                            <i class="fa-solid fa-users-gear mr-1"></i> রোস্টার ম্যানেজমেন্ট
+                        </button>
+                    </div>
+                    <span class="text-xs text-slate-400">এডমিন নিয়ন্ত্রণ প্যানেল</span>
+                </div>
+
+                <!-- Tab 1: Leave Requests Approval -->
+                <div id="adminTabLeaves" class="space-y-4">
+                    <h4 class="text-sm font-bold text-slate-200">কর্মচারীদের ছুটির দরখাস্ত (Leave Approvals)</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-400 bg-slate-900/60 uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="py-3 px-4">কর্মচারী</th>
+                                    <th class="py-3 px-4">ছুটির ধরন</th>
+                                    <th class="py-3 px-4">তারিখের মেয়ার</th>
+                                    <th class="py-3 px-4">কারণ</th>
+                                    <th class="py-3 px-4">স্ট্যাটাস</th>
+                                    <th class="py-3 px-4 text-center">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminLeaveRequestsBody" class="divide-y divide-slate-700/60 text-slate-300">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Shift Change Requests Approval -->
+                <div id="adminTabShifts" class="space-y-4 hidden">
+                    <h4 class="text-sm font-bold text-slate-200">ডিউটি শিফট পরিবর্তন দরখাস্ত (Shift Approvals)</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-400 bg-slate-900/60 uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="py-3 px-4">কর্মচারী</th>
+                                    <th class="py-3 px-4">অনুরোধকৃত সময়</th>
+                                    <th class="py-3 px-4">তারিখ</th>
+                                    <th class="py-3 px-4">কারণ</th>
+                                    <th class="py-3 px-4">স্ট্যাটাস</th>
+                                    <th class="py-3 px-4 text-center">অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminShiftRequestsBody" class="divide-y divide-slate-700/60 text-slate-300">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Employee Roster Management -->
+                <div id="adminTabRoster" class="space-y-4 hidden">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-bold text-slate-200">কর্মচারী তালিকা ও নির্ধারিত শিফট সম্পাদনা</h4>
+                        <button onclick="openModal('addEmpModal')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1">
+                            <i class="fa-solid fa-user-plus"></i> নতুন কর্মচারী যুক্ত করুন
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-400 bg-slate-900/60 uppercase border-b border-slate-700">
+                                <tr>
+                                    <th class="py-3 px-4">আইডি (ID)</th>
+                                    <th class="py-3 px-4">নাম</th>
+                                    <th class="py-3 px-4">পদবী</th>
+                                    <th class="py-3 px-4">বর্তমান শিফট</th>
+                                    <th class="py-3 px-4 text-center">সম্পাদনা</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminRosterBody" class="divide-y divide-slate-700/60 text-slate-300">
+                                <!-- Dynamic roster -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Employee Check-In Monitoring -->
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-emerald-400"></i>
+                            লাইভ চেক-ইন ও উপস্থিতি মনিটরিং লগ
+                        </h3>
+                        <p class="text-xs text-slate-400">আজকের সমস্ত কর্মচারীদের রিয়েল-টাইম উপস্থিতি</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="adminFilterStatus" onchange="renderAdminLiveLogs()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="all">সকল উপস্থিতি স্ট্যাটাস</option>
+                            <option value="Present">উপস্থিত (Checked In)</option>
+                            <option value="Checked Out">প্রস্থানকৃত (Checked Out)</option>
+                            <option value="On Leave">ছুটিতে আছে</option>
+                            <option value="Absent">অনুপস্থিত</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-slate-400 bg-slate-900/80 uppercase border-b border-slate-700">
+                            <tr>
+                                <th class="py-3 px-4">কর্মচারী</th>
+                                <th class="py-3 px-4">তারিখ</th>
+                                <th class="py-3 px-4">চেক ইন</th>
+                                <th class="py-3 px-4">চেক আউট</th>
+                                <th class="py-3 px-4">ডিউটি স্থায়িত্ব</th>
+                                <th class="py-3 px-4">অবস্থান</th>
+                                <th class="py-3 px-4">স্ট্যাটাস</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminLiveLogsBody" class="divide-y divide-slate-700/60 text-slate-300">
+                            <!-- Dynamic logs -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 border-t border-slate-800 text-xs text-slate-500 py-4 text-center mt-auto">
+        <p>© 2026 WorkDuty Pro - উপস্থিতি ও ডিউটি সময় পরিবর্তন ব্যবস্থাপনা অ্যাপ। সর্বস্বত্ব সংরক্ষিত।</p>
+    </footer>
+
+
+    <!-- MODALS -->
+
+    <!-- Leave Request Modal -->
+    <div id="leaveModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-plane-departure text-indigo-400"></i>
+                    ছুটির জন্য আবেদন
+                </h3>
+                <button onclick="closeModal('leaveModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="leaveForm" onsubmit="handleLeaveSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">ছুটির ধরন</label>
+                    <select id="leaveType" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="Casual Leave">নৈমিত্তিক ছুটি (Casual Leave)</option>
+                        <option value="Sick Leave">অসুস্থতাজনিত ছুটি (Sick Leave)</option>
+                        <option value="Annual Leave">বার্ষিক ছুটি (Annual Leave)</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">শুরুর তারিখ</label>
+                        <input type="date" id="leaveStartDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">শেষের তারিখ</label>
+                        <input type="date" id="leaveEndDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">আবেদনের বিস্তারিত কারণ</label>
+                    <textarea id="leaveReason" rows="3" required placeholder="ছুটি নেওয়ার সঠিক কারণ লিখুন..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-700">
+                    <button type="button" onclick="closeModal('leaveModal')" class="px-4 py-2 bg-slate-700 text-slate-300 text-xs rounded-xl font-semibold hover:bg-slate-600">বাতিল</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-xs rounded-xl font-semibold hover:bg-indigo-700 shadow-md">জমা দিন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shift Change Request Modal -->
+    <div id="shiftModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i>
+                    ডিউটি টাইম পরিবর্তনের আবেদন
+                </h3>
+                <button onclick="closeModal('shiftModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="shiftForm" onsubmit="handleShiftSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">কার্যকর হওয়ার তারিখ</label>
+                    <input type="date" id="shiftDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">পছন্দনীয় শিফট / সময়</label>
+                    <select id="desiredShift" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="Morning Shift (08:00 AM - 04:00 PM)">সকাল শিফট (08:00 AM - 04:00 PM)</option>
+                        <option value="Evening Shift (02:00 PM - 10:00 PM)">সন্ধ্যা শিফট (02:00 PM - 10:00 PM)</option>
+                        <option value="Night Shift (10:00 PM - 06:00 AM)">নাইট শিফট (10:00 PM - 06:00 AM)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">পরিবর্তনের কারণ</label>
+                    <textarea id="shiftReason" rows="3" required placeholder="ডিউটি টাইম পরিবর্তনের কারণ প্রদান করুন..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-700">
+                    <button type="button" onclick="closeModal('shiftModal')" class="px-4 py-2 bg-slate-700 text-slate-300 text-xs rounded-xl font-semibold hover:bg-slate-600">বাতিল</button>
+                    <button type="submit" class="px-4 py-2 bg-cyan-600 text-white text-xs rounded-xl font-semibold hover:bg-cyan-700 shadow-md">আবেদন জমা দিন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal (Admin) -->
+    <div id="addEmpModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-emerald-400"></i>
+                    নতুন কর্মচারী যোগ করুন
+                </h3>
+                <button onclick="closeModal('addEmpModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="addEmpForm" onsubmit="handleAddEmployeeSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">পূর্ণ নাম</label>
+                    <input type="text" id="newEmpName" required placeholder="যেমন: আব্দুর রহমান" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">পদবী (Designation)</label>
+                    <input type="text" id="newEmpRole" required placeholder="যেমন: Software Engineer" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">প্রাথমিক শিফট</label>
+                    <select id="newEmpShift" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+                        <option value="09:00 AM - 05:00 PM">ডে শিফট (09:00 AM - 05:00 PM)</option>
+                        <option value="08:00 AM - 04:00 PM">মর্নিং শিফট (08:00 AM - 04:00 PM)</option>
+                        <option value="02:00 PM - 10:00 PM">ইভনিং শিফট (02:00 PM - 10:00 PM)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-700">
+                    <button type="button" onclick="closeModal('addEmpModal')" class="px-4 py-2 bg-slate-700 text-slate-300 text-xs rounded-xl font-semibold hover:bg-slate-600">বাতিল</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-xs rounded-xl font-semibold hover:bg-emerald-700 shadow-md">সংরক্ষণ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2"></div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // GLOBAL STATE & STORAGE INITIALIZATION
+        const CURRENT_USER = {
+            id: 'EMP-102',
+            name: 'তানভীর আহমেদ',
+            role: 'Senior Executive'
+        };
+
+        let activeRole = 'employee'; // 'employee' or 'admin'
+        let timerInterval = null;
+
+        // Default Sample Data Structure
+        const defaultEmployees = [
+            { id: 'EMP-101', name: 'মোঃ করিম হোসেন', designation: 'Manager', shift: '09:00 AM - 05:00 PM' },
+            { id: 'EMP-102', name: 'তানভীর আহমেদ', designation: 'Senior Executive', shift: '09:00 AM - 05:00 PM' },
+            { id: 'EMP-103', name: 'সাদিয়া ইসলাম', designation: 'UI/UX Designer', shift: '10:00 AM - 06:00 PM' },
+            { id: 'EMP-104', name: 'রাফসান হাবিব', designation: 'Support Lead', shift: '02:00 PM - 10:00 PM' }
+        ];
+
+        const defaultAttendanceLogs = [
+            { id: 1, empId: 'EMP-101', empName: 'মোঃ করিম হোসেন', date: getTodayFormatted(), checkIn: '08:55 AM', checkOut: '--:--', duration: 'চলমান', location: 'Dhaka HQ', status: 'Present' },
+            { id: 2, empId: 'EMP-103', empName: 'সাদিয়া ইসলাম', date: getTodayFormatted(), checkIn: '10:02 AM', checkOut: '--:--', duration: 'চলমান', location: 'Dhaka HQ', status: 'Present' },
+            { id: 3, empId: 'EMP-104', empName: 'রাফসান হাবিব', date: getTodayFormatted(), checkIn: '--:--', checkOut: '--:--', duration: '0 ঘণ্টা', location: 'N/A', status: 'On Leave' }
+        ];
+
+        const defaultLeaveRequests = [
+            { id: 'LV-101', empId: 'EMP-102', empName: 'তানভীর আহমেদ', type: 'Casual Leave', startDate: getTodayFormatted(), endDate: getTodayFormatted(), reason: 'ব্যক্তিগত কাজের জন্য ছুটি প্রয়োজন', status: 'Pending' },
+            { id: 'LV-100', empId: 'EMP-104', empName: 'রাফসান হাবিব', type: 'Sick Leave', startDate: getTodayFormatted(), endDate: getTodayFormatted(), reason: 'জ্বরজনিত কারণে একদিনের ছুটি', status: 'Approved' }
+        ];
+
+        const defaultShiftRequests = [
+            { id: 'SF-101', empId: 'EMP-102', empName: 'তানভীর আহমেদ', desiredShift: 'Morning Shift (08:00 AM - 04:00 PM)', date: getTodayFormatted(), reason: 'সকালের শিফটে ট্রাফিক কম থাকে', status: 'Pending' }
+        ];
+
+        // Retrieve or Set LocalStorage
+        function getStorage(key, defaultVal) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultVal;
+        }
+
+        function setStorage(key, val) {
+            localStorage.setItem(key, JSON.stringify(val));
+        }
+
+        // Initialize state variables
+        let employees = getStorage('wp_employees', defaultEmployees);
+        let attendanceLogs = getStorage('wp_attendance', defaultAttendanceLogs);
+        let leaveRequests = getStorage('wp_leaves', defaultLeaveRequests);
+        let shiftRequests = getStorage('wp_shifts', defaultShiftRequests);
+        let currentCheckInState = getStorage('wp_emp_checked_in', false); // true = Checked In
+
+        // UTILITY FUNCTIONS
+        function getTodayFormatted() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatTime12H(dateObj) {
+            return dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800 border-indigo-500 text-indigo-200';
+            let icon = 'fa-circle-info';
+            if (type === 'success') {
+                bgClass = 'bg-emerald-900/90 border-emerald-500 text-emerald-200';
+                icon = 'fa-circle-check';
+            } else if (type === 'danger') {
+                bgClass = 'bg-rose-900/90 border-rose-500 text-rose-200';
+                icon = 'fa-circle-xmark';
+            }
+
+            toast.className = `flex items-center space-x-3 p-3.5 rounded-xl border shadow-xl text-xs font-semibold transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // REAL-TIME CLOCK LOGIC
+        function updateClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('headerClock');
+            const dateEl = document.getElementById('headerDate');
+            const liveDisplay = document.getElementById('liveTimeDisplay');
+
+            const timeStr = formatTime12H(now);
+            const dateStr = now.toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            if(clockEl) clockEl.innerText = timeStr;
+            if(dateEl) dateEl.innerText = dateStr;
+            if(liveDisplay) liveDisplay.innerText = timeStr;
+
+            // Update live working duration if checked in
+            if (currentCheckInState) {
+                calculateCurrentWorkingDuration();
+            }
+        }
+
+        // ROLE SWITCHING LOGIC
+        function switchRole(role) {
+            activeRole = role;
+            const empBtn = document.getElementById('btnRoleEmp');
+            const adminBtn = document.getElementById('btnRoleAdmin');
+            const empView = document.getElementById('employeeView');
+            const adminView = document.getElementById('adminView');
+
+            if (role === 'employee') {
+                empBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 bg-indigo-600 text-white shadow-md";
+                adminBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all duration-200";
+                empView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                renderEmployeeDashboard();
+            } else {
+                adminBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 bg-indigo-600 text-white shadow-md";
+                empBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all duration-200";
+                adminView.classList.remove('hidden');
+                empView.classList.add('hidden');
+                renderAdminDashboard();
+            }
+        }
+
+        // CHECK IN / CHECK OUT LOGIC
+        function toggleCheckInOut() {
+            const today = getTodayFormatted();
+            const currentTimeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+            if (!currentCheckInState) {
+                // Perform Check In
+                currentCheckInState = true;
+                setStorage('wp_emp_checked_in', true);
+                setStorage('wp_checkin_timestamp', Date.now());
+
+                // Find or add entry in attendance logs
+                let todayRecord = attendanceLogs.find(log => log.empId === CURRENT_USER.id && log.date === today);
+                if (todayRecord) {
+                    todayRecord.checkIn = currentTimeStr;
+                    todayRecord.status = 'Present';
+                } else {
+                    attendanceLogs.unshift({
+                        id: Date.now(),
+                        empId: CURRENT_USER.id,
+                        empName: CURRENT_USER.name,
+                        date: today,
+                        checkIn: currentTimeStr,
+                        checkOut: '--:--',
+                        duration: 'চলমান',
+                        location: 'Dhaka HQ',
+                        status: 'Present'
+                    });
+                }
+                setStorage('wp_attendance', attendanceLogs);
+                showToast('সফলভাবে চেক-ইন সম্পন্ন হয়েছে!', 'success');
+            } else {
+                // Perform Check Out
+                currentCheckInState = false;
+                setStorage('wp_emp_checked_in', false);
+
+                let todayRecord = attendanceLogs.find(log => log.empId === CURRENT_USER.id && log.date === today);
+                if (todayRecord) {
+                    todayRecord.checkOut = currentTimeStr;
+                    todayRecord.status = 'Checked Out';
+                    
+                    const startTime = getStorage('wp_checkin_timestamp', Date.now());
+                    const diffMinutes = Math.floor((Date.now() - startTime) / (1000 * 60));
+                    const hours = Math.floor(diffMinutes / 60);
+                    const mins = diffMinutes % 60;
+                    todayRecord.duration = `${hours} ঘণ্টা ${mins} মি.`;
+                }
+                setStorage('wp_attendance', attendanceLogs);
+                showToast('সফলভাবে চেক-আউট সম্পন্ন হয়েছে!', 'danger');
+            }
+
+            renderEmployeeDashboard();
+        }
+
+        function calculateCurrentWorkingDuration() {
+            const startTime = getStorage('wp_checkin_timestamp', null);
+            if (!startTime) return;
+
+            const diffMinutes = Math.floor((Date.now() - startTime) / (1000 * 60));
+            const hours = Math.floor(diffMinutes / 60);
+            const mins = diffMinutes % 60;
+
+            const workingHoursEl = document.getElementById('totalWorkingHours');
+            if (workingHoursEl) workingHoursEl.innerText = `${hours} ঘণ্টা ${mins} মি.`;
+        }
+
+        // RENDER EMPLOYEE DASHBOARD
+        function renderEmployeeDashboard() {
+            const checkInOutBtn = document.getElementById('checkInOutBtn');
+            const checkInOutBtnText = document.getElementById('checkInOutBtnText');
+            const badge = document.getElementById('shiftStatusBadge');
+            const todayIn = document.getElementById('todayCheckInTime');
+            const todayOut = document.getElementById('todayCheckOutTime');
+
+            const today = getTodayFormatted();
+            const todayLog = attendanceLogs.find(log => log.empId === CURRENT_USER.id && log.date === today);
+
+            if (currentCheckInState) {
+                checkInOutBtn.className = "w-full md:w-48 py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 bg-rose-500 hover:bg-rose-600 text-white shadow-lg glow-rose transform hover:-translate-y-0.5 active:translate-y-0";
+                checkInOutBtnText.innerText = "চেক আউট (Out)";
+                badge.className = "text-xs px-3 py-1 rounded-full font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                badge.innerText = "স্ট্যাটাস: বর্তমানে অন-ডিউটি আছেন";
+            } else {
+                checkInOutBtn.className = "w-full md:w-48 py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg glow-emerald transform hover:-translate-y-0.5 active:translate-y-0";
+                checkInOutBtnText.innerText = "চেক ইন (Check In)";
+                badge.className = "text-xs px-3 py-1 rounded-full font-medium bg-slate-700/80 text-slate-300";
+                badge.innerText = "স্ট্যাটাস: চেক আউট অবস্থায় আছেন";
+            }
+
+            if (todayLog) {
+                todayIn.innerText = todayLog.checkIn || '--:--';
+                todayOut.innerText = todayLog.checkOut || '--:--';
+                if (!currentCheckInState && todayLog.duration) {
+                    document.getElementById('totalWorkingHours').innerText = todayLog.duration;
+                }
+            } else {
+                todayIn.innerText = '--:--';
+                todayOut.innerText = '--:--';
+                document.getElementById('totalWorkingHours').innerText = '0 ঘণ্টা 0 মি.';
+            }
+
+            renderEmployeeLeaveRequests();
+            renderEmployeeShiftRequests();
+            renderEmpAttendanceHistory();
+        }
+
+        function renderEmployeeLeaveRequests() {
+            const table = document.getElementById('empLeaveTable');
+            const myLeaves = leaveRequests.filter(req => req.empId === CURRENT_USER.id);
+
+            if (myLeaves.length === 0) {
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-500">কোনো আবেদন পাওয়া যায়নি</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = myLeaves.map(req => {
+                let statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/20 text-amber-300">অপেক্ষমাণ</span>`;
+                if (req.status === 'Approved') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/20 text-emerald-300">অনুমোদিত</span>`;
+                if (req.status === 'Rejected') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/20 text-rose-300">বাতিলকৃত</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-700/30">
+                        <td class="py-2.5 px-3 font-medium">${req.type}</td>
+                        <td class="py-2.5 px-3 text-slate-400">${req.startDate}</td>
+                        <td class="py-2.5 px-3 text-slate-400 truncate max-w-[120px]" title="${req.reason}">${req.reason}</td>
+                        <td class="py-2.5 px-3">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderEmployeeShiftRequests() {
+            const table = document.getElementById('empShiftTable');
+            const myShifts = shiftRequests.filter(req => req.empId === CURRENT_USER.id);
+
+            if (myShifts.length === 0) {
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-500">কোনো আবেদন পাওয়া যায়নি</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = myShifts.map(req => {
+                let statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/20 text-amber-300">অপেক্ষমাণ</span>`;
+                if (req.status === 'Approved') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/20 text-emerald-300">অনুমোদিত</span>`;
+                if (req.status === 'Rejected') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/20 text-rose-300">বাতিলকৃত</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-700/30">
+                        <td class="py-2.5 px-3 font-medium">${req.desiredShift}</td>
+                        <td class="py-2.5 px-3 text-slate-400">${req.date}</td>
+                        <td class="py-2.5 px-3 text-slate-400 truncate max-w-[120px]">${req.reason}</td>
+                        <td class="py-2.5 px-3">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderEmpAttendanceHistory() {
+            const table = document.getElementById('empAttendanceHistoryBody');
+            const logs = attendanceLogs.filter(log => log.empId === CURRENT_USER.id);
+
+            if (logs.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500">উপস্থিতির কোনো তথ্য রেকর্ড করা হয়নি</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = logs.map(log => {
+                let statusTag = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">Present</span>`;
+                if(log.status === 'Checked Out') statusTag = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300">Checked Out</span>`;
+                if(log.status === 'On Leave') statusTag = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/20 text-rose-400">On Leave</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-700/20">
+                        <td class="py-3 px-4 font-mono font-medium">${log.date}</td>
+                        <td class="py-3 px-4 text-emerald-400 font-mono">${log.checkIn}</td>
+                        <td class="py-3 px-4 text-rose-400 font-mono">${log.checkOut}</td>
+                        <td class="py-3 px-4 font-mono">${log.duration}</td>
+                        <td class="py-3 px-4 text-xs text-slate-400">${log.location}</td>
+                        <td class="py-3 px-4">${statusTag}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // RENDER ADMIN DASHBOARD
+        function renderAdminDashboard() {
+            // Metrics Calculations
+            const totalEmp = employees.length;
+            const presentCount = attendanceLogs.filter(l => l.date === getTodayFormatted() && (l.status === 'Present' || l.status === 'Checked Out')).length;
+            const onLeaveCount = attendanceLogs.filter(l => l.date === getTodayFormatted() && l.status === 'On Leave').length;
+            const pendingLeaves = leaveRequests.filter(r => r.status === 'Pending').length;
+            const pendingShifts = shiftRequests.filter(r => r.status === 'Pending').length;
+
+            document.getElementById('metricTotalEmp').innerText = totalEmp;
+            document.getElementById('metricPresent').innerText = presentCount;
+            document.getElementById('metricOnLeave').innerText = onLeaveCount;
+            document.getElementById('metricPending').innerText = pendingLeaves + pendingShifts;
+
+            renderAdminLeaveTable();
+            renderAdminShiftTable();
+            renderAdminRosterTable();
+            renderAdminLiveLogs();
+        }
+
+        function switchAdminTab(tab) {
+            const btnLeaves = document.getElementById('tabBtnLeaves');
+            const btnShifts = document.getElementById('tabBtnShifts');
+            const btnRoster = document.getElementById('tabBtnRoster');
+
+            const sectionLeaves = document.getElementById('adminTabLeaves');
+            const sectionShifts = document.getElementById('adminTabShifts');
+            const sectionRoster = document.getElementById('adminTabRoster');
+
+            [btnLeaves, btnShifts, btnRoster].forEach(b => b.className = "px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition");
+            [sectionLeaves, sectionShifts, sectionRoster].forEach(s => s.classList.add('hidden'));
+
+            if(tab === 'leaves') {
+                btnLeaves.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition";
+                sectionLeaves.classList.remove('hidden');
+            } else if(tab === 'shifts') {
+                btnShifts.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition";
+                sectionShifts.classList.remove('hidden');
+            } else if(tab === 'roster') {
+                btnRoster.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition";
+                sectionRoster.classList.remove('hidden');
+            }
+        }
+
+        function renderAdminLeaveTable() {
+            const table = document.getElementById('adminLeaveRequestsBody');
+            if (leaveRequests.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-500">কোনো আবেদন নেই</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = leaveRequests.map(req => {
+                let statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/20 text-amber-300">অপেক্ষমাণ</span>`;
+                if (req.status === 'Approved') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/20 text-emerald-300">অনুমোদিত</span>`;
+                if (req.status === 'Rejected') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/20 text-rose-300">বাতিলকৃত</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-700/20">
+                        <td class="py-3 px-4 font-semibold text-slate-200">${req.empName} <span class="text-[10px] text-slate-400 block">${req.empId}</span></td>
+                        <td class="py-3 px-4">${req.type}</td>
+                        <td class="py-3 px-4 font-mono text-slate-400">${req.startDate} হতে ${req.endDate}</td>
+                        <td class="py-3 px-4 text-slate-300">${req.reason}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4 text-center">
+                            ${req.status === 'Pending' ? `
+                                <div class="flex items-center justify-center space-x-2">
+                                    <button onclick="updateLeaveStatus('${req.id}', 'Approved')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] rounded-lg font-medium shadow">অনুমোদন</button>
+                                    <button onclick="updateLeaveStatus('${req.id}', 'Rejected')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] rounded-lg font-medium shadow">বাতিল</button>
+                                </div>
+                            ` : `<span class="text-xs text-slate-500">নিষ্পন্ন</span>`}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateLeaveStatus(id, status) {
+            leaveRequests = leaveRequests.map(req => req.id === id ? { ...req, status } : req);
+            setStorage('wp_leaves', leaveRequests);
+            showToast(`ছুটির আবেদন ${status === 'Approved' ? 'অনুমোদন' : 'বাতিল'} করা হয়েছে`, status === 'Approved' ? 'success' : 'danger');
+            renderAdminDashboard();
+        }
+
+        function renderAdminShiftTable() {
+            const table = document.getElementById('adminShiftRequestsBody');
+            if (shiftRequests.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-500">কোনো আবেদন নেই</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = shiftRequests.map(req => {
+                let statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/20 text-amber-300">অপেক্ষমাণ</span>`;
+                if (req.status === 'Approved') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/20 text-emerald-300">অনুমোদিত</span>`;
+                if (req.status === 'Rejected') statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/20 text-rose-300">বাতিলকৃত</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-700/20">
+                        <td class="py-3 px-4 font-semibold text-slate-200">${req.empName} <span class="text-[10px] text-slate-400 block">${req.empId}</span></td>
+                        <td class="py-3 px-4 font-medium text-cyan-300">${req.desiredShift}</td>
+                        <td class="py-3 px-4 font-mono text-slate-400">${req.date}</td>
+                        <td class="py-3 px-4 text-slate-300">${req.reason}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4 text-center">
+                            ${req.status === 'Pending' ? `
+                                <div class="flex items-center justify-center space-x-2">
+                                    <button onclick="updateShiftStatus('${req.id}', 'Approved')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] rounded-lg font-medium shadow">অনুমোদন</button>
+                                    <button onclick="updateShiftStatus('${req.id}', 'Rejected')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[11px] rounded-lg font-medium shadow">বাতিল</button>
+                                </div>
+                            ` : `<span class="text-xs text-slate-500">নিষ্পন্ন</span>`}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateShiftStatus(id, status) {
+            shiftRequests = shiftRequests.map(req => req.id === id ? { ...req, status } : req);
+            setStorage('wp_shifts', shiftRequests);
+            showToast(`শিফট পরিবর্তনের আবেদন ${status === 'Approved' ? 'অনুমোদন' : 'বাতিল'} করা হয়েছে`, status === 'Approved' ? 'success' : 'danger');
+            renderAdminDashboard();
+        }
+
+        function renderAdminRosterTable() {
+            const table = document.getElementById('adminRosterBody');
+            table.innerHTML = employees.map(emp => `
+                <tr class="hover:bg-slate-700/20">
+                    <td class="py-3 px-4 font-mono text-indigo-400 font-bold">${emp.id}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-100">${emp.name}</td>
+                    <td class="py-3 px-4 text-slate-300">${emp.designation}</td>
+                    <td class="py-3 px-4 font-mono text-emerald-400">${emp.shift}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="editEmployeeShift('${emp.id}')" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded-lg transition border border-slate-600">
+                            <i class="fa-solid fa-pen-to-square"></i> সময় পরিবর্তন
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editEmployeeShift(empId) {
+            const emp = employees.find(e => e.id === empId);
+            if (!emp) return;
+            const newShift = prompt(`${emp.name}-এর নতুন শিফট নির্ধারণ করুন:`, emp.shift);
+            if (newShift && newShift.trim() !== '') {
+                emp.shift = newShift;
+                setStorage('wp_employees', employees);
+                showToast(`শিফট পরিবর্তন করে ${newShift} করা হয়েছে`, 'success');
+                renderAdminRosterTable();
+            }
+        }
+
+        function renderAdminLiveLogs() {
+            const table = document.getElementById('adminLiveLogsBody');
+            const filter = document.getElementById('adminFilterStatus').value;
+
+            let filteredLogs = attendanceLogs;
+            if (filter !== 'all') {
+                filteredLogs = attendanceLogs.filter(l => l.status === filter);
+            }
+
+            if (filteredLogs.length === 0) {
+                table.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500">কোনো রেকর্ড পাওয়া যায়নি</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = filteredLogs.map(log => {
+                let statusTag = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Present</span>`;
+                if(log.status === 'Checked Out') statusTag = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300">Checked Out</span>`;
+                if(log.status === 'On Leave') statusTag = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/20 text-rose-400 border border-rose-500/30">On Leave</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-700/20">
+                        <td class="py-3 px-4 font-semibold text-slate-200">${log.empName} <span class="text-[10px] text-slate-400 block">${log.empId}</span></td>
+                        <td class="py-3 px-4 font-mono text-slate-400">${log.date}</td>
+                        <td class="py-3 px-4 text-emerald-400 font-mono">${log.checkIn}</td>
+                        <td class="py-3 px-4 text-rose-400 font-mono">${log.checkOut}</td>
+                        <td class="py-3 px-4 font-mono">${log.duration}</td>
+                        <td class="py-3 px-4 text-xs text-slate-400">${log.location}</td>
+                        <td class="py-3 px-4">${statusTag}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // FORM SUBMISSIONS & MODALS
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function handleLeaveSubmit(e) {
+            e.preventDefault();
+            const type = document.getElementById('leaveType').value;
+            const startDate = document.getElementById('leaveStartDate').value;
+            const endDate = document.getElementById('leaveEndDate').value;
+            const reason = document.getElementById('leaveReason').value;
+
+            const newLeave = {
+                id: 'LV-' + Math.floor(100 + Math.random() * 900),
+                empId: CURRENT_USER.id,
+                empName: CURRENT_USER.name,
+                type,
+                startDate,
+                endDate,
+                reason,
+                status: 'Pending'
+            };
+
+            leaveRequests.unshift(newLeave);
+            setStorage('wp_leaves', leaveRequests);
+            closeModal('leaveModal');
+            document.getElementById('leaveForm').reset();
+            showToast('ছুটির আবেদন সফলভাবে জমা দেয়া হয়েছে!', 'success');
+            renderEmployeeDashboard();
+        }
+
+        function handleShiftSubmit(e) {
+            e.preventDefault();
+            const desiredShift = document.getElementById('desiredShift').value;
+            const date = document.getElementById('shiftDate').value;
+            const reason = document.getElementById('shiftReason').value;
+
+            const newShiftReq = {
+                id: 'SF-' + Math.floor(100 + Math.random() * 900),
+                empId: CURRENT_USER.id,
+                empName: CURRENT_USER.name,
+                desiredShift,
+                date,
+                reason,
+                status: 'Pending'
+            };
+
+            shiftRequests.unshift(newShiftReq);
+            setStorage('wp_shifts', shiftRequests);
+            closeModal('shiftModal');
+            document.getElementById('shiftForm').reset();
+            showToast('শিফট পরিবর্তনের আবেদন সফলভাবে জমা দেয়া হয়েছে!', 'success');
+            renderEmployeeDashboard();
+        }
+
+        function handleAddEmployeeSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('newEmpName').value;
+            const designation = document.getElementById('newEmpRole').value;
+            const shift = document.getElementById('newEmpShift').value;
+
+            const newEmp = {
+                id: 'EMP-' + Math.floor(105 + Math.random() * 900),
+                name,
+                designation,
+                shift
+            };
+
+            employees.push(newEmp);
+            setStorage('wp_employees', employees);
+            closeModal('addEmpModal');
+            document.getElementById('addEmpForm').reset();
+            showToast('নতুন কর্মচারী সফলভাবে তৈরি করা হয়েছে!', 'success');
+            renderAdminDashboard();
+        }
+
+        // INITIALIZATION ON WINDOW LOAD
+        window.onload = function() {
+            // Start Clock Interval
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Set default date inputs to today
+            const todayStr = getTodayFormatted();
+            if (document.getElementById('leaveStartDate')) document.getElementById('leaveStartDate').value = todayStr;
+            if (document.getElementById('leaveEndDate')) document.getElementById('leaveEndDate').value = todayStr;
+            if (document.getElementById('shiftDate')) document.getElementById('shiftDate').value = todayStr;
+
+            // Render Employee view by default
+            renderEmployeeDashboard();
+        };
+    </script>
+</body>
+</html>
